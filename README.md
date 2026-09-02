@@ -118,7 +118,9 @@ si la réglementation change.
 
 ## Prochaines étapes possibles
 
-1. Modification manuelle des factures depuis la fiche (+ journal des modifications).
-2. Validation manuelle d'une facture (bouton « Valider »).
-3. Branchement d'une vraie analyse automatique (OCR / IA) via `src/lib/parsing/`.
-4. Saisie manuelle d'une facture sans PDF.
+- ✅ Navigation entre les mois sur le tableau de bord
+- ✅ Modification manuelle des factures + journal des modifications
+- ✅ Validation manuelle d'une facture
+- Saisie manuelle d'une facture sans PDF
+- Branchement d'une vraie analyse automatique (OCR / IA) via `src/lib/parsing/`
+- Empaquetage en application Windows double-cliquable (voir `ARCHITECTURE.md`)
