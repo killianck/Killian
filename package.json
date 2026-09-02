@@ -1,10 +1,14 @@
 {
   "name": "facturation-tva",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Suivi des factures et de la TVA pour petite entreprise",
   "author": "Killian",
   "main": "electron/main.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/VOTRE-COMPTE-GITHUB/facturation-tva.git"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -20,16 +24,19 @@
     "db:deploy": "tsx scripts/migrate.mts",
     "backup": "tsx scripts/backup.mts",
     "db:backfill-parties": "tsx scripts/backfill-parties.mts",
+    "auth:reset": "tsx scripts/auth-reset.mts",
     "setup": "prisma generate && tsx scripts/migrate.mts",
     "app:dev": "concurrently -k \"next dev\" \"wait-on tcp:3000 && electron electron/main.js\"",
     "app:build": "next build && node scripts/prepare-standalone.mjs",
-    "app:dist": "npm run app:build && electron-builder"
+    "app:dist": "npm run app:build && electron-builder",
+    "app:release": "npm run app:build && electron-builder --publish always"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
+    "electron-updater": "^6.8.9",
     "exceljs": "^4.4.0",
     "next": "16.3.4",
     "react": "19.2.8",

@@ -21,6 +21,7 @@ const fs = require("node:fs");
 const crypto = require("node:crypto");
 const { fork } = require("node:child_process");
 const dataEncryption = require("./data-encryption");
+const { setupAutoUpdate, isUpdatePending, quitAndInstall } = require("./updater");
 
 const isDev = !app.isPackaged;
 const DEV_URL = "http://localhost:3000";
@@ -190,6 +191,10 @@ async function bootstrap() {
     await waitForServer(DEV_URL).catch(() => {});
   }
   createWindow();
+
+  if (!isDev) {
+    setupAutoUpdate(() => mainWindow);
+  }
 }
 
 if (!app.requestSingleInstanceLock()) {
@@ -209,8 +214,11 @@ if (!app.requestSingleInstanceLock()) {
     if (quitting || isDev) return;
     quitting = true;
     e.preventDefault();
-    stopServerThenLock();
-    setTimeout(() => app.exit(0), 200);
+    stopServerThenLock(); // arrête le serveur + re-chiffre les données
+    setTimeout(() => {
+      if (isUpdatePending()) quitAndInstall();
+      else app.exit(0);
+    }, 200);
   });
 
   app.on("window-all-closed", () => {

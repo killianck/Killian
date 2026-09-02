@@ -99,9 +99,14 @@ le `.exe`. L'utilisateur l'installe ; le dossier `%APPDATA%\facturation-tva`
 (base + PDF + sauvegardes) n'est jamais touché, et les migrations éventuelles
 s'appliquent au premier lancement de la nouvelle version.
 
-**À compléter plus tard :**
-- une icône personnalisée : déposer `build/icon.ico` (256×256 min) puis rebuild ;
-- un système de mise à jour automatique (electron-updater) — jamais silencieux.
+**Mises à jour automatiques (electron-updater) :** au démarrage, l'app vérifie
+les *GitHub Releases* du dépôt (`repository` dans `package.json`), télécharge la
+nouvelle version et propose « Redémarrer maintenant » (jamais en silence). Le
+re-chiffrement des données a lieu avant l'installation. Publication :
+`npm run app:release` (voir `DEPLOIEMENT.md`). Tant que le dépôt n'est pas
+configuré, la vérification est simplement ignorée.
+
+**À compléter plus tard :** une icône personnalisée (`build/icon.ico`, 256×256 min).
 
 **Règle :** une IA ne modifie jamais directement l'application installée ni les
 données de production. Toute évolution passe par le code source → tests → nouvelle

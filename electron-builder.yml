@@ -32,5 +32,11 @@ nsis:
   createStartMenuShortcut: true
   shortcutName: Facturation & TVA
 
+# Mises à jour automatiques : les nouvelles versions sont publiées sur les
+# "Releases" du dépôt GitHub (défini par le champ "repository" du package.json).
+publish:
+  provider: github
+  releaseType: release
+
 extraMetadata:
   main: electron/main.js
