@@ -7,7 +7,7 @@
   "main": "electron/main.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/VOTRE-COMPTE-GITHUB/facturation-tva.git"
+    "url": "https://github.com/killianck/Killian.git"
   },
   "scripts": {
     "dev": "next dev",

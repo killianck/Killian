@@ -11,27 +11,27 @@ On utilise **GitHub Releases** (gratuit).
 
 ## 1. Préparation (une seule fois)
 
-1. Créez un compte sur **https://github.com** (gratuit).
-2. Créez un dépôt (bouton **New repository**) nommé `facturation-tva`
-   (case **Private** cochée si vous voulez le garder privé).
-3. Dans `package.json`, remplacez l'adresse du dépôt par la vôtre :
+Dépôt utilisé : **https://github.com/killianck/Killian** (déjà branché dans le
+projet et dans `package.json`).
 
-   ```json
-   "repository": {
-     "type": "git",
-     "url": "https://github.com/VOTRE-COMPTE/facturation-tva.git"
-   }
-   ```
+1. **Rendez le dépôt public.** Pour que la mise à jour automatique fonctionne
+   simplement, les *Releases* doivent être accessibles sans jeton. Sur GitHub :
+   dépôt → **Settings** → tout en bas, **Change repository visibility** →
+   **Public**. (L'installeur ne contient aucune donnée — juste le programme.)
+   *Si vous tenez à garder le code privé : dites-le moi, on publiera les versions
+   ailleurs.*
 
-4. Envoyez le code sur GitHub (depuis le dossier du projet) :
+2. Envoyez le code sur GitHub (depuis le dossier du projet) :
 
    ```bash
-   git remote add origin https://github.com/VOTRE-COMPTE/facturation-tva.git
    git push -u origin main
    ```
 
-5. Créez un **jeton d'accès** : GitHub → Settings → Developer settings →
-   **Personal access tokens** → *Tokens (classic)* → **Generate new token**.
+   Une fenêtre GitHub s'ouvre → **Authorize**. C'est fait.
+
+3. Créez un **jeton d'accès** (pour publier les versions) :
+   GitHub → photo de profil → **Settings** → **Developer settings** →
+   **Personal access tokens** → *Tokens (classic)* → **Generate new token (classic)**.
    Cochez la permission **`repo`**. Copiez le jeton (il ne s'affiche qu'une fois).
 
 ---
