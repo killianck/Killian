@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Application de bureau et scripts Node (CommonJS, non concernés) :
+    "dist-app/**",
+    "electron/**",
+    "scripts/**",
   ]),
 ]);
 

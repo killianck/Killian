@@ -71,41 +71,41 @@ Processus cible :
 ```
 1. Claude Code modifie le code source (nouvelle branche Git)
 2. npm test        (les tests passent)
-3. npm run build   (l'application se compile)
+3. npm run app:dist   (compile + génère l'installeur Windows)
 4. commit + tag de version (ex. v0.2.0)
-5. Génération de l'installeur Windows      ← étape à mettre en place (voir §6)
-6. L'utilisateur installe la nouvelle version ; ses données sont conservées
+5. L'utilisateur lance l'installeur ; ses données (%APPDATA%) sont conservées
 ```
+
+---
+
+## 6. Application Windows double-cliquable ✅
+
+L'application est empaquetée avec **Electron** + **electron-builder**.
+
+- `electron/main.js` : processus principal. En production il
+  1. définit `APP_DATA_DIR` = `%APPDATA%\facturation-tva` et `DATABASE_URL`,
+  2. applique les migrations en attente (`src/lib/migrate.ts`, via `node:sqlite`,
+     sans le CLI Prisma),
+  3. démarre le serveur Next embarqué (`.next/standalone`),
+  4. ouvre la fenêtre sur ce serveur local.
+- La sauvegarde automatique quotidienne se déclenche comme d'habitude.
+- `npm run app:build` : `next build` (mode `standalone`) + `scripts/prepare-standalone.mjs`.
+- `npm run app:dist` : produit `dist-app/Facturation & TVA Setup <version>.exe`
+  (installeur NSIS, raccourci bureau + menu Démarrer).
+- `npm run app:dev` : lance `next dev` + une fenêtre Electron dessus.
+
+**Génération d'une nouvelle version :** `npm test` → `npm run app:dist` → distribuer
+le `.exe`. L'utilisateur l'installe ; le dossier `%APPDATA%\facturation-tva`
+(base + PDF + sauvegardes) n'est jamais touché, et les migrations éventuelles
+s'appliquent au premier lancement de la nouvelle version.
+
+**À compléter plus tard :**
+- une icône personnalisée : déposer `build/icon.ico` (256×256 min) puis rebuild ;
+- un système de mise à jour automatique (electron-updater) — jamais silencieux.
 
 **Règle :** une IA ne modifie jamais directement l'application installée ni les
 données de production. Toute évolution passe par le code source → tests → nouvelle
 version.
-
----
-
-## 6. Cible : application Windows double-cliquable (à faire)
-
-Aujourd'hui, l'application se lance avec `npm run dev`. L'objectif final est une
-**icône sur le bureau** → double-clic → l'application s'ouvre, sans terminal.
-
-Plan prévu (tâche à part entière, à faire quand les fonctionnalités seront stables) :
-
-1. **Empaqueter** l'application Next.js dans une application de bureau
-   (piste recommandée : **Tauri** — léger — ou **Electron** — plus simple à mettre
-   en place). Le programme embarque Node et sert l'app en local.
-2. **Au démarrage**, l'app :
-   - définit `APP_DATA_DIR` vers `%APPDATA%\FacturationTVA`,
-   - crée le dossier si absent, applique les migrations (`db:deploy`),
-   - fait une sauvegarde,
-   - ouvre la fenêtre.
-3. **Installeur** (`.msi` / `.exe`) généré automatiquement à partir du code, avec
-   création du raccourci bureau.
-4. **Mises à jour** (plus tard) : vérification d'une nouvelle version au démarrage,
-   téléchargement, installation au prochain lancement — jamais en silence, toujours
-   avec l'accord de l'utilisateur.
-
-Rien dans le code actuel n'empêche cette évolution : c'est pour cela que les données
-sont déjà séparées et que les chemins sont centralisés.
 
 ---
 

@@ -2,6 +2,9 @@
   "name": "facturation-tva",
   "version": "0.1.0",
   "private": true,
+  "description": "Suivi des factures et de la TVA pour petite entreprise",
+  "author": "Killian",
+  "main": "electron/main.js",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -14,10 +17,13 @@
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
     "db:reset": "prisma migrate reset --force",
-    "db:deploy": "prisma migrate deploy",
+    "db:deploy": "tsx scripts/migrate.mts",
     "backup": "tsx scripts/backup.mts",
     "db:backfill-parties": "tsx scripts/backfill-parties.mts",
-    "setup": "prisma migrate deploy && prisma generate"
+    "setup": "prisma generate && tsx scripts/migrate.mts",
+    "app:dev": "concurrently -k \"next dev\" \"wait-on tcp:3000 && electron electron/main.js\"",
+    "app:build": "next build && node scripts/prepare-standalone.mjs",
+    "app:dist": "npm run app:build && electron-builder"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -33,10 +39,13 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@types/node": "^22.20.1",
     "@types/pdfkit": "^0.17.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "concurrently": "^10.0.5",
+    "electron": "^44.1.1",
+    "electron-builder": "^26.15.3",
     "eslint": "^9",
     "eslint-config-next": "16.3.4",
     "pdfkit": "^0.20.2",
@@ -44,13 +53,15 @@
     "tailwindcss": "^4",
     "tsx": "^4.23.13",
     "typescript": "^5",
-    "vitest": "^4.1.11"
+    "vitest": "^4.1.11",
+    "wait-on": "^9.1.0"
   },
   "allowScripts": {
     "esbuild@0.28.2": true,
     "unrs-resolver@1.12.2": true,
     "prisma@6.19.3": true,
     "@prisma/engines@6.19.3": true,
-    "@prisma/client@6.19.3": true
+    "@prisma/client@6.19.3": true,
+    "electron@44.1.1": true
   }
 }

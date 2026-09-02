@@ -57,6 +57,10 @@ next-env.d.ts
 # fichiers de test / exports générés
 /exports
 
+# application de bureau (Electron)
+/dist-app
+/electron/migrate.cjs
+
 # journaux locaux
 *.log
 dev-server.log

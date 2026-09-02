@@ -1,0 +1,36 @@
+appId: fr.facturation-tva.app
+productName: Facturation & TVA
+copyright: Outil de suivi des factures et de la TVA
+
+directories:
+  output: dist-app
+  buildResources: build
+
+# Fichiers embarqués dans app.asar
+files:
+  - electron/**/*
+  - package.json
+
+asar: true
+
+# Le serveur Next autonome (.next/standalone) est copié tel quel dans
+# resources/standalone par le hook afterPack — copie fiable de .next et
+# node_modules, et fichiers réels sur disque (nécessaire au moteur Prisma).
+afterPack: scripts/after-pack.js
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Facturation & TVA
+
+extraMetadata:
+  main: electron/main.js

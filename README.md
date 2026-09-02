@@ -85,8 +85,9 @@ npm run backup
 
 | Commande | Effet |
 | --- | --- |
-| `npm run dev` | Lance l'application en mode développement |
-| `npm run build` / `npm start` | Version optimisée |
+| `npm run dev` | Lance l'application en mode développement (navigateur) |
+| `npm run app:dev` | Lance l'application dans une fenêtre (Electron) |
+| `npm run app:dist` | Génère l'installeur Windows → `dist-app/…Setup….exe` |
 | `npm test` | Lance les tests |
 | `npm run backup` | Sauvegarde la base + les PDF dans `data/sauvegardes/` |
 | `npm run db:studio` | Ouvre une interface pour voir/éditer la base |
@@ -137,7 +138,8 @@ si la réglementation change.
 - ✅ Saisie manuelle + suppression + détection de doublon
 - ✅ TVA d'achat non récupérable
 - ✅ Sauvegarde automatique quotidienne + bouton manuel
+- ✅ Fiches Tiers réutilisables (fournisseurs / clients)
+- ✅ Application Windows double-cliquable (`npm run app:dist`, voir `ARCHITECTURE.md`)
 - OCR pour les PDF scannés (images) — service externe à brancher dans `src/lib/parsing/`
-- Empaquetage en application Windows double-cliquable (voir `ARCHITECTURE.md`)
 - Authentification / comptes utilisateurs
 - Exports comptables (FEC…)
