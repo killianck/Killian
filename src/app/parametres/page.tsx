@@ -3,7 +3,11 @@ import { VAT_RATES, TVA_DISCLAIMER } from "@/lib/tva/rules";
 import { CATEGORIES, STATUSES } from "@/lib/domain/enums";
 
 export default function ParametresPage() {
-  const parser = process.env.INVOICE_PARSER ?? "stub";
+  const parser = process.env.INVOICE_PARSER ?? "heuristic";
+  const parserLabel: Record<string, string> = {
+    heuristic: "Lecture du texte du PDF + règles (par défaut)",
+    stub: "Aucune analyse (saisie 100 % manuelle)",
+  };
 
   return (
     <>
@@ -15,6 +19,7 @@ export default function ParametresPage() {
           <p className="text-sm text-[var(--muted)]">
             Moteur actuel : <Badge tone="info">{parser}</Badge>
           </p>
+          <p className="mt-1 text-xs text-[var(--muted)]">{parserLabel[parser] ?? parser}</p>
           <p className="mt-2 text-xs text-[var(--muted)]">
             Se règle via la variable <code>INVOICE_PARSER</code> du fichier <code>.env</code>.
             La clé API éventuelle (<code>INVOICE_PARSER_API_KEY</code>) ne doit jamais être mise

@@ -104,7 +104,9 @@ export async function reanalyzeInvoice(id: string): Promise<void> {
         ...data,
         status: inv.status === "validee" ? "a_verifier" : inv.status === "a_analyser" ? "a_verifier" : inv.status,
         coherence,
-        notes: parsed.warnings.length ? parsed.warnings.join(" ") : inv.notes,
+        // La ré-analyse remplace les remarques automatiques (les corrections
+        // manuelles éventuelles restent dans l'historique).
+        notes: parsed.warnings.length ? parsed.warnings.join(" ") : null,
         vatLines: { create: lines },
       },
     }),

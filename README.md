@@ -14,9 +14,13 @@ Logiciel de suivi des factures et de calcul de TVA pour une petite entreprise fr
   nombre de factures, totaux HT/TTC, graphique mensuel, prochaines échéances.
 - **Factures** : liste complète avec recherche, filtres (mois, année, achat/vente,
   type, catégorie, taux de TVA) et tri (date, montant). Fiche détaillée par facture.
-- **Import** : dépôt d'un PDF (glisser-déposer ou sélection). Le PDF original est
-  conservé et consultable depuis la fiche. *(L'analyse automatique OCR/IA n'est pas
-  encore branchée : les informations sont à saisir/vérifier à la main.)*
+- **Import + analyse automatique** : dépôt d'un PDF (glisser-déposer ou sélection).
+  Le logiciel lit le texte du PDF et repère montants (HT/TVA/TTC), taux, dates de
+  facture et d'échéance, numéro, SIRET, TVA intracom, fournisseur. Le PDF original
+  est conservé. Bouton **« Ré-analyser »** pour relancer l'analyse. *(Fonctionne sur
+  les PDF « texte » ; un PDF scanné/image demande une saisie manuelle.)*
+- **Modification** : toutes les valeurs sont corrigeables (bouton « Modifier »),
+  chaque changement est journalisé. Validation manuelle d'une facture.
 - **Contrôles automatiques** : vérification que HT + TVA = TTC, cohérence des lignes
   de TVA, détection des taux non standard. Chaque facture a un niveau de cohérence
   (cohérent / à vérifier / incorrect).
@@ -101,7 +105,8 @@ src/
       coherence.ts     Contrôles mathématiques des montants
       aggregate.ts     Totaux mensuels et annuels
     paths.ts           Emplacement des données (séparées du code)
-    parsing/           Interface d'analyse des factures (OCR/IA plus tard)
+    parsing/           Analyse des PDF : lecture du texte + heuristiques
+                       (extract.ts). Extensible vers un service OCR/IA.
     export/            Export Excel (d'autres formats possibles à côté)
 ```
 
@@ -121,6 +126,7 @@ si la réglementation change.
 - ✅ Navigation entre les mois sur le tableau de bord
 - ✅ Modification manuelle des factures + journal des modifications
 - ✅ Validation manuelle d'une facture
+- ✅ Analyse automatique des PDF « texte » (montants, dates, numéro, SIRET…)
 - Saisie manuelle d'une facture sans PDF
-- Branchement d'une vraie analyse automatique (OCR / IA) via `src/lib/parsing/`
+- OCR pour les PDF scannés (images) — service externe à brancher dans `src/lib/parsing/`
 - Empaquetage en application Windows double-cliquable (voir `ARCHITECTURE.md`)
