@@ -1,0 +1,86 @@
+// Schéma de la base de données (Prisma + SQLite).
+// Pour faire évoluer la structure : modifier ce fichier puis lancer `npm run db:migrate`.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+/// Une facture (ou un avoir) déposée dans le logiciel.
+model Invoice {
+  id String @id @default(cuid())
+
+  // --- Nature du document ---
+  documentType String @default("facture") // "facture" | "avoir"
+  direction    String @default("achat") // "achat" (fournisseur) | "vente" (client)
+  category     String? // "materiel" | "sous_traitance" | "transport" | "fournitures" | "services" | "autre" | null
+
+  // --- Identification ---
+  number      String?
+  invoiceDate DateTime
+  dueDate     DateTime? // date d'échéance de paiement (information seule, aucun suivi de paiement)
+
+  // --- Tiers (fournisseur ou client selon `direction`) ---
+  partyName    String?
+  partyAddress String?
+  siret        String?
+  vatNumber    String? // TVA intracommunautaire
+
+  currency String @default("EUR")
+
+  // --- Montants globaux (en unité de la devise, ex. euros) ---
+  totalHT  Float @default(0)
+  totalVAT Float @default(0)
+  totalTTC Float @default(0)
+
+  // --- Suivi ---
+  status    String @default("a_analyser") // a_analyser | analyse_en_cours | a_verifier | validee | erreur
+  coherence String @default("a_verifier") // coherent | a_verifier | incoherent
+
+  notes String?
+
+  // --- Fichier PDF original (jamais supprimé automatiquement) ---
+  originalFileName String?
+  originalFilePath String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  vatLines  VatLine[]
+  revisions InvoiceRevision[]
+
+  @@index([invoiceDate])
+  @@index([dueDate])
+  @@index([direction])
+  @@index([status])
+}
+
+/// Une ligne de TVA d'une facture. Une facture peut en avoir plusieurs (plusieurs taux).
+model VatLine {
+  id        String  @id @default(cuid())
+  invoiceId String
+  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  rate      Float // taux en pourcentage : 20, 10, 5.5, 2.1, 0
+  baseHT    Float // montant HT soumis à ce taux
+  vatAmount Float // montant de TVA pour ce taux
+
+  @@index([invoiceId])
+}
+
+/// Journal des modifications manuelles apportées à une facture.
+model InvoiceRevision {
+  id        String   @id @default(cuid())
+  invoiceId String
+  invoice   Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  changedAt DateTime @default(now())
+  field     String
+  oldValue  String?
+  newValue  String?
+
+  @@index([invoiceId])
+}
