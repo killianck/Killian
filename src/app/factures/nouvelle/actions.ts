@@ -13,11 +13,29 @@ export async function createInvoice(
   if (!parsed.ok) return { error: parsed.error };
   const { data, lines, coherence } = parsed;
 
+  // Avertissement doublon (même numéro + même tiers)
+  let notes = data.notes;
+  if (data.number && data.partyName) {
+    const dup = await prisma.invoice.findFirst({
+      where: { number: data.number, partyName: data.partyName },
+      select: { id: true },
+    });
+    if (dup) {
+      notes = [
+        "⚠️ Une facture portant le même numéro et le même tiers existe déjà. Vérifiez qu'il ne s'agit pas d'un doublon.",
+        notes,
+      ]
+        .filter(Boolean)
+        .join(" ");
+    }
+  }
+
   let id: string;
   try {
     const created = await prisma.invoice.create({
       data: {
         ...data,
+        notes,
         status: "a_verifier",
         coherence,
         vatLines: { create: lines },

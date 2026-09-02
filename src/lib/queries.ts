@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/db";
 import type { AggregatableInvoice } from "@/lib/tva/aggregate";
+import { isDuplicatePair, type DuplicateCandidate } from "@/lib/invoices/duplicates";
 
 export type InvoiceWithLines = Awaited<ReturnType<typeof getInvoices>>[number];
 
@@ -31,6 +32,16 @@ export function toAggregatable(
     totalVAT: i.totalVAT,
     totalTTC: i.totalTTC,
   }));
+}
+
+/** Autres factures qui semblent être des doublons de celle-ci. */
+export async function getDuplicatesOf(inv: DuplicateCandidate) {
+  const others = await prisma.invoice.findMany({
+    where: { id: { not: inv.id } },
+    select: { id: true, number: true, partyName: true, invoiceDate: true, totalTTC: true, currency: true },
+    orderBy: { createdAt: "asc" },
+  });
+  return others.filter((o) => isDuplicatePair(inv, o));
 }
 
 /** Années présentes en base (pour les sélecteurs), ordre décroissant. */

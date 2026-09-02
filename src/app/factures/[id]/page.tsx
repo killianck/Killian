@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getInvoice } from "@/lib/queries";
+import { getDuplicatesOf, getInvoice } from "@/lib/queries";
 import { PageHeader, Card, Money, StatusBadge, CoherenceBadge } from "@/components/ui";
 import { formatDate, formatRate } from "@/lib/format";
 import {
@@ -33,6 +33,8 @@ export default async function InvoiceDetailPage({
   const analyse = (await searchParams).analyse;
   const inv = await getInvoice(id);
   if (!inv) notFound();
+
+  const duplicates = await getDuplicatesOf(inv);
 
   const report = checkCoherence({
     totalHT: inv.totalHT,
@@ -99,6 +101,18 @@ export default async function InvoiceDetailPage({
         <p className="mb-4 rounded-lg border border-[var(--danger-bg)] bg-[var(--danger-bg)] px-3 py-2 text-xs text-[var(--danger)]">
           Le PDF d&apos;origine est introuvable.
         </p>
+      )}
+
+      {duplicates.length > 0 && (
+        <div className="mb-4 rounded-lg border border-[var(--warning-bg)] bg-[var(--warning-bg)] px-3 py-2 text-xs text-[var(--warning)]">
+          ⚠️ Doublon potentiel avec&nbsp;:
+          {duplicates.map((d) => (
+            <Link key={d.id} href={`/factures/${d.id}`} className="ml-1.5 font-medium underline">
+              {d.number ?? "sans numéro"} ({formatDate(d.invoiceDate)})
+            </Link>
+          ))}
+          . Vérifiez qu&apos;il ne s&apos;agit pas de la même facture importée deux fois.
+        </div>
       )}
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
