@@ -5,7 +5,8 @@ import { CATEGORIES, STATUSES } from "@/lib/domain/enums";
 import { lastBackupAt } from "@/lib/backup";
 import { formatDate } from "@/lib/format";
 import { getCurrentUser } from "@/lib/auth";
-import { backupNow } from "./actions";
+import { isDesktopApp, isEncryptionRequested } from "@/lib/encryption";
+import { backupNow, setEncryption } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +19,9 @@ export default async function ParametresPage() {
   };
 
   const lastBackup = lastBackupAt();
+  const isAdmin = user?.role === "admin";
+  const encryptionOn = isEncryptionRequested();
+  const desktop = isDesktopApp();
 
   return (
     <>
@@ -37,6 +41,37 @@ export default async function ParametresPage() {
           >
             Gérer les utilisateurs et mon mot de passe
           </Link>
+        </Card>
+
+        <Card className="p-4">
+          <h2 className="mb-2 text-sm font-semibold">Chiffrement des données</h2>
+          <p className="text-sm text-[var(--muted)]">
+            État :{" "}
+            <span className="font-medium text-[var(--foreground)]">
+              {encryptionOn ? "activé" : "désactivé"}
+            </span>
+          </p>
+          <p className="mt-1 text-xs text-[var(--muted)]">
+            Une fois activé, la base, les PDF et les sauvegardes sont chiffrés (AES-256) au repos
+            avec une clé liée à votre compte Windows. Un dossier de données copié ailleurs devient
+            illisible. Pense-bête : activez aussi BitLocker pour une protection complète.
+          </p>
+          {!desktop ? (
+            <p className="mt-3 text-xs text-[var(--warning)]">
+              Disponible uniquement dans l&apos;application installée (fenêtre de bureau).
+            </p>
+          ) : isAdmin ? (
+            <form action={setEncryption.bind(null, !encryptionOn)} className="mt-3">
+              <button className="rounded-lg border border-[var(--border)] px-3 py-2 text-sm font-medium">
+                {encryptionOn ? "Désactiver le chiffrement" : "Activer le chiffrement"}
+              </button>
+              <span className="ml-2 text-xs text-[var(--muted)]">
+                (prend effet au prochain démarrage de l&apos;application)
+              </span>
+            </form>
+          ) : (
+            <p className="mt-3 text-xs text-[var(--muted)]">Réservé à un administrateur.</p>
+          )}
         </Card>
 
         <Card className="p-4">
@@ -114,8 +149,8 @@ export default async function ParametresPage() {
         <h2 className="mb-2 text-sm font-semibold">Avertissement</h2>
         <p className="text-sm text-[var(--muted)]">{TVA_DISCLAIMER}</p>
         <p className="mt-2 text-xs text-[var(--muted)]">
-          Connexion par compte, rôles (administrateur / utilisateur) et journal des modifications
-          sont actifs. Le chiffrement du dossier de données reste à ajouter.
+          Connexion par compte, rôles (administrateur / utilisateur), journal des modifications
+          et chiffrement des données au repos sont disponibles.
         </p>
       </Card>
     </>

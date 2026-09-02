@@ -66,7 +66,9 @@ npm run db:seed           # ajoute des factures fictives pour tester
 npm run dev
 ```
 
-Puis ouvrir **http://localhost:3000**.
+Puis ouvrir **http://localhost:3000**. Compte de démonstration (après `db:seed`) :
+**admin / motdepasse**. Au tout premier lancement d'une base vide, l'application
+propose de créer le premier compte.
 
 ## Où sont mes données ?
 
@@ -140,6 +142,8 @@ si la réglementation change.
 - ✅ Sauvegarde automatique quotidienne + bouton manuel
 - ✅ Fiches Tiers réutilisables (fournisseurs / clients)
 - ✅ Application Windows double-cliquable (`npm run app:dist`, voir `ARCHITECTURE.md`)
+- ✅ Comptes utilisateurs, rôles, permissions
+- ✅ Chiffrement des données au repos (application installée)
 - OCR pour les PDF scannés (images) — service externe à brancher dans `src/lib/parsing/`
-- Authentification / comptes utilisateurs
+- Mises à jour automatiques de l'application (electron-updater)
 - Exports comptables (FEC…)

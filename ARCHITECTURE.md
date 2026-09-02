@@ -109,9 +109,18 @@ version.
 
 ---
 
-## 7. Sécurité (rappel)
+## 7. Sécurité
 
 - Aucune clé secrète dans le code : variables d'environnement (`.env`, non versionné).
 - Le dossier `data/` (base + PDF) n'est jamais envoyé sur Git.
-- Prévu plus tard : authentification, comptes, permissions, chiffrement du dossier
-  de données, journalisation complète des modifications.
+- **Connexion par compte** (`src/lib/auth`, `src/proxy.ts`) : mots de passe hachés
+  (scrypt), session par cookie signé, rôles administrateur / utilisateur.
+- **Permissions** : la suppression de factures et de tiers est réservée aux
+  administrateurs (garde côté serveur).
+- **Journal des modifications** : chaque changement enregistre le nom de l'utilisateur.
+- **Chiffrement au repos** (application installée) : la base, les PDF et les
+  sauvegardes sont chiffrés (AES-256-GCM) quand l'application est fermée. La clé
+  est protégée par le compte Windows (`safeStorage` / DPAPI). Activable dans
+  Paramètres. Recommandation complémentaire : BitLocker.
+- **À ajouter plus tard** : verrouillage automatique après inactivité, base
+  chiffrée en continu (SQLCipher via un *driver adapter* Prisma).
