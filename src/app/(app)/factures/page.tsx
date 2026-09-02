@@ -6,6 +6,7 @@ import { DeleteInvoiceButton } from "@/components/DeleteInvoiceButton";
 import { deleteInvoice } from "./[id]/actions";
 import { formatDate } from "@/lib/format";
 import { getAvailableYears } from "@/lib/queries";
+import { getCurrentUser } from "@/lib/auth";
 import { duplicateIds } from "@/lib/invoices/duplicates";
 import { buildInvoiceWhere, invoiceOrderBy } from "@/lib/invoices/filter";
 
@@ -29,6 +30,8 @@ export default async function FacturesPage({ searchParams }: { searchParams: Pro
   };
 
   const years = await getAvailableYears();
+  const user = await getCurrentUser();
+  const isAdmin = user?.role === "admin";
 
   const where = buildInvoiceWhere(f, years);
   let invoices = await prisma.invoice.findMany({
@@ -152,7 +155,9 @@ export default async function FacturesPage({ searchParams }: { searchParams: Pro
                       >
                         ✏️
                       </Link>
-                      <DeleteInvoiceButton action={deleteInvoice.bind(null, inv.id)} variant="icon" />
+                      {isAdmin && (
+                        <DeleteInvoiceButton action={deleteInvoice.bind(null, inv.id)} variant="icon" />
+                      )}
                     </div>
                   </td>
                 </tr>

@@ -1,13 +1,16 @@
+import Link from "next/link";
 import { PageHeader, Card, Badge } from "@/components/ui";
 import { VAT_RATES, TVA_DISCLAIMER } from "@/lib/tva/rules";
 import { CATEGORIES, STATUSES } from "@/lib/domain/enums";
 import { lastBackupAt } from "@/lib/backup";
 import { formatDate } from "@/lib/format";
+import { getCurrentUser } from "@/lib/auth";
 import { backupNow } from "./actions";
 
 export const dynamic = "force-dynamic";
 
-export default function ParametresPage() {
+export default async function ParametresPage() {
+  const user = await getCurrentUser();
   const parser = process.env.INVOICE_PARSER ?? "heuristic";
   const parserLabel: Record<string, string> = {
     heuristic: "Lecture du texte du PDF + règles (par défaut)",
@@ -21,6 +24,21 @@ export default function ParametresPage() {
       <PageHeader title="Paramètres" subtitle="Configuration de l'application." />
 
       <div className="grid gap-4 lg:grid-cols-2">
+        <Card className="p-4">
+          <h2 className="mb-2 text-sm font-semibold">Utilisateurs</h2>
+          <p className="text-sm text-[var(--muted)]">
+            Connecté en tant que <span className="font-medium text-[var(--foreground)]">{user?.name}</span>
+            {" · "}
+            {user?.role === "admin" ? "Administrateur" : "Utilisateur"}
+          </p>
+          <Link
+            href="/parametres/utilisateurs"
+            className="mt-3 inline-block rounded-lg border border-[var(--border)] px-3 py-2 text-sm font-medium"
+          >
+            Gérer les utilisateurs et mon mot de passe
+          </Link>
+        </Card>
+
         <Card className="p-4">
           <h2 className="mb-2 text-sm font-semibold">Sauvegarde des données</h2>
           <p className="text-sm text-[var(--muted)]">
@@ -96,8 +114,8 @@ export default function ParametresPage() {
         <h2 className="mb-2 text-sm font-semibold">Avertissement</h2>
         <p className="text-sm text-[var(--muted)]">{TVA_DISCLAIMER}</p>
         <p className="mt-2 text-xs text-[var(--muted)]">
-          Les fonctionnalités de sécurité (authentification, comptes, permissions, chiffrement,
-          journalisation complète) sont prévues dans l&apos;architecture mais pas encore activées.
+          Connexion par compte, rôles (administrateur / utilisateur) et journal des modifications
+          sont actifs. Le chiffrement du dossier de données reste à ajouter.
         </p>
       </Card>
     </>

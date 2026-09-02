@@ -12,6 +12,7 @@ import { checkCoherence } from "@/lib/tva/coherence";
 import { totalsFromLines } from "@/lib/tva/lines";
 import { diffInvoice } from "@/lib/domain/revisions";
 import { resolveParty } from "@/lib/invoices/party";
+import { requireAdmin, requireUser } from "@/lib/auth";
 
 /**
  * Change le statut d'une facture (validation manuelle, retour "à vérifier", etc.).
@@ -19,6 +20,7 @@ import { resolveParty } from "@/lib/invoices/party";
  */
 export async function setInvoiceStatus(id: string, status: Status): Promise<void> {
   if (!(status in STATUSES)) return;
+  const me = await requireUser();
 
   const current = await prisma.invoice.findUnique({ where: { id }, select: { status: true } });
   if (!current || current.status === status) return;
@@ -31,6 +33,7 @@ export async function setInvoiceStatus(id: string, status: Status): Promise<void
         field: "Statut",
         oldValue: STATUSES[current.status as Status] ?? current.status,
         newValue: STATUSES[status],
+        userName: me.name,
       },
     }),
   ]);
@@ -44,6 +47,7 @@ export async function setInvoiceStatus(id: string, status: Status): Promise<void
  * il est déplacé dans le dossier `data/corbeille/`.
  */
 export async function deleteInvoice(id: string): Promise<void> {
+  await requireAdmin();
   const inv = await prisma.invoice.findUnique({
     where: { id },
     select: { originalFilePath: true, originalFileName: true },
@@ -73,6 +77,7 @@ export async function deleteInvoice(id: string): Promise<void> {
  * actuelles par celles détectées. Chaque changement est journalisé.
  */
 export async function reanalyzeInvoice(id: string): Promise<void> {
+  const me = await requireUser();
   const inv = await prisma.invoice.findUnique({ where: { id }, include: { vatLines: true } });
   if (!inv) redirect("/factures");
   if (!inv.originalFilePath) redirect(`/factures/${id}?analyse=nofile`);
@@ -157,11 +162,12 @@ export async function reanalyzeInvoice(id: string): Promise<void> {
         field: "Analyse automatique",
         oldValue: `${inv.status}`,
         newValue: `relancée (confiance ${Math.round(parsed.confidence * 100)} %)`,
+        userName: me.name,
       },
     }),
     ...revisions.map((r) =>
       prisma.invoiceRevision.create({
-        data: { invoiceId: id, field: r.field, oldValue: r.oldValue, newValue: r.newValue },
+        data: { invoiceId: id, field: r.field, oldValue: r.oldValue, newValue: r.newValue, userName: me.name },
       }),
     ),
   ]);

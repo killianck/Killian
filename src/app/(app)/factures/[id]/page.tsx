@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getDuplicatesOf, getInvoice } from "@/lib/queries";
+import { getCurrentUser } from "@/lib/auth";
 import { PageHeader, Card, Money, StatusBadge, CoherenceBadge } from "@/components/ui";
 import { formatDate, formatRate } from "@/lib/format";
 import {
@@ -35,6 +36,7 @@ export default async function InvoiceDetailPage({
   if (!inv) notFound();
 
   const duplicates = await getDuplicatesOf(inv);
+  const user = await getCurrentUser();
 
   const report = checkCoherence({
     totalHT: inv.totalHT,
@@ -239,24 +241,27 @@ export default async function InvoiceDetailPage({
           <ul className="space-y-1 text-xs text-[var(--muted)]">
             {inv.revisions.map((r) => (
               <li key={r.id}>
-                {formatDate(r.changedAt)} — {r.field} : « {r.oldValue ?? "—"} » → « {r.newValue ?? "—"} »
+                {formatDate(r.changedAt)}
+                {r.userName ? ` · ${r.userName}` : ""} — {r.field} : « {r.oldValue ?? "—"} » → « {r.newValue ?? "—"} »
               </li>
             ))}
           </ul>
         </Card>
       )}
 
-      <Card className="mt-4 p-4">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <h2 className="text-sm font-semibold">Supprimer</h2>
-            <p className="text-xs text-[var(--muted)]">
-              Retire la facture de tous les calculs. Le PDF d&apos;origine est déplacé dans « data/corbeille », pas effacé.
-            </p>
+      {user?.role === "admin" && (
+        <Card className="mt-4 p-4">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-sm font-semibold">Supprimer</h2>
+              <p className="text-xs text-[var(--muted)]">
+                Retire la facture de tous les calculs. Le PDF d&apos;origine est déplacé dans « data/corbeille », pas effacé.
+              </p>
+            </div>
+            <DeleteInvoiceButton action={deleteInvoice.bind(null, inv.id)} />
           </div>
-          <DeleteInvoiceButton action={deleteInvoice.bind(null, inv.id)} />
-        </div>
-      </Card>
+        </Card>
+      )}
     </>
   );
 }

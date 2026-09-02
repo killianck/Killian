@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { PARTY_KINDS } from "@/lib/invoices/party";
+import { requireAdmin, requireUser } from "@/lib/auth";
 
 export type PartyFormState = { error?: string };
 
@@ -15,6 +16,7 @@ export async function updateParty(
   _prev: PartyFormState,
   fd: FormData,
 ): Promise<PartyFormState> {
+  await requireUser();
   const name = str(fd, "name");
   if (!name) return { error: "Le nom est obligatoire." };
 
@@ -47,6 +49,7 @@ export async function updateParty(
 }
 
 export async function deleteParty(id: string): Promise<void> {
+  await requireAdmin();
   // Les factures liées gardent leur nom ; elles sont simplement "déliées".
   await prisma.invoice.updateMany({ where: { partyId: id }, data: { partyId: null } });
   await prisma.party.delete({ where: { id } });

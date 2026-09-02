@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NAV_ITEMS, isActive } from "./nav";
+import { logout } from "@/lib/auth/actions";
 
-export function Sidebar() {
+export function Sidebar({ user }: { user: { name: string; role: string } }) {
   const pathname = usePathname();
 
   return (
@@ -29,8 +30,18 @@ export function Sidebar() {
           </Link>
         ))}
       </nav>
-      <div className="mt-auto px-3 pt-6 text-[11px] leading-relaxed text-[var(--muted)]">
-        Outil de suivi. Ne remplace pas un expert-comptable.
+
+      <div className="mt-auto px-3 pt-6">
+        <p className="text-xs font-medium text-[var(--foreground)]">{user.name}</p>
+        <p className="text-[11px] text-[var(--muted)]">
+          {user.role === "admin" ? "Administrateur" : "Utilisateur"}
+        </p>
+        <form action={logout} className="mt-2">
+          <button className="text-xs font-medium text-[var(--primary)]">Se déconnecter</button>
+        </form>
+        <p className="mt-4 text-[11px] leading-relaxed text-[var(--muted)]">
+          Outil de suivi. Ne remplace pas un expert-comptable.
+        </p>
       </div>
     </aside>
   );

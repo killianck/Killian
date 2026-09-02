@@ -16,6 +16,7 @@ const path = require("node:path");
 const http = require("node:http");
 const net = require("node:net");
 const fs = require("node:fs");
+const crypto = require("node:crypto");
 
 const isDev = !app.isPackaged;
 const DEV_URL = "http://localhost:3000";
@@ -67,6 +68,16 @@ function setupUserData() {
 
   const dbFile = path.join(dataDir, "facturation.db");
   process.env.DATABASE_URL = "file:" + dbFile;
+
+  // Clé de signature des sessions, propre à cette installation.
+  const secretFile = path.join(dataDir, "auth-secret.txt");
+  if (fs.existsSync(secretFile)) {
+    process.env.AUTH_SECRET = fs.readFileSync(secretFile, "utf8").trim();
+  } else {
+    const s = crypto.randomBytes(32).toString("hex");
+    fs.writeFileSync(secretFile, s, { mode: 0o600 });
+    process.env.AUTH_SECRET = s;
+  }
 
   // Moteur Prisma livré avec l'application (fichier réel, hors asar).
   const engine = path.join(standaloneDir, "node_modules", ".prisma", "client", "query_engine-windows.dll.node");

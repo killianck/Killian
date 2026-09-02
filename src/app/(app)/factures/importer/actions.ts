@@ -9,6 +9,7 @@ import { uploadDir } from "@/lib/paths";
 import { getInvoiceParser } from "@/lib/parsing";
 import { checkCoherence } from "@/lib/tva/coherence";
 import { resolveParty } from "@/lib/invoices/party";
+import { requireUser } from "@/lib/auth";
 
 const MAX_SIZE = 20 * 1024 * 1024; // 20 Mo
 
@@ -127,6 +128,7 @@ async function importOne(
 }
 
 export async function importInvoices(_prev: ImportState, formData: FormData): Promise<ImportState> {
+  await requireUser();
   const direction = formData.get("direction") === "vente" ? "vente" : "achat";
   const documentType = formData.get("documentType") === "avoir" ? "avoir" : "facture";
 

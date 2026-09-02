@@ -4,6 +4,7 @@
 import { PrismaClient } from "@prisma/client";
 import { checkCoherence } from "../src/lib/tva/coherence";
 import { resolveParty } from "../src/lib/invoices/party";
+import { hashPassword } from "../src/lib/auth/password";
 
 const prisma = new PrismaClient();
 
@@ -148,6 +149,13 @@ async function main() {
   await prisma.vatLine.deleteMany();
   await prisma.invoice.deleteMany();
   await prisma.party.deleteMany();
+
+  // Compte de démonstration (développement uniquement) : admin / motdepasse
+  await prisma.user.deleteMany();
+  await prisma.user.create({
+    data: { name: "admin", passwordHash: hashPassword("motdepasse"), role: "admin" },
+  });
+  console.log("Compte de démonstration : admin / motdepasse");
 
   console.log(`Insertion de ${DATA.length} factures fictives...`);
   for (const d of DATA) {

@@ -5,12 +5,14 @@ import { prisma } from "@/lib/db";
 import { parseInvoiceForm, type InvoiceFormState } from "@/lib/invoices/form";
 import { resolveParty } from "@/lib/invoices/party";
 import { diffInvoice } from "@/lib/domain/revisions";
+import { requireUser } from "@/lib/auth";
 
 export async function updateInvoice(
   id: string,
   _prev: InvoiceFormState,
   formData: FormData,
 ): Promise<InvoiceFormState> {
+  const me = await requireUser();
   const existing = await prisma.invoice.findUnique({
     where: { id },
     include: { vatLines: true },
@@ -66,7 +68,7 @@ export async function updateInvoice(
       }),
       ...revisions.map((r) =>
         prisma.invoiceRevision.create({
-          data: { invoiceId: id, field: r.field, oldValue: r.oldValue, newValue: r.newValue },
+          data: { invoiceId: id, field: r.field, oldValue: r.oldValue, newValue: r.newValue, userName: me.name },
         }),
       ),
     ]);

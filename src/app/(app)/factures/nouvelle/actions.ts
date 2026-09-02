@@ -4,12 +4,14 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { parseInvoiceForm, type InvoiceFormState } from "@/lib/invoices/form";
 import { resolveParty } from "@/lib/invoices/party";
+import { requireUser } from "@/lib/auth";
 
 /** Crée une facture saisie manuellement (sans PDF). */
 export async function createInvoice(
   _prev: InvoiceFormState,
   formData: FormData,
 ): Promise<InvoiceFormState> {
+  const me = await requireUser();
   const parsed = parseInvoiceForm(formData);
   if (!parsed.ok) return { error: parsed.error };
   const { data, lines, coherence } = parsed;
@@ -54,7 +56,7 @@ export async function createInvoice(
         coherence,
         vatLines: { create: lines },
         revisions: {
-          create: { field: "Création", oldValue: "—", newValue: "Saisie manuelle" },
+          create: { field: "Création", oldValue: "—", newValue: "Saisie manuelle", userName: me.name },
         },
       },
     });
