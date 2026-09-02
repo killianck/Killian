@@ -27,6 +27,7 @@ export type InvoiceFormData = {
   totalHT: number;
   totalVAT: number;
   totalTTC: number;
+  deductible: boolean; // TVA d'achat récupérable ? (sans objet pour une vente)
 };
 
 export type ParsedInvoiceForm =
@@ -69,9 +70,10 @@ export function parseInvoiceForm(fd: FormData): ParsedInvoiceForm {
     ? parseAmount(str(fd, "totalTTC")) || Math.round((totalHT + totalVAT) * 100) / 100
     : fromLines.totalTTC;
 
+  const direction = str(fd, "direction") === "vente" ? "vente" : "achat";
   const data: InvoiceFormData = {
     documentType: str(fd, "documentType") === "avoir" ? "avoir" : "facture",
-    direction: str(fd, "direction") === "vente" ? "vente" : "achat",
+    direction,
     category: orNull(str(fd, "category")),
     number: orNull(str(fd, "number")),
     invoiceDate,
@@ -85,6 +87,9 @@ export function parseInvoiceForm(fd: FormData): ParsedInvoiceForm {
     totalHT,
     totalVAT,
     totalTTC,
+    // pour une vente, la notion ne s'applique pas -> true ; pour un achat,
+    // la case cochée envoie "1", décochée -> absente
+    deductible: direction === "vente" ? true : fd.get("deductible") === "1",
   };
 
   const coherence = checkCoherence({ totalHT, totalVAT, totalTTC, vatLines: lines }).level;

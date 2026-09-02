@@ -1,6 +1,11 @@
 import { PageHeader, Card, Badge } from "@/components/ui";
 import { VAT_RATES, TVA_DISCLAIMER } from "@/lib/tva/rules";
 import { CATEGORIES, STATUSES } from "@/lib/domain/enums";
+import { lastBackupAt } from "@/lib/backup";
+import { formatDate } from "@/lib/format";
+import { backupNow } from "./actions";
+
+export const dynamic = "force-dynamic";
 
 export default function ParametresPage() {
   const parser = process.env.INVOICE_PARSER ?? "heuristic";
@@ -9,11 +14,34 @@ export default function ParametresPage() {
     stub: "Aucune analyse (saisie 100 % manuelle)",
   };
 
+  const lastBackup = lastBackupAt();
+
   return (
     <>
       <PageHeader title="Paramètres" subtitle="Configuration de l'application." />
 
       <div className="grid gap-4 lg:grid-cols-2">
+        <Card className="p-4">
+          <h2 className="mb-2 text-sm font-semibold">Sauvegarde des données</h2>
+          <p className="text-sm text-[var(--muted)]">
+            Dernière sauvegarde :{" "}
+            <span className="font-medium text-[var(--foreground)]">
+              {lastBackup
+                ? `${formatDate(lastBackup)} à ${lastBackup.getHours()}h${String(lastBackup.getMinutes()).padStart(2, "0")}`
+                : "aucune"}
+            </span>
+          </p>
+          <p className="mt-1 text-xs text-[var(--muted)]">
+            Une sauvegarde automatique est faite une fois par jour au lancement. Les 30 dernières
+            sont conservées dans <code>data/sauvegardes/</code>.
+          </p>
+          <form action={backupNow} className="mt-3">
+            <button className="rounded-lg bg-[var(--primary)] px-3 py-2 text-sm font-medium text-white">
+              Sauvegarder maintenant
+            </button>
+          </form>
+        </Card>
+
         <Card className="p-4">
           <h2 className="mb-2 text-sm font-semibold">Analyse des factures</h2>
           <p className="text-sm text-[var(--muted)]">
@@ -69,8 +97,7 @@ export default function ParametresPage() {
         <p className="text-sm text-[var(--muted)]">{TVA_DISCLAIMER}</p>
         <p className="mt-2 text-xs text-[var(--muted)]">
           Les fonctionnalités de sécurité (authentification, comptes, permissions, chiffrement,
-          sauvegardes, journalisation complète) sont prévues dans l&apos;architecture mais pas
-          encore activées dans cette première version.
+          journalisation complète) sont prévues dans l&apos;architecture mais pas encore activées.
         </p>
       </Card>
     </>

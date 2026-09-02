@@ -29,6 +29,7 @@ export default async function ModifierPage({ params }: { params: Promise<{ id: s
     totalHT: inv.totalHT,
     totalVAT: inv.totalVAT,
     totalTTC: inv.totalTTC,
+    deductible: inv.deductible,
     vatLines: inv.vatLines.map((l) => ({ rate: l.rate, baseHT: l.baseHT, vatAmount: l.vatAmount })),
   };
 

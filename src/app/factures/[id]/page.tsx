@@ -58,6 +58,9 @@ export default async function InvoiceDetailPage({
     ["SIRET", inv.siret ?? "—"],
     ["TVA intracommunautaire", inv.vatNumber ?? "—"],
     ["Devise", inv.currency],
+    ...(inv.direction === "achat"
+      ? ([["TVA récupérable", inv.deductible ? "Oui" : "Non — exclue de la TVA déductible"]] as [string, ReactNode][])
+      : []),
   ];
 
   return (

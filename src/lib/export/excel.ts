@@ -18,6 +18,7 @@ export type ExportableInvoice = {
   totalVAT: number;
   totalTTC: number;
   currency: string;
+  deductible: boolean;
   vatLines: { rate: number }[];
 };
 
@@ -38,6 +39,7 @@ export async function buildInvoicesWorkbook(invoices: ExportableInvoice[]): Prom
     { header: "TVA", key: "tva", width: 12 },
     { header: "TTC", key: "ttc", width: 12 },
     { header: "Taux TVA", key: "rates", width: 14 },
+    { header: "TVA récupérable", key: "deductible", width: 15 },
     { header: "Mois", key: "month", width: 12 },
     { header: "Année", key: "year", width: 8 },
   ];
@@ -57,6 +59,7 @@ export async function buildInvoicesWorkbook(invoices: ExportableInvoice[]): Prom
       tva: inv.totalVAT,
       ttc: inv.totalTTC,
       rates: [...new Set(inv.vatLines.map((l) => l.rate))].join(" / "),
+      deductible: inv.direction === "achat" ? (inv.deductible ? "Oui" : "Non") : "",
       month: MONTH_NAMES_FR[d.getMonth()],
       year: d.getFullYear(),
     });
@@ -69,5 +72,5 @@ export async function buildInvoicesWorkbook(invoices: ExportableInvoice[]): Prom
   }
 
   const arrayBuffer = await wb.xlsx.writeBuffer();
-  return Buffer.from(arrayBuffer);
+  return Buffer.from(arrayBuffer as ArrayBuffer);
 }

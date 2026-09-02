@@ -14,13 +14,19 @@ Logiciel de suivi des factures et de calcul de TVA pour une petite entreprise fr
   nombre de factures, totaux HT/TTC, graphique mensuel, prochaines échéances.
 - **Factures** : liste complète avec recherche, filtres (mois, année, achat/vente,
   type, catégorie, taux de TVA) et tri (date, montant). Fiche détaillée par facture.
-- **Import + analyse automatique** : dépôt d'un PDF (glisser-déposer ou sélection).
-  Le logiciel lit le texte du PDF et repère montants (HT/TVA/TTC), taux, dates de
-  facture et d'échéance, numéro, SIRET, TVA intracom, fournisseur. Le PDF original
-  est conservé. Bouton **« Ré-analyser »** pour relancer l'analyse. *(Fonctionne sur
-  les PDF « texte » ; un PDF scanné/image demande une saisie manuelle.)*
-- **Modification** : toutes les valeurs sont corrigeables (bouton « Modifier »),
-  chaque changement est journalisé. Validation manuelle d'une facture.
+- **Import + analyse automatique** : dépôt d'**un ou plusieurs** PDF (glisser-déposer
+  ou sélection). Le logiciel lit le texte de chaque PDF et repère montants (HT/TVA/TTC),
+  taux, dates de facture et d'échéance, numéro, SIRET, TVA intracom, fournisseur. Le
+  PDF original est conservé. Bouton **« Ré-analyser »** pour relancer l'analyse.
+  *(Fonctionne sur les PDF « texte » ; un PDF scanné/image demande une saisie manuelle.)*
+- **Saisie manuelle / modification / suppression** : créer une facture sans PDF,
+  corriger toutes les valeurs (bouton « Modifier »), supprimer (le PDF part en
+  corbeille). Chaque changement est journalisé. Validation manuelle d'une facture.
+- **TVA d'achat non récupérable** : case à décocher sur une facture d'achat pour
+  l'exclure du calcul de la TVA déductible.
+- **Détection de doublons** : alerte si deux factures ont le même numéro + tiers.
+- **Sauvegarde** : automatique une fois par jour + bouton manuel dans Paramètres
+  (base + PDF copiés dans `data/sauvegardes/`, 30 dernières conservées).
 - **Contrôles automatiques** : vérification que HT + TVA = TTC, cohérence des lignes
   de TVA, détection des taux non standard. Chaque facture a un niveau de cohérence
   (cohérent / à vérifier / incorrect).
@@ -127,7 +133,11 @@ si la réglementation change.
 - ✅ Modification manuelle des factures + journal des modifications
 - ✅ Validation manuelle d'une facture
 - ✅ Analyse automatique des PDF « texte » (montants, dates, numéro, SIRET…)
-- ✅ Saisie manuelle d'une facture sans PDF + suppression + détection de doublon
+- ✅ Import de plusieurs PDF à la fois
+- ✅ Saisie manuelle + suppression + détection de doublon
+- ✅ TVA d'achat non récupérable
+- ✅ Sauvegarde automatique quotidienne + bouton manuel
 - OCR pour les PDF scannés (images) — service externe à brancher dans `src/lib/parsing/`
 - Empaquetage en application Windows double-cliquable (voir `ARCHITECTURE.md`)
 - Authentification / comptes utilisateurs
+- Exports comptables (FEC…)

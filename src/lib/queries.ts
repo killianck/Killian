@@ -22,7 +22,15 @@ export async function getInvoice(id: string) {
 
 /** Convertit les lignes Prisma vers le format attendu par l'agrégateur TVA. */
 export function toAggregatable(
-  invoices: { invoiceDate: Date; direction: string; documentType: string; totalHT: number; totalVAT: number; totalTTC: number }[],
+  invoices: {
+    invoiceDate: Date;
+    direction: string;
+    documentType: string;
+    totalHT: number;
+    totalVAT: number;
+    totalTTC: number;
+    deductible?: boolean;
+  }[],
 ): AggregatableInvoice[] {
   return invoices.map((i) => ({
     invoiceDate: i.invoiceDate,
@@ -31,6 +39,7 @@ export function toAggregatable(
     totalHT: i.totalHT,
     totalVAT: i.totalVAT,
     totalTTC: i.totalTTC,
+    deductible: i.deductible,
   }));
 }
 

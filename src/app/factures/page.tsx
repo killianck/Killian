@@ -7,6 +7,7 @@ import { deleteInvoice } from "./[id]/actions";
 import { formatDate } from "@/lib/format";
 import { getAvailableYears } from "@/lib/queries";
 import { duplicateIds } from "@/lib/invoices/duplicates";
+import { buildInvoiceWhere, invoiceOrderBy } from "@/lib/invoices/filter";
 
 export const dynamic = "force-dynamic";
 
@@ -29,45 +30,12 @@ export default async function FacturesPage({ searchParams }: { searchParams: Pro
 
   const years = await getAvailableYears();
 
-  // --- Filtre Prisma (tout dans un AND pour combiner librement) ---
-  const and: Record<string, unknown>[] = [];
-  if (f.q) {
-    and.push({
-      OR: [
-        { partyName: { contains: f.q } },
-        { number: { contains: f.q } },
-        { notes: { contains: f.q } },
-      ],
-    });
-  }
-  if (f.direction) and.push({ direction: f.direction });
-  if (f.type) and.push({ documentType: f.type });
-  if (f.category) and.push({ category: f.category });
-  if (f.rate) and.push({ vatLines: { some: { rate: Number(f.rate) } } });
-
-  // Dates : année + mois, ou année seule, ou mois seul (toutes les années)
-  const y = f.year ? Number(f.year) : null;
-  const m = f.month ? Number(f.month) : null;
-  if (y && m) {
-    and.push({ invoiceDate: { gte: new Date(y, m - 1, 1), lt: new Date(y, m, 1) } });
-  } else if (y) {
-    and.push({ invoiceDate: { gte: new Date(y, 0, 1), lt: new Date(y + 1, 0, 1) } });
-  } else if (m) {
-    and.push({
-      OR: years.map((yy) => ({
-        invoiceDate: { gte: new Date(yy, m - 1, 1), lt: new Date(yy, m, 1) },
-      })),
-    });
-  }
-
-  const orderBy =
-    f.sort === "date_asc" ? { invoiceDate: "asc" as const }
-    : f.sort === "ttc_desc" ? { totalTTC: "desc" as const }
-    : f.sort === "ttc_asc" ? { totalTTC: "asc" as const }
-    : { invoiceDate: "desc" as const };
-
-  const where = and.length ? { AND: and } : {};
-  let invoices = await prisma.invoice.findMany({ where, orderBy, include: { vatLines: true } });
+  const where = buildInvoiceWhere(f, years);
+  let invoices = await prisma.invoice.findMany({
+    where,
+    orderBy: invoiceOrderBy(f.sort),
+    include: { vatLines: true },
+  });
 
   // --- Doublons ---
   // Calculés sur TOUTES les factures (pas seulement la liste filtrée) pour être fiables.

@@ -37,6 +37,10 @@ model Invoice {
   totalVAT Float @default(0)
   totalTTC Float @default(0)
 
+  // TVA d'achat récupérable ? (par défaut oui). Mettre à false pour exclure la
+  // TVA de cette facture du calcul de la TVA déductible (ex. dépense exclue).
+  deductible Boolean @default(true)
+
   // --- Suivi ---
   status    String @default("a_analyser") // a_analyser | analyse_en_cours | a_verifier | validee | erreur
   coherence String @default("a_verifier") // coherent | a_verifier | incoherent

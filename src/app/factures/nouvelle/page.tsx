@@ -20,6 +20,7 @@ const blank: EditableInvoice = {
   totalHT: 0,
   totalVAT: 0,
   totalTTC: 0,
+  deductible: true,
   vatLines: [],
 };
 

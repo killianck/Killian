@@ -2,15 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
-const NAV = [
-  { href: "/", label: "Tableau de bord", icon: "▚" },
-  { href: "/factures", label: "Factures", icon: "▤" },
-  { href: "/echeances", label: "Échéances", icon: "◷" },
-  { href: "/tva", label: "TVA", icon: "%" },
-  { href: "/rapports", label: "Rapports", icon: "▦" },
-  { href: "/parametres", label: "Paramètres", icon: "⚙" },
-];
+import { NAV_ITEMS, isActive } from "./nav";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -22,24 +14,20 @@ export function Sidebar() {
         <p className="text-xs text-[var(--muted)]">Suivi de l&apos;entreprise</p>
       </div>
       <nav className="flex flex-col gap-1">
-        {NAV.map((item) => {
-          const active =
-            item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
-                active
-                  ? "bg-[var(--primary)] text-white"
-                  : "text-[var(--foreground)] hover:bg-[#f2f4f7]"
-              }`}
-            >
-              <span className="w-4 text-center opacity-80">{item.icon}</span>
-              {item.label}
-            </Link>
-          );
-        })}
+        {NAV_ITEMS.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
+              isActive(pathname, item.href)
+                ? "bg-[var(--primary)] text-white"
+                : "text-[var(--foreground)] hover:bg-[#f2f4f7]"
+            }`}
+          >
+            <span className="w-4 text-center opacity-80">{item.icon}</span>
+            {item.label}
+          </Link>
+        ))}
       </nav>
       <div className="mt-auto px-3 pt-6 text-[11px] leading-relaxed text-[var(--muted)]">
         Outil de suivi. Ne remplace pas un expert-comptable.

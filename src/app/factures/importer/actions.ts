@@ -11,34 +11,38 @@ import { checkCoherence } from "@/lib/tva/coherence";
 
 const MAX_SIZE = 20 * 1024 * 1024; // 20 Mo
 
-export type ImportState = { error?: string };
+export type ImportResult = {
+  fileName: string;
+  status: "ok" | "error";
+  invoiceId?: string;
+  message?: string;
+};
 
-export async function importInvoice(_prev: ImportState, formData: FormData): Promise<ImportState> {
-  const file = formData.get("file");
-  const direction = String(formData.get("direction") || "achat");
-  const documentType = String(formData.get("documentType") || "facture");
+export type ImportState = {
+  error?: string;
+  results?: ImportResult[];
+};
 
-  if (!(file instanceof File) || file.size === 0) {
-    return { error: "Veuillez sélectionner un fichier PDF." };
-  }
+async function importOne(
+  file: File,
+  direction: "achat" | "vente",
+  documentType: "facture" | "avoir",
+): Promise<ImportResult> {
   if (file.type && file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
-    return { error: "Le fichier doit être un PDF." };
+    return { fileName: file.name, status: "error", message: "Ce n'est pas un PDF." };
   }
   if (file.size > MAX_SIZE) {
-    return { error: "Le fichier est trop volumineux (maximum 20 Mo)." };
+    return { fileName: file.name, status: "error", message: "Fichier trop volumineux (max 20 Mo)." };
   }
 
-  let newId: string;
   try {
     const dir = uploadDir();
     await mkdir(dir, { recursive: true });
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const storedName = `${randomUUID()}.pdf`;
-    const storedPath = path.join(dir, storedName);
+    const storedPath = path.join(dir, `${randomUUID()}.pdf`);
     await writeFile(storedPath, buffer);
 
-    // Analyse automatique (pour l'instant : "stub" -> ne remplit rien, prévient l'utilisateur)
     let parsed;
     try {
       parsed = await getInvoiceParser().parse({ fileBuffer: buffer, fileName: file.name });
@@ -48,8 +52,7 @@ export async function importInvoice(_prev: ImportState, formData: FormData): Pro
         confidence: 0,
         engine: "stub",
         warnings: [
-          "Impossible de lire automatiquement cette facture. " +
-            "Veuillez vérifier ou saisir les informations manuellement.",
+          "Impossible de lire automatiquement cette facture. Veuillez saisir les informations manuellement.",
         ],
       };
     }
@@ -61,7 +64,6 @@ export async function importInvoice(_prev: ImportState, formData: FormData): Pro
     const coherence =
       totalHT || totalTTC ? checkCoherence({ totalHT, totalVAT, totalTTC, vatLines }).level : "a_verifier";
 
-    // Détection de doublon (même numéro + même tiers) — on prévient sans bloquer.
     const warnings = [...parsed.warnings];
     if (parsed.number && parsed.partyName) {
       const dup = await prisma.invoice.findFirst({
@@ -77,8 +79,8 @@ export async function importInvoice(_prev: ImportState, formData: FormData): Pro
 
     const created = await prisma.invoice.create({
       data: {
-        documentType: parsed.documentType ?? (documentType === "avoir" ? "avoir" : "facture"),
-        direction: direction === "vente" ? "vente" : "achat",
+        documentType: parsed.documentType ?? documentType,
+        direction,
         number: parsed.number ?? null,
         invoiceDate: parsed.invoiceDate ? new Date(parsed.invoiceDate) : new Date(),
         dueDate: parsed.dueDate ? new Date(parsed.dueDate) : null,
@@ -100,11 +102,39 @@ export async function importInvoice(_prev: ImportState, formData: FormData): Pro
           : undefined,
       },
     });
-    newId = created.id;
+
+    const confPct = Math.round(parsed.confidence * 100);
+    return {
+      fileName: file.name,
+      status: "ok",
+      invoiceId: created.id,
+      message: confPct > 0 ? `Analysée (confiance ${confPct} %)` : "Enregistrée — à compléter à la main",
+    };
   } catch (e) {
     console.error("Import de la facture échoué :", e);
-    return { error: "L'import a échoué. Le fichier n'a pas pu être enregistré. Réessayez." };
+    return { fileName: file.name, status: "error", message: "Enregistrement impossible." };
+  }
+}
+
+export async function importInvoices(_prev: ImportState, formData: FormData): Promise<ImportState> {
+  const direction = formData.get("direction") === "vente" ? "vente" : "achat";
+  const documentType = formData.get("documentType") === "avoir" ? "avoir" : "facture";
+
+  const files = formData.getAll("file").filter((f): f is File => f instanceof File && f.size > 0);
+  if (files.length === 0) {
+    return { error: "Veuillez sélectionner au moins un fichier PDF." };
   }
 
-  redirect(`/factures/${newId}`);
+  const results: ImportResult[] = [];
+  for (const file of files) {
+    results.push(await importOne(file, direction, documentType));
+  }
+
+  // Un seul fichier importé avec succès -> on ouvre directement la facture.
+  const ok = results.filter((r) => r.status === "ok");
+  if (files.length === 1 && ok.length === 1) {
+    redirect(`/factures/${ok[0].invoiceId}`);
+  }
+
+  return { results };
 }

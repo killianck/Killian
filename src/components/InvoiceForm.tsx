@@ -25,6 +25,7 @@ export type EditableInvoice = {
   totalHT: number;
   totalVAT: number;
   totalTTC: number;
+  deductible: boolean;
   vatLines: { rate: number; baseHT: number; vatAmount: number }[];
 };
 
@@ -51,6 +52,7 @@ export function InvoiceForm({
       ? invoice.vatLines.map((l) => ({ rate: String(l.rate), baseHT: String(l.baseHT), vatAmount: String(l.vatAmount) }))
       : [{ rate: "20", baseHT: "", vatAmount: "" }],
   );
+  const [direction, setDirection] = useState(invoice.direction);
   const [manualTotals, setManualTotals] = useState(false);
   const [totals, setTotals] = useState({
     totalHT: String(invoice.totalHT),
@@ -100,7 +102,12 @@ export function InvoiceForm({
         </div>
         <div>
           <label className={label}>Sens</label>
-          <select name="direction" defaultValue={invoice.direction} className={field}>
+          <select
+            name="direction"
+            value={direction}
+            onChange={(e) => setDirection(e.target.value)}
+            className={field}
+          >
             {Object.entries(DIRECTIONS).map(([k, v]) => (
               <option key={k} value={k}>{v}</option>
             ))}
@@ -152,6 +159,19 @@ export function InvoiceForm({
           <label className={label}>Notes</label>
           <textarea name="notes" defaultValue={invoice.notes ?? ""} rows={2} className={field} />
         </div>
+
+        {direction === "achat" && (
+          <div className="sm:col-span-2">
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" name="deductible" value="1" defaultChecked={invoice.deductible} />
+              TVA récupérable sur cet achat
+            </label>
+            <p className="mt-1 text-[11px] text-[var(--muted)]">
+              Décochez si la TVA de cette facture n&apos;est pas déductible (dépense exclue, usage privé…).
+              Elle sera alors retirée du calcul de la TVA déductible.
+            </p>
+          </div>
+        )}
       </section>
 
       {/* ------- Lignes de TVA ------- */}

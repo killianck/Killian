@@ -20,11 +20,13 @@ export const TRACKED_FIELDS: Record<string, string> = {
   totalHT: "Total HT",
   totalVAT: "Total TVA",
   totalTTC: "Total TTC",
+  deductible: "TVA récupérable",
   notes: "Notes",
   vatLines: "Lignes de TVA",
 };
 
 function display(field: string, value: unknown): string {
+  if (field === "deductible") return value === false ? "Non" : "Oui";
   if (value === null || value === undefined || value === "") return "—";
   if (field === "invoiceDate" || field === "dueDate") return formatDate(value as string);
   if (field === "documentType") return labelOf(DOCUMENT_TYPES, value as string);
