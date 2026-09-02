@@ -127,6 +127,7 @@ si la réglementation change.
 - ✅ Modification manuelle des factures + journal des modifications
 - ✅ Validation manuelle d'une facture
 - ✅ Analyse automatique des PDF « texte » (montants, dates, numéro, SIRET…)
-- Saisie manuelle d'une facture sans PDF
+- ✅ Saisie manuelle d'une facture sans PDF + suppression + détection de doublon
 - OCR pour les PDF scannés (images) — service externe à brancher dans `src/lib/parsing/`
 - Empaquetage en application Windows double-cliquable (voir `ARCHITECTURE.md`)
+- Authentification / comptes utilisateurs
