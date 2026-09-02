@@ -15,12 +15,21 @@ import {
   type DocumentType,
 } from "@/lib/domain/enums";
 import { checkCoherence } from "@/lib/tva/coherence";
-import { setInvoiceStatus } from "./actions";
+import { reanalyzeInvoice, setInvoiceStatus } from "./actions";
 
 export const dynamic = "force-dynamic";
 
-export default async function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
+type SP = Record<string, string | string[] | undefined>;
+
+export default async function InvoiceDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<SP>;
+}) {
   const { id } = await params;
+  const analyse = (await searchParams).analyse;
   const inv = await getInvoice(id);
   if (!inv) notFound();
 
@@ -55,6 +64,13 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
         subtitle={inv.partyName ?? undefined}
         action={
           <div className="flex items-center gap-3">
+            {inv.originalFilePath && (
+              <form action={reanalyzeInvoice.bind(null, inv.id)}>
+                <button className="rounded-lg border border-[var(--border)] px-3 py-2 text-sm font-medium" title="Relancer l'analyse automatique du PDF (remplace les valeurs actuelles)">
+                  Ré-analyser
+                </button>
+              </form>
+            )}
             <Link
               href={`/factures/${inv.id}/modifier`}
               className="rounded-lg border border-[var(--border)] px-3 py-2 text-sm font-medium"
@@ -67,6 +83,22 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
           </div>
         }
       />
+
+      {analyse === "ok" && (
+        <p className="mb-4 rounded-lg border border-[var(--success-bg)] bg-[var(--success-bg)] px-3 py-2 text-xs text-[var(--success)]">
+          Analyse relancée. Vérifiez les valeurs ci-dessous (les changements sont dans l&apos;historique).
+        </p>
+      )}
+      {analyse === "vide" && (
+        <p className="mb-4 rounded-lg border border-[var(--warning-bg)] bg-[var(--warning-bg)] px-3 py-2 text-xs text-[var(--warning)]">
+          L&apos;analyse automatique n&apos;a rien pu extraire de ce PDF (probablement un scan). Saisissez les informations via « Modifier ».
+        </p>
+      )}
+      {analyse === "nofile" && (
+        <p className="mb-4 rounded-lg border border-[var(--danger-bg)] bg-[var(--danger-bg)] px-3 py-2 text-xs text-[var(--danger)]">
+          Le PDF d&apos;origine est introuvable.
+        </p>
+      )}
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <StatusBadge status={inv.status} />

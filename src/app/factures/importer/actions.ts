@@ -6,7 +6,7 @@ import { randomUUID } from "node:crypto";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { uploadDir } from "@/lib/paths";
-import { getInvoiceParser } from "@/lib/parsing/stubParser";
+import { getInvoiceParser } from "@/lib/parsing";
 import { checkCoherence } from "@/lib/tva/coherence";
 
 const MAX_SIZE = 20 * 1024 * 1024; // 20 Mo
