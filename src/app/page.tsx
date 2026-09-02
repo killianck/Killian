@@ -1,18 +1,27 @@
 import Link from "next/link";
 import { PageHeader, StatCard, Card, Money, Disclaimer } from "@/components/ui";
 import { TvaChart, type MonthlyPoint } from "@/components/TvaChart";
+import { PeriodNav } from "@/components/PeriodNav";
 import { getInvoices, getUpcomingDueDates, toAggregatable } from "@/lib/queries";
 import { monthlyBreakdown, totalsForMonth, totalsForYear } from "@/lib/tva/aggregate";
-import { MONTH_NAMES_FR, formatDate, formatMoney, formatMonthLabel } from "@/lib/format";
+import { MONTH_NAMES_FR, formatDate, formatMoney } from "@/lib/format";
 import { TVA_DISCLAIMER } from "@/lib/tva/rules";
 import { DIRECTIONS, type Direction } from "@/lib/domain/enums";
 
 export const dynamic = "force-dynamic";
 
-export default async function DashboardPage() {
+type SP = Record<string, string | string[] | undefined>;
+const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
+
+export default async function DashboardPage({ searchParams }: { searchParams: Promise<SP> }) {
+  const sp = await searchParams;
   const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth() + 1;
+
+  const yParam = Number(one(sp.year));
+  const mParam = Number(one(sp.month));
+  const year = Number.isInteger(yParam) && yParam >= 2000 && yParam <= 2100 ? yParam : now.getFullYear();
+  const month = Number.isInteger(mParam) && mParam >= 1 && mParam <= 12 ? mParam : now.getMonth() + 1;
+  const isCurrentMonth = year === now.getFullYear() && month === now.getMonth() + 1;
 
   const invoices = await getInvoices();
   const agg = toAggregatable(invoices);
@@ -33,11 +42,16 @@ export default async function DashboardPage() {
     <>
       <PageHeader
         title="Tableau de bord"
-        subtitle={`Vue d'ensemble — ${formatMonthLabel(year, month)}`}
+        subtitle="Vue d'ensemble des factures et de la TVA"
       />
 
       <section className="mb-3">
-        <h2 className="mb-2 text-sm font-semibold text-[var(--muted)]">Mois en cours</h2>
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-sm font-semibold text-[var(--muted)]">
+            {isCurrentMonth ? "Mois en cours" : "Mois sélectionné"}
+          </h2>
+          <PeriodNav year={year} month={month} />
+        </div>
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
           <StatCard label="TVA collectée" value={formatMoney(m.collectedVat)} hint="Sur les ventes" />
           <StatCard label="TVA déductible" value={formatMoney(m.deductibleVat)} hint="Sur les achats" />

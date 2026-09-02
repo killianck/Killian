@@ -58,6 +58,12 @@ export const MONTH_NAMES_FR = [
   "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre",
 ];
 
+/** Décale un couple (année, mois 1-12) de `delta` mois. */
+export function addMonths(year: number, month1to12: number, delta: number): { year: number; month: number } {
+  const zero = year * 12 + (month1to12 - 1) + delta;
+  return { year: Math.floor(zero / 12), month: (((zero % 12) + 12) % 12) + 1 };
+}
+
 /** Convertit une saisie texte "1 250,50" ou "1250.5" en nombre. */
 export function parseAmount(input: string | number | null | undefined): number {
   if (typeof input === "number") return input;
