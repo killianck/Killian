@@ -5,7 +5,7 @@ import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { uploadDir } from "@/lib/storage";
+import { uploadDir } from "@/lib/paths";
 import { getInvoiceParser } from "@/lib/parsing/stubParser";
 import { checkCoherence } from "@/lib/tva/coherence";
 

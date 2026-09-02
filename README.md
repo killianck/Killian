@@ -46,7 +46,7 @@ Logiciel de suivi des factures et de calcul de TVA pour une petite entreprise fr
 ```bash
 npm install
 cp .env.example .env      # sous Windows PowerShell : copy .env.example .env
-npm run db:migrate        # crée la base de données
+npm run setup             # crée la base de données dans data/
 npm run db:seed           # ajoute des factures fictives pour tester
 ```
 
@@ -58,6 +58,19 @@ npm run dev
 
 Puis ouvrir **http://localhost:3000**.
 
+## Où sont mes données ?
+
+Tout ce qui vous appartient est dans le dossier **`data/`** (à la racine du projet) :
+la base de données, les PDF des factures, les sauvegardes. Ce dossier est **séparé
+du code** : mettre à jour le logiciel n'y touche jamais. Voir
+[`ARCHITECTURE.md`](ARCHITECTURE.md) pour les détails.
+
+Sauvegarde manuelle :
+
+```bash
+npm run backup
+```
+
 ## Commandes utiles
 
 | Commande | Effet |
@@ -65,9 +78,11 @@ Puis ouvrir **http://localhost:3000**.
 | `npm run dev` | Lance l'application en mode développement |
 | `npm run build` / `npm start` | Version optimisée |
 | `npm test` | Lance les tests |
+| `npm run backup` | Sauvegarde la base + les PDF dans `data/sauvegardes/` |
 | `npm run db:studio` | Ouvre une interface pour voir/éditer la base |
 | `npm run db:seed` | Recharge les données fictives |
-| `npm run db:migrate` | Applique un changement de structure de la base |
+| `npm run db:migrate` | Crée une migration après un changement de `schema.prisma` |
+| `npm run db:deploy` | Applique les migrations existantes (nouvelle version) |
 
 ## Organisation du code
 
@@ -85,6 +100,7 @@ src/
       rules.ts         ⚠️ RÈGLES FISCALES FRANÇAISES — zone isolée
       coherence.ts     Contrôles mathématiques des montants
       aggregate.ts     Totaux mensuels et annuels
+    paths.ts           Emplacement des données (séparées du code)
     parsing/           Interface d'analyse des factures (OCR/IA plus tard)
     export/            Export Excel (d'autres formats possibles à côté)
 ```
@@ -96,7 +112,7 @@ si la réglementation change.
 ## Sécurité
 
 - Aucune clé secrète dans le code : tout passe par le fichier `.env` (non versionné).
-- Les PDF de factures (`uploads/`) et la base de données ne sont pas versionnés.
+- Le dossier `data/` (PDF de factures + base de données) n'est jamais versionné.
 - L'architecture prévoit l'ajout ultérieur de : authentification, comptes
   utilisateurs, permissions, chiffrement, sauvegardes, journalisation complète.
 

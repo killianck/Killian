@@ -40,18 +40,16 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# base de données locale (SQLite)
+# DONNÉES UTILISATEUR — jamais versionnées (base, PDF de factures, sauvegardes)
+/data/*
+!/data/.gitkeep
 /prisma/*.db
 /prisma/*.db-journal
-/prisma/migrations/dev.db*
+/uploads
 
 # client Prisma généré (recréé par `npm install` / `npm run db:generate`)
 /src/generated
 /prisma/generated
-
-# PDF des factures (données sensibles — ne jamais committer)
-/uploads/*
-!/uploads/.gitkeep
 
 # fichiers de test / exports générés
 /exports

@@ -13,7 +13,10 @@
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
-    "db:reset": "prisma migrate reset --force"
+    "db:reset": "prisma migrate reset --force",
+    "db:deploy": "prisma migrate deploy",
+    "backup": "node scripts/backup.mjs",
+    "setup": "prisma migrate deploy && prisma generate"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

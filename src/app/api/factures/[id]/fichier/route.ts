@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { prisma } from "@/lib/db";
-import { uploadDir } from "@/lib/storage";
+import { uploadDir } from "@/lib/paths";
 
 export const dynamic = "force-dynamic";
 
