@@ -15,6 +15,7 @@ import {
   type DocumentType,
 } from "@/lib/domain/enums";
 import { checkCoherence } from "@/lib/tva/coherence";
+import { setInvoiceStatus } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -53,21 +54,46 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
         title={`Facture ${inv.number ?? ""}`.trim()}
         subtitle={inv.partyName ?? undefined}
         action={
-          <Link href="/factures" className="text-sm text-[var(--muted)]">
-            ← Retour aux factures
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href={`/factures/${inv.id}/modifier`}
+              className="rounded-lg border border-[var(--border)] px-3 py-2 text-sm font-medium"
+            >
+              Modifier
+            </Link>
+            <Link href="/factures" className="text-sm text-[var(--muted)]">
+              ← Retour
+            </Link>
+          </div>
         }
       />
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <StatusBadge status={inv.status} />
         <CoherenceBadge level={report.level} />
-        {inv.status !== "validee" && (
-          <span className="text-xs text-[var(--muted)]">
-            (La validation manuelle et la modification seront ajoutées à l&apos;étape suivante.)
-          </span>
-        )}
+        <div className="ml-auto flex gap-2">
+          {inv.status !== "validee" && (
+            <form action={setInvoiceStatus.bind(null, inv.id, "validee")}>
+              <button className="rounded-lg bg-[var(--success)] px-3 py-1.5 text-xs font-medium text-white">
+                ✓ Valider la facture
+              </button>
+            </form>
+          )}
+          {inv.status === "validee" && (
+            <form action={setInvoiceStatus.bind(null, inv.id, "a_verifier")}>
+              <button className="rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs font-medium">
+                Repasser en « à vérifier »
+              </button>
+            </form>
+          )}
+        </div>
       </div>
+
+      {report.level === "incoherent" && inv.status !== "validee" && (
+        <p className="mb-4 rounded-lg border border-[var(--danger-bg)] bg-[var(--danger-bg)] px-3 py-2 text-xs text-[var(--danger)]">
+          Les montants semblent incohérents. Vérifiez-les via « Modifier » avant de valider.
+        </p>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="p-4 lg:col-span-2">

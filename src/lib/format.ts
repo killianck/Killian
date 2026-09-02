@@ -64,6 +64,15 @@ export function addMonths(year: number, month1to12: number, delta: number): { ye
   return { year: Math.floor(zero / 12), month: (((zero % 12) + 12) % 12) + 1 };
 }
 
+/** Date -> "AAAA-MM-JJ" pour un <input type="date">. "" si absente. */
+export function toDateInputValue(value: Date | string | null | undefined): string {
+  if (!value) return "";
+  const d = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(d.getTime())) return "";
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
 /** Convertit une saisie texte "1 250,50" ou "1250.5" en nombre. */
 export function parseAmount(input: string | number | null | undefined): number {
   if (typeof input === "number") return input;
