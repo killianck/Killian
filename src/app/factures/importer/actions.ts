@@ -61,6 +61,20 @@ export async function importInvoice(_prev: ImportState, formData: FormData): Pro
     const coherence =
       totalHT || totalTTC ? checkCoherence({ totalHT, totalVAT, totalTTC, vatLines }).level : "a_verifier";
 
+    // Détection de doublon (même numéro + même tiers) — on prévient sans bloquer.
+    const warnings = [...parsed.warnings];
+    if (parsed.number && parsed.partyName) {
+      const dup = await prisma.invoice.findFirst({
+        where: { number: parsed.number, partyName: parsed.partyName },
+        select: { id: true },
+      });
+      if (dup) {
+        warnings.unshift(
+          "⚠️ Une facture portant le même numéro et le même tiers existe déjà. Vérifiez qu'il ne s'agit pas d'un doublon.",
+        );
+      }
+    }
+
     const created = await prisma.invoice.create({
       data: {
         documentType: parsed.documentType ?? (documentType === "avoir" ? "avoir" : "facture"),
@@ -78,7 +92,7 @@ export async function importInvoice(_prev: ImportState, formData: FormData): Pro
         totalTTC,
         status: parsed.confidence > 0 ? "a_verifier" : "a_analyser",
         coherence,
-        notes: parsed.warnings.length ? parsed.warnings.join(" ") : null,
+        notes: warnings.length ? warnings.join(" ") : null,
         originalFileName: file.name,
         originalFilePath: storedPath,
         vatLines: vatLines.length

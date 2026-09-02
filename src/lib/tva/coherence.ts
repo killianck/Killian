@@ -2,7 +2,7 @@
 // On ne fait JAMAIS confiance aveuglément aux données extraites automatiquement.
 
 import type { CoherenceLevel } from "@/lib/domain/enums";
-import { isKnownVatRate, round2 } from "./rules";
+import { isKnownVatRate, KNOWN_VAT_RATES, round2 } from "./rules";
 
 export type VatLineInput = {
   rate: number;
@@ -90,9 +90,12 @@ export function checkCoherence(input: InvoiceAmountsInput): CoherenceReport {
       }
     }
   } else if (totalHT > 0 && totalVAT > 0) {
-    // 5) Pas de détail par taux, mais on peut vérifier un taux global plausible
+    // 5) Pas de détail par taux : on vérifie un taux global plausible.
+    //    Tolérance de 0,5 point pour absorber les arrondis (fréquents sur les
+    //    factures télécom, énergie, etc.).
     const impliedRate = round2((totalVAT / totalHT) * 100);
-    if (!isKnownVatRate(impliedRate)) {
+    const nearStandard = KNOWN_VAT_RATES.some((r) => Math.abs(r - impliedRate) <= 0.5);
+    if (!nearStandard) {
       issues.push({
         severity: "warning",
         message: `Le taux de TVA global implicite (${impliedRate} %) n'est pas un taux standard : à vérifier.`,

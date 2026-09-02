@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { getInvoice } from "@/lib/queries";
 import { PageHeader, Card } from "@/components/ui";
 import { toDateInputValue } from "@/lib/format";
-import { InvoiceEditForm, type EditableInvoice } from "./InvoiceEditForm";
+import { InvoiceForm, type EditableInvoice } from "@/components/InvoiceForm";
+import { updateInvoice } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +14,6 @@ export default async function ModifierPage({ params }: { params: Promise<{ id: s
   if (!inv) notFound();
 
   const editable: EditableInvoice = {
-    id: inv.id,
     documentType: inv.documentType,
     direction: inv.direction,
     category: inv.category,
@@ -44,7 +44,12 @@ export default async function ModifierPage({ params }: { params: Promise<{ id: s
         }
       />
       <Card className="p-6">
-        <InvoiceEditForm invoice={editable} />
+        <InvoiceForm
+          invoice={editable}
+          action={updateInvoice.bind(null, inv.id)}
+          submitLabel="Enregistrer les modifications"
+          cancelHref={`/factures/${inv.id}`}
+        />
       </Card>
     </>
   );

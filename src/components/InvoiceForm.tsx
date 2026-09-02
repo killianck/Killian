@@ -2,7 +2,7 @@
 
 import { useActionState, useMemo, useState } from "react";
 import Link from "next/link";
-import { updateInvoice, type EditState } from "./actions";
+import type { InvoiceFormState } from "@/lib/invoices/form";
 import { parseAmount } from "@/lib/format";
 import { checkCoherence } from "@/lib/tva/coherence";
 import { totalsFromLines, vatOfLine } from "@/lib/tva/lines";
@@ -10,7 +10,6 @@ import { CATEGORIES, DIRECTIONS, DOCUMENT_TYPES } from "@/lib/domain/enums";
 import { VAT_RATES } from "@/lib/tva/rules";
 
 export type EditableInvoice = {
-  id: string;
   documentType: string;
   direction: string;
   category: string | null;
@@ -34,11 +33,18 @@ type Line = { rate: string; baseHT: string; vatAmount: string };
 const field = "rounded-lg border border-[var(--border)] bg-white px-2.5 py-1.5 text-sm w-full";
 const label = "text-xs text-[var(--muted)] mb-1 block";
 
-export function InvoiceEditForm({ invoice }: { invoice: EditableInvoice }) {
-  const [state, formAction, pending] = useActionState<EditState, FormData>(
-    updateInvoice.bind(null, invoice.id),
-    {},
-  );
+export function InvoiceForm({
+  invoice,
+  action,
+  submitLabel,
+  cancelHref,
+}: {
+  invoice: EditableInvoice;
+  action: (prev: InvoiceFormState, fd: FormData) => Promise<InvoiceFormState>;
+  submitLabel: string;
+  cancelHref: string;
+}) {
+  const [state, formAction, pending] = useActionState<InvoiceFormState, FormData>(action, {});
 
   const [lines, setLines] = useState<Line[]>(
     invoice.vatLines.length
@@ -284,9 +290,9 @@ export function InvoiceEditForm({ invoice }: { invoice: EditableInvoice }) {
           disabled={pending}
           className="rounded-lg bg-[var(--primary)] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
         >
-          {pending ? "Enregistrement…" : "Enregistrer les modifications"}
+          {pending ? "Enregistrement…" : submitLabel}
         </button>
-        <Link href={`/factures/${invoice.id}`} className="text-sm text-[var(--muted)]">
+        <Link href={cancelHref} className="text-sm text-[var(--muted)]">
           Annuler
         </Link>
       </div>

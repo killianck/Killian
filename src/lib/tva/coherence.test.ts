@@ -67,6 +67,16 @@ describe("checkCoherence", () => {
     expect(r.issues.some((i) => i.severity === "warning")).toBe(true);
   });
 
+  it("tolère un taux implicite proche de 20 % (arrondis facture télécom)", () => {
+    const r = checkCoherence({
+      totalHT: 165.81,
+      totalVAT: 33.14,
+      totalTTC: 198.95,
+      vatLines: [],
+    });
+    expect(r.level).toBe("coherent");
+  });
+
   it("signale un taux non standard", () => {
     const r = checkCoherence({
       totalHT: 1000,

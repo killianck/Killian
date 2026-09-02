@@ -8,7 +8,7 @@
 
 import type { ParsedInvoice, ParsedVatLine } from "./types";
 import { findMoneyTokens, parseFrAmount } from "./frenchNumbers";
-import { isKnownVatRate, round2 } from "@/lib/tva/rules";
+import { round2 } from "@/lib/tva/rules";
 
 /** Enlève les accents pour comparer les mots-clés sans se soucier de la casse. */
 const COMBINING_MARKS = /[̀-ͯ]/g;
@@ -272,10 +272,11 @@ export function extractAmounts(text: string): ExtractedAmounts {
   }
 
   // Taux déduit du rapport TVA / HT si aucun taux clair n'a été lu
+  // (tolérance de 0,5 point pour absorber les arrondis).
   let inferredRate: number | undefined;
   if (!nonZeroRates.length && totalHT && totalVAT) {
-    const r = round2((totalVAT / totalHT) * 100);
-    if (isKnownVatRate(r)) inferredRate = r;
+    const raw = (totalVAT / totalHT) * 100;
+    inferredRate = [20, 10, 5.5, 2.1].find((r) => Math.abs(r - raw) <= 0.5);
   }
 
   // Lignes de TVA

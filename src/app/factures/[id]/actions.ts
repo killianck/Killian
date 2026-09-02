@@ -1,9 +1,11 @@
 "use server";
 
-import { readFile } from "node:fs/promises";
+import { mkdir, readFile, rename } from "node:fs/promises";
+import path from "node:path";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
+import { dataDir } from "@/lib/paths";
 import { STATUSES, type Status } from "@/lib/domain/enums";
 import { getInvoiceParser } from "@/lib/parsing";
 import { checkCoherence } from "@/lib/tva/coherence";
@@ -34,6 +36,35 @@ export async function setInvoiceStatus(id: string, status: Status): Promise<void
 
   revalidatePath(`/factures/${id}`);
   revalidatePath("/factures");
+}
+
+/**
+ * Supprime une facture. Le PDF d'origine n'est jamais effacé définitivement :
+ * il est déplacé dans le dossier `data/corbeille/`.
+ */
+export async function deleteInvoice(id: string): Promise<void> {
+  const inv = await prisma.invoice.findUnique({
+    where: { id },
+    select: { originalFilePath: true, originalFileName: true },
+  });
+  if (!inv) redirect("/factures");
+
+  // La suppression en base enlève aussi les lignes de TVA et le journal (cascade).
+  await prisma.invoice.delete({ where: { id } });
+
+  if (inv.originalFilePath) {
+    try {
+      const trash = path.join(dataDir(), "corbeille");
+      await mkdir(trash, { recursive: true });
+      const name = inv.originalFileName ?? path.basename(inv.originalFilePath);
+      await rename(inv.originalFilePath, path.join(trash, `${Date.now()}-${name}`));
+    } catch (e) {
+      console.error("Déplacement du PDF vers la corbeille impossible :", e);
+    }
+  }
+
+  revalidatePath("/factures");
+  redirect("/factures");
 }
 
 /**

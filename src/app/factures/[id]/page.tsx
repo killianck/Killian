@@ -15,7 +15,8 @@ import {
   type DocumentType,
 } from "@/lib/domain/enums";
 import { checkCoherence } from "@/lib/tva/coherence";
-import { reanalyzeInvoice, setInvoiceStatus } from "./actions";
+import { DeleteInvoiceButton } from "@/components/DeleteInvoiceButton";
+import { deleteInvoice, reanalyzeInvoice, setInvoiceStatus } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -218,6 +219,18 @@ export default async function InvoiceDetailPage({
           </ul>
         </Card>
       )}
+
+      <Card className="mt-4 p-4">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h2 className="text-sm font-semibold">Supprimer</h2>
+            <p className="text-xs text-[var(--muted)]">
+              Retire la facture de tous les calculs. Le PDF d&apos;origine est déplacé dans « data/corbeille », pas effacé.
+            </p>
+          </div>
+          <DeleteInvoiceButton action={deleteInvoice.bind(null, inv.id)} />
+        </div>
+      </Card>
     </>
   );
 }

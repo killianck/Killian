@@ -68,12 +68,20 @@ export default async function FacturesPage({ searchParams }: { searchParams: Pro
         title="Factures"
         subtitle={`${invoices.length} facture${invoices.length > 1 ? "s" : ""}`}
         action={
-          <Link
-            href="/factures/importer"
-            className="rounded-lg bg-[var(--primary)] px-3 py-2 text-sm font-medium text-white"
-          >
-            + Importer une facture
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/factures/nouvelle"
+              className="rounded-lg border border-[var(--border)] px-3 py-2 text-sm font-medium"
+            >
+              Saisir une facture
+            </Link>
+            <Link
+              href="/factures/importer"
+              className="rounded-lg bg-[var(--primary)] px-3 py-2 text-sm font-medium text-white"
+            >
+              + Importer un PDF
+            </Link>
+          </div>
         }
       />
 
