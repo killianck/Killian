@@ -3,6 +3,7 @@
 
 import { PrismaClient } from "@prisma/client";
 import { checkCoherence } from "../src/lib/tva/coherence";
+import { resolveParty } from "../src/lib/invoices/party";
 
 const prisma = new PrismaClient();
 
@@ -146,11 +147,20 @@ async function main() {
   await prisma.invoiceRevision.deleteMany();
   await prisma.vatLine.deleteMany();
   await prisma.invoice.deleteMany();
+  await prisma.party.deleteMany();
 
   console.log(`Insertion de ${DATA.length} factures fictives...`);
   for (const d of DATA) {
     const t = totals(d.lines);
     const coherence = checkCoherence({ ...t, vatLines: d.lines }).level;
+
+    const party = await resolveParty(prisma, {
+      name: d.partyName,
+      address: d.partyAddress ?? null,
+      siret: d.siret ?? null,
+      vatNumber: d.vatNumber ?? null,
+      direction: d.direction,
+    });
 
     await prisma.invoice.create({
       data: {
@@ -160,10 +170,11 @@ async function main() {
         number: d.number,
         invoiceDate: new Date(d.invoiceDate),
         dueDate: d.dueDate ? new Date(d.dueDate) : null,
-        partyName: d.partyName,
-        partyAddress: d.partyAddress ?? null,
-        siret: d.siret ?? null,
-        vatNumber: d.vatNumber ?? null,
+        partyId: party.partyId,
+        partyName: party.partyName,
+        partyAddress: party.partyAddress,
+        siret: party.siret,
+        vatNumber: party.vatNumber,
         currency: "EUR",
         totalHT: t.totalHT,
         totalVAT: t.totalVAT,
@@ -179,7 +190,8 @@ async function main() {
   }
 
   const count = await prisma.invoice.count();
-  console.log(`✅ Terminé : ${count} factures en base.`);
+  const parties = await prisma.party.count();
+  console.log(`✅ Terminé : ${count} factures et ${parties} tiers en base.`);
 }
 
 main()

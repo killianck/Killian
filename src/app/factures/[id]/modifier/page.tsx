@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getInvoice } from "@/lib/queries";
+import { getInvoice, getPartyNames } from "@/lib/queries";
 import { PageHeader, Card } from "@/components/ui";
 import { toDateInputValue } from "@/lib/format";
 import { InvoiceForm, type EditableInvoice } from "@/components/InvoiceForm";
@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 export default async function ModifierPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const inv = await getInvoice(id);
+  const [inv, partyNames] = await Promise.all([getInvoice(id), getPartyNames()]);
   if (!inv) notFound();
 
   const editable: EditableInvoice = {
@@ -50,6 +50,7 @@ export default async function ModifierPage({ params }: { params: Promise<{ id: s
           action={updateInvoice.bind(null, inv.id)}
           submitLabel="Enregistrer les modifications"
           cancelHref={`/factures/${inv.id}`}
+          partyNames={partyNames}
         />
       </Card>
     </>

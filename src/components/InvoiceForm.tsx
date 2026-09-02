@@ -39,11 +39,13 @@ export function InvoiceForm({
   action,
   submitLabel,
   cancelHref,
+  partyNames = [],
 }: {
   invoice: EditableInvoice;
   action: (prev: InvoiceFormState, fd: FormData) => Promise<InvoiceFormState>;
   submitLabel: string;
   cancelHref: string;
+  partyNames?: string[];
 }) {
   const [state, formAction, pending] = useActionState<InvoiceFormState, FormData>(action, {});
 
@@ -137,7 +139,21 @@ export function InvoiceForm({
         </div>
         <div>
           <label className={label}>Fournisseur / Client</label>
-          <input name="partyName" defaultValue={invoice.partyName ?? ""} className={field} />
+          <input
+            name="partyName"
+            defaultValue={invoice.partyName ?? ""}
+            list="known-parties"
+            autoComplete="off"
+            className={field}
+          />
+          <datalist id="known-parties">
+            {partyNames.map((n) => (
+              <option key={n} value={n} />
+            ))}
+          </datalist>
+          <p className="mt-1 text-[11px] text-[var(--muted)]">
+            Un tiers connu est reconnu automatiquement (ses coordonnées sont réutilisées).
+          </p>
         </div>
         <div>
           <label className={label}>Devise</label>

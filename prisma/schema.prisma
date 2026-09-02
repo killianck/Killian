@@ -25,6 +25,10 @@ model Invoice {
   dueDate     DateTime? // date d'échéance de paiement (information seule, aucun suivi de paiement)
 
   // --- Tiers (fournisseur ou client selon `direction`) ---
+  // partyName est conservé "à plat" pour l'affichage et comme repli
+  // (imports non rattachés) ; partyId pointe vers la fiche Tiers si rattachée.
+  partyId      String?
+  party        Party?  @relation(fields: [partyId], references: [id])
   partyName    String?
   partyAddress String?
   siret        String?
@@ -61,6 +65,27 @@ model Invoice {
   @@index([dueDate])
   @@index([direction])
   @@index([status])
+  @@index([partyId])
+}
+
+/// Fiche d'un tiers (fournisseur et/ou client), réutilisable d'une facture à l'autre.
+model Party {
+  id        String  @id @default(cuid())
+  kind      String  @default("les_deux") // "fournisseur" | "client" | "les_deux"
+  name      String
+  address   String?
+  siret     String?
+  vatNumber String?
+  email     String?
+  phone     String?
+  notes     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  invoices Invoice[]
+
+  @@index([name])
 }
 
 /// Une ligne de TVA d'une facture. Une facture peut en avoir plusieurs (plusieurs taux).

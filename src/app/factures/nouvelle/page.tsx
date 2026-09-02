@@ -2,7 +2,10 @@ import Link from "next/link";
 import { PageHeader, Card } from "@/components/ui";
 import { InvoiceForm, type EditableInvoice } from "@/components/InvoiceForm";
 import { toDateInputValue } from "@/lib/format";
+import { getPartyNames } from "@/lib/queries";
 import { createInvoice } from "./actions";
+
+export const dynamic = "force-dynamic";
 
 const blank: EditableInvoice = {
   documentType: "facture",
@@ -24,7 +27,8 @@ const blank: EditableInvoice = {
   vatLines: [],
 };
 
-export default function NouvelleFacturePage() {
+export default async function NouvelleFacturePage() {
+  const partyNames = await getPartyNames();
   return (
     <>
       <PageHeader
@@ -42,6 +46,7 @@ export default function NouvelleFacturePage() {
           action={createInvoice}
           submitLabel="Créer la facture"
           cancelHref="/factures"
+          partyNames={partyNames}
         />
       </Card>
     </>

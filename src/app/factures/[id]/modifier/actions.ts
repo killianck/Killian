@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { parseInvoiceForm, type InvoiceFormState } from "@/lib/invoices/form";
+import { resolveParty } from "@/lib/invoices/party";
 import { diffInvoice } from "@/lib/domain/revisions";
 
 export async function updateInvoice(
@@ -18,7 +19,23 @@ export async function updateInvoice(
 
   const parsed = parseInvoiceForm(formData);
   if (!parsed.ok) return { error: parsed.error };
-  const { data, lines, coherence } = parsed;
+  const { lines, coherence } = parsed;
+
+  const party = await resolveParty(prisma, {
+    name: parsed.data.partyName,
+    address: parsed.data.partyAddress,
+    siret: parsed.data.siret,
+    vatNumber: parsed.data.vatNumber,
+    direction: parsed.data.direction,
+  });
+  const data = {
+    ...parsed.data,
+    partyId: party.partyId,
+    partyName: party.partyName,
+    partyAddress: party.partyAddress,
+    siret: party.siret,
+    vatNumber: party.vatNumber,
+  };
 
   // --- Journal des modifications ---
   const before = {

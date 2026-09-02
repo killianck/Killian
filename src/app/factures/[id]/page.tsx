@@ -53,7 +53,16 @@ export default async function InvoiceDetailPage({
     ["Numéro", inv.number ?? "—"],
     ["Date de facture", formatDate(inv.invoiceDate)],
     ["Date d'échéance", inv.dueDate ? formatDate(inv.dueDate) : "Échéance non indiquée"],
-    [inv.direction === "achat" ? "Fournisseur" : "Client", inv.partyName ?? "—"],
+    [
+      inv.direction === "achat" ? "Fournisseur" : "Client",
+      inv.partyId ? (
+        <Link href={`/tiers/${inv.partyId}`} className="text-[var(--primary)] hover:underline">
+          {inv.partyName ?? "—"}
+        </Link>
+      ) : (
+        inv.partyName ?? "—"
+      ),
+    ],
     ["Adresse", inv.partyAddress ?? "—"],
     ["SIRET", inv.siret ?? "—"],
     ["TVA intracommunautaire", inv.vatNumber ?? "—"],

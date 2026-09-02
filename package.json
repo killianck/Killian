@@ -16,6 +16,7 @@
     "db:reset": "prisma migrate reset --force",
     "db:deploy": "prisma migrate deploy",
     "backup": "tsx scripts/backup.mts",
+    "db:backfill-parties": "tsx scripts/backfill-parties.mts",
     "setup": "prisma migrate deploy && prisma generate"
   },
   "prisma": {

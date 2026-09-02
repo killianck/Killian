@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { parseInvoiceForm, type InvoiceFormState } from "@/lib/invoices/form";
+import { resolveParty } from "@/lib/invoices/party";
 
 /** Crée une facture saisie manuellement (sans PDF). */
 export async function createInvoice(
@@ -13,11 +14,19 @@ export async function createInvoice(
   if (!parsed.ok) return { error: parsed.error };
   const { data, lines, coherence } = parsed;
 
+  const party = await resolveParty(prisma, {
+    name: data.partyName,
+    address: data.partyAddress,
+    siret: data.siret,
+    vatNumber: data.vatNumber,
+    direction: data.direction,
+  });
+
   // Avertissement doublon (même numéro + même tiers)
   let notes = data.notes;
-  if (data.number && data.partyName) {
+  if (data.number && party.partyName) {
     const dup = await prisma.invoice.findFirst({
-      where: { number: data.number, partyName: data.partyName },
+      where: { number: data.number, partyName: party.partyName },
       select: { id: true },
     });
     if (dup) {
@@ -36,6 +45,11 @@ export async function createInvoice(
       data: {
         ...data,
         notes,
+        partyId: party.partyId,
+        partyName: party.partyName,
+        partyAddress: party.partyAddress,
+        siret: party.siret,
+        vatNumber: party.vatNumber,
         status: "a_verifier",
         coherence,
         vatLines: { create: lines },

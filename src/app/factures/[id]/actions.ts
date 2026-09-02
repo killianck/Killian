@@ -11,6 +11,7 @@ import { getInvoiceParser } from "@/lib/parsing";
 import { checkCoherence } from "@/lib/tva/coherence";
 import { totalsFromLines } from "@/lib/tva/lines";
 import { diffInvoice } from "@/lib/domain/revisions";
+import { resolveParty } from "@/lib/invoices/party";
 
 /**
  * Change le statut d'une facture (validation manuelle, retour "à vérifier", etc.).
@@ -102,14 +103,23 @@ export async function reanalyzeInvoice(id: string): Promise<void> {
   const totalVAT = parsed.totalVAT ?? (parsed.vatLines?.length ? derived.totalVAT : inv.totalVAT);
   const totalTTC = parsed.totalTTC ?? (parsed.vatLines?.length ? derived.totalTTC : inv.totalTTC);
 
+  const party = await resolveParty(prisma, {
+    name: parsed.partyName ?? inv.partyName,
+    address: inv.partyAddress,
+    siret: parsed.siret ?? inv.siret,
+    vatNumber: parsed.vatNumber ?? inv.vatNumber,
+    direction: inv.direction,
+  });
+
   const data = {
     documentType: parsed.documentType ?? inv.documentType,
     number: parsed.number ?? inv.number,
     invoiceDate: parsed.invoiceDate ? new Date(parsed.invoiceDate) : inv.invoiceDate,
     dueDate: parsed.dueDate ? new Date(parsed.dueDate) : inv.dueDate,
-    partyName: parsed.partyName ?? inv.partyName,
-    siret: parsed.siret ?? inv.siret,
-    vatNumber: parsed.vatNumber ?? inv.vatNumber,
+    partyId: party.partyId,
+    partyName: party.partyName,
+    siret: party.siret,
+    vatNumber: party.vatNumber,
     currency: parsed.currency ?? inv.currency,
     totalHT,
     totalVAT,

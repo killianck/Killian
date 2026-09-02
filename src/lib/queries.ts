@@ -16,7 +16,7 @@ export async function getInvoices() {
 export async function getInvoice(id: string) {
   return prisma.invoice.findUnique({
     where: { id },
-    include: { vatLines: true, revisions: { orderBy: { changedAt: "desc" } } },
+    include: { vatLines: true, party: true, revisions: { orderBy: { changedAt: "desc" } } },
   });
 }
 
@@ -59,6 +59,52 @@ export async function getAvailableYears(): Promise<number[]> {
   const years = new Set<number>(rows.map((r) => r.invoiceDate.getFullYear()));
   years.add(new Date().getFullYear());
   return [...years].sort((a, b) => b - a);
+}
+
+/** Liste des tiers avec, pour chacun, le nombre de factures et les totaux HT. */
+export async function getPartiesWithStats() {
+  const parties = await prisma.party.findMany({ orderBy: { name: "asc" } });
+  const grouped = await prisma.invoice.groupBy({
+    by: ["partyId", "direction", "documentType"],
+    _sum: { totalHT: true },
+    _count: { _all: true },
+    where: { partyId: { not: null } },
+  });
+
+  return parties.map((p) => {
+    const rows = grouped.filter((g) => g.partyId === p.id);
+    const sum = (dir: string) =>
+      rows
+        .filter((r) => r.direction === dir)
+        .reduce((s, r) => s + (r._sum.totalHT ?? 0) * (r.documentType === "avoir" ? -1 : 1), 0);
+    return {
+      ...p,
+      invoiceCount: rows.reduce((s, r) => s + r._count._all, 0),
+      totalAchatsHT: Math.round(sum("achat") * 100) / 100,
+      totalVentesHT: Math.round(sum("vente") * 100) / 100,
+    };
+  });
+}
+
+export async function getParty(id: string) {
+  return prisma.party.findUnique({
+    where: { id },
+    include: {
+      invoices: {
+        orderBy: { invoiceDate: "desc" },
+        select: {
+          id: true, number: true, direction: true, documentType: true,
+          invoiceDate: true, totalHT: true, totalTTC: true, currency: true, status: true,
+        },
+      },
+    },
+  });
+}
+
+/** Noms de tiers connus (pour l'autocomplétion des formulaires). */
+export async function getPartyNames(): Promise<string[]> {
+  const rows = await prisma.party.findMany({ select: { name: true }, orderBy: { name: "asc" } });
+  return rows.map((r) => r.name);
 }
 
 /** Prochaines échéances (dueDate >= aujourd'hui), triées, limitées. */

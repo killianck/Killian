@@ -8,6 +8,7 @@ import { prisma } from "@/lib/db";
 import { uploadDir } from "@/lib/paths";
 import { getInvoiceParser } from "@/lib/parsing";
 import { checkCoherence } from "@/lib/tva/coherence";
+import { resolveParty } from "@/lib/invoices/party";
 
 const MAX_SIZE = 20 * 1024 * 1024; // 20 Mo
 
@@ -64,10 +65,18 @@ async function importOne(
     const coherence =
       totalHT || totalTTC ? checkCoherence({ totalHT, totalVAT, totalTTC, vatLines }).level : "a_verifier";
 
+    const party = await resolveParty(prisma, {
+      name: parsed.partyName ?? null,
+      address: parsed.partyAddress ?? null,
+      siret: parsed.siret ?? null,
+      vatNumber: parsed.vatNumber ?? null,
+      direction,
+    });
+
     const warnings = [...parsed.warnings];
-    if (parsed.number && parsed.partyName) {
+    if (parsed.number && party.partyName) {
       const dup = await prisma.invoice.findFirst({
-        where: { number: parsed.number, partyName: parsed.partyName },
+        where: { number: parsed.number, partyName: party.partyName },
         select: { id: true },
       });
       if (dup) {
@@ -84,10 +93,11 @@ async function importOne(
         number: parsed.number ?? null,
         invoiceDate: parsed.invoiceDate ? new Date(parsed.invoiceDate) : new Date(),
         dueDate: parsed.dueDate ? new Date(parsed.dueDate) : null,
-        partyName: parsed.partyName ?? null,
-        partyAddress: parsed.partyAddress ?? null,
-        siret: parsed.siret ?? null,
-        vatNumber: parsed.vatNumber ?? null,
+        partyId: party.partyId,
+        partyName: party.partyName,
+        partyAddress: party.partyAddress,
+        siret: party.siret,
+        vatNumber: party.vatNumber,
         currency: parsed.currency ?? "EUR",
         totalHT,
         totalVAT,
