@@ -1,0 +1,35 @@
+name: Publier une version
+
+# Se déclenche quand on pousse un tag de version (ex. v0.2.1).
+# Construit l'installeur Windows et le publie dans les "Releases" du dépôt.
+# L'application installée le télécharge alors et se met à jour toute seule.
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      - run: npm ci
+
+      - run: npx prisma generate
+
+      - run: npm test
+
+      - name: Construire et publier l'installeur
+        run: npm run app:release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
