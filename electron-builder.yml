@@ -13,6 +13,10 @@ files:
 
 asar: true
 
+# Nom de fichier sans espaces ni accents (doit correspondre à celui écrit dans
+# latest.yml, sinon l'auto-update ne retrouve pas le fichier à télécharger).
+artifactName: ${name}-setup-${version}.${ext}
+
 # Le serveur Next autonome (.next/standalone) est copié tel quel dans
 # resources/standalone par le hook afterPack — copie fiable de .next et
 # node_modules, et fichiers réels sur disque (nécessaire au moteur Prisma).

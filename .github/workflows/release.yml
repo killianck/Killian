@@ -1,6 +1,6 @@
 name: Publier une version
 
-# Se déclenche quand on pousse un tag de version (ex. v0.2.1).
+# Se déclenche quand on pousse un tag de version (ex. v0.2.2).
 # Construit l'installeur Windows et le publie dans les "Releases" du dépôt.
 # L'application installée le télécharge alors et se met à jour toute seule.
 
@@ -29,7 +29,18 @@ jobs:
 
       - run: npm test
 
-      - name: Construire et publier l'installeur
-        run: npm run app:release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Construit l'installeur + latest.yml + blockmap dans dist-app/ (sans publier).
+      - run: npm run app:build
+      - run: npx electron-builder --win nsis --publish never
+
+      # Publication robuste des fichiers (gère bien les gros fichiers, échoue si un manque).
+      - name: Publier la release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          files: |
+            dist-app/*.exe
+            dist-app/latest.yml
+            dist-app/*.blockmap
+          fail_on_unmatched_files: true
