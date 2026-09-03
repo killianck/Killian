@@ -7,8 +7,15 @@
 export const SESSION_COOKIE = "fv_session";
 const MAX_AGE_SECONDS = 60 * 60 * 24 * 14; // 14 jours
 
+const DEV_SECRET = "dev-secret-non-securise-a-changer";
+
 function secret(): string {
-  return process.env.AUTH_SECRET || "dev-secret-non-securise-a-changer";
+  const s = process.env.AUTH_SECRET;
+  if (process.env.NODE_ENV === "production" && (!s || s === DEV_SECRET)) {
+    // En production, un secret par défaut rendrait les sessions falsifiables.
+    throw new Error("AUTH_SECRET manquant : configuration de sécurité invalide.");
+  }
+  return s || DEV_SECRET;
 }
 
 const enc = new TextEncoder();
@@ -44,10 +51,18 @@ export async function createSessionToken(userId: string): Promise<string> {
   return `${payload}.${await hmac(payload)}`;
 }
 
+/** Comparaison à temps constant de deux chaînes base64url. */
+function timingSafeEqualStr(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
 export async function verifySessionToken(token: string | undefined | null): Promise<string | null> {
   if (!token || !token.includes(".")) return null;
   const [payload, sig] = token.split(".");
-  if ((await hmac(payload)) !== sig) return null;
+  if (!timingSafeEqualStr(await hmac(payload), sig)) return null;
   try {
     const { uid, exp } = JSON.parse(new TextDecoder().decode(bytesFromB64url(payload)));
     if (typeof uid !== "string" || typeof exp !== "number" || exp * 1000 < Date.now()) return null;

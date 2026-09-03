@@ -29,8 +29,8 @@ describe("buildInvoiceWhere", () => {
   it("année + mois -> plage d'un mois", () => {
     const w = buildInvoiceWhere({ ...empty, year: "2026", month: "3" }, [2026]) as { AND: { invoiceDate: { gte: Date; lt: Date } }[] };
     const cond = w.AND[0].invoiceDate;
-    expect(cond.gte).toEqual(new Date(2026, 2, 1));
-    expect(cond.lt).toEqual(new Date(2026, 3, 1));
+    expect(cond.gte).toEqual(new Date(Date.UTC(2026, 2, 1)));
+    expect(cond.lt).toEqual(new Date(Date.UTC(2026, 3, 1)));
   });
 
   it("mois seul -> ce mois sur toutes les années disponibles", () => {
@@ -40,8 +40,8 @@ describe("buildInvoiceWhere", () => {
 
   it("année seule -> plage d'un an", () => {
     const w = buildInvoiceWhere({ ...empty, year: "2026" }, [2026]) as { AND: { invoiceDate: { gte: Date; lt: Date } }[] };
-    expect(w.AND[0].invoiceDate.gte).toEqual(new Date(2026, 0, 1));
-    expect(w.AND[0].invoiceDate.lt).toEqual(new Date(2027, 0, 1));
+    expect(w.AND[0].invoiceDate.gte).toEqual(new Date(Date.UTC(2026, 0, 1)));
+    expect(w.AND[0].invoiceDate.lt).toEqual(new Date(Date.UTC(2027, 0, 1)));
   });
 
   it("combine plusieurs filtres", () => {

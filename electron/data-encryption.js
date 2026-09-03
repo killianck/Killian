@@ -21,8 +21,36 @@ const MARKER = "chiffrement.actif";
 const KEYFILE = "chiffrement.cle";
 
 // Cibles à chiffrer (relatives au dossier de données). Les dossiers sont récursifs.
-const TARGET_FILES = ["facturation.db", "auth-secret.txt"];
+// Les fichiers annexes SQLite (-wal/-shm/-journal) sont inclus : sinon ils
+// resteraient EN CLAIR à côté de la base chiffrée (fuite de données).
+const TARGET_FILES = [
+  "facturation.db",
+  "facturation.db-wal",
+  "facturation.db-shm",
+  "facturation.db-journal",
+  "auth-secret.txt",
+];
 const TARGET_DIRS = ["factures-pdf", "sauvegardes", "corbeille"];
+
+/** Force l'écriture du WAL dans la base principale avant chiffrement. */
+function checkpointDatabase(dataDir) {
+  const dbPath = path.join(dataDir, "facturation.db");
+  if (!fs.existsSync(dbPath)) return;
+  try {
+    const { DatabaseSync } = require("node:sqlite");
+    const db = new DatabaseSync(dbPath);
+    try {
+      db.exec("PRAGMA wal_checkpoint(TRUNCATE)");
+    } finally {
+      db.close();
+    }
+    for (const suffix of ["-wal", "-shm", "-journal"]) {
+      try { fs.rmSync(dbPath + suffix, { force: true }); } catch {}
+    }
+  } catch (e) {
+    console.error("Checkpoint SQLite avant chiffrement impossible :", e && e.message);
+  }
+}
 
 function markerPath(dataDir) {
   return path.join(dataDir, MARKER);
@@ -102,6 +130,7 @@ function unlock(dataDir) {
   }
 
   return function lock() {
+    checkpointDatabase(dataDir);
     for (const f of eachTarget(dataDir)) {
       if (fs.existsSync(f) && !f.endsWith(".enc")) {
         try {

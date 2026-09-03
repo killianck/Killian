@@ -16,6 +16,7 @@ export type FilterValues = {
   rate: string;
   sort: string;
   onlyDuplicates: string;
+  statut: string;
 };
 
 const cls = "rounded-lg border border-[var(--border)] bg-white px-2.5 py-1.5 text-sm";
@@ -46,6 +47,13 @@ export function FactureFilters({ values, years }: { values: FilterValues; years:
         {MONTH_NAMES_FR.map((n, i) => (
           <option key={i} value={i + 1}>{n}</option>
         ))}
+      </select>
+      <select name="statut" defaultValue={values.statut} onChange={submit} className={cls}>
+        <option value="">Tous statuts</option>
+        <option value="a_traiter">À traiter (non validées)</option>
+        <option value="a_verifier">À vérifier</option>
+        <option value="validee">Validées</option>
+        <option value="incoherent">Montants incohérents</option>
       </select>
       <select name="direction" defaultValue={values.direction} onChange={submit} className={cls}>
         <option value="">Achat / Vente</option>

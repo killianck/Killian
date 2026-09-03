@@ -10,6 +10,7 @@ export type InvoiceFilterParams = {
   category: string;
   rate: string;
   sort: string;
+  statut?: string;
 };
 
 export type PrismaWhere = Record<string, unknown>;
@@ -33,17 +34,32 @@ export function buildInvoiceWhere(p: InvoiceFilterParams, availableYears: number
   if (p.category) and.push({ category: p.category });
   if (p.rate) and.push({ vatLines: { some: { rate: Number(p.rate) } } });
 
+  switch (p.statut) {
+    case "a_traiter":
+      and.push({ status: { in: ["a_analyser", "analyse_en_cours", "a_verifier", "erreur"] } });
+      break;
+    case "a_verifier":
+    case "validee":
+      and.push({ status: p.statut });
+      break;
+    case "incoherent":
+      and.push({ coherence: "incoherent" });
+      break;
+  }
+
+  // Dates stockées à minuit UTC : bornes calculées en UTC (cf. aggregate.ts).
+  const utc = (yy: number, mm: number) => new Date(Date.UTC(yy, mm, 1));
   const y = p.year ? Number(p.year) : null;
   const m = p.month ? Number(p.month) : null;
   if (y && m) {
-    and.push({ invoiceDate: { gte: new Date(y, m - 1, 1), lt: new Date(y, m, 1) } });
+    and.push({ invoiceDate: { gte: utc(y, m - 1), lt: utc(y, m) } });
   } else if (y) {
-    and.push({ invoiceDate: { gte: new Date(y, 0, 1), lt: new Date(y + 1, 0, 1) } });
+    and.push({ invoiceDate: { gte: utc(y, 0), lt: utc(y + 1, 0) } });
   } else if (m) {
     // mois seul : ce mois pour toutes les années présentes
     and.push({
       OR: availableYears.map((yy) => ({
-        invoiceDate: { gte: new Date(yy, m - 1, 1), lt: new Date(yy, m, 1) },
+        invoiceDate: { gte: utc(yy, m - 1), lt: utc(yy, m) },
       })),
     });
   }

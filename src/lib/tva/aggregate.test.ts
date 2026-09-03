@@ -67,6 +67,26 @@ describe("totalsForMonth / totalsForYear", () => {
   });
 });
 
+describe("robustesse", () => {
+  it("ignore une facture non datée sans fausser le total (excludedCount)", () => {
+    const t = sumInvoices([
+      { invoiceDate: "2026-03-01", direction: "vente", documentType: "facture", totalHT: 1000, totalVAT: 200, totalTTC: 1200 },
+      { invoiceDate: "pas une date", direction: "vente", documentType: "facture", totalHT: 999, totalVAT: 99, totalTTC: 1098 },
+    ]);
+    expect(t.count).toBe(1);
+    expect(t.excludedCount).toBe(1);
+    expect(t.collectedVat).toBe(200);
+  });
+
+  it("ignore une direction aberrante plutôt que de la compter comme un achat", () => {
+    const t = sumInvoices([
+      { invoiceDate: "2026-03-01", direction: "Vente ", documentType: "facture", totalHT: 1000, totalVAT: 200, totalTTC: 1200 },
+    ]);
+    expect(t.count).toBe(0);
+    expect(t.excludedCount).toBe(1);
+  });
+});
+
 describe("monthlyBreakdown", () => {
   it("renvoie 12 mois", () => {
     const months = monthlyBreakdown(sample, 2026);

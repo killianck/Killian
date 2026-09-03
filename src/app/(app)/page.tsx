@@ -2,7 +2,7 @@ import Link from "next/link";
 import { PageHeader, StatCard, Card, Money, Disclaimer } from "@/components/ui";
 import { TvaChart, type MonthlyPoint } from "@/components/TvaChart";
 import { PeriodNav } from "@/components/PeriodNav";
-import { getInvoices, getUpcomingDueDates, toAggregatable } from "@/lib/queries";
+import { countToReview, getInvoices, getUpcomingDueDates, toAggregatable } from "@/lib/queries";
 import { monthlyBreakdown, totalsForMonth, totalsForYear } from "@/lib/tva/aggregate";
 import { MONTH_NAMES_FR, formatDate, formatMoney } from "@/lib/format";
 import { TVA_DISCLAIMER } from "@/lib/tva/rules";
@@ -30,6 +30,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const y = totalsForYear(agg, year);
   const months = monthlyBreakdown(agg, year);
   const upcoming = await getUpcomingDueDates(6);
+  const toReview = await countToReview();
 
   const chartData: MonthlyPoint[] = months.map((t, i) => ({
     mois: MONTH_NAMES_FR[i].slice(0, 3),
@@ -44,6 +45,25 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         title="Tableau de bord"
         subtitle="Vue d'ensemble des factures et de la TVA"
       />
+
+      {toReview > 0 && (
+        <Link
+          href="/factures?statut=a_traiter"
+          className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-[var(--warning-bg)] bg-[var(--warning-bg)] px-4 py-3 text-sm text-[var(--warning)]"
+        >
+          <span>
+            <strong>{toReview}</strong> facture{toReview > 1 ? "s" : ""} à vérifier ou à compléter.
+            Elles sont déjà incluses dans les totaux ci-dessous — leurs montants peuvent encore changer.
+          </span>
+          <span className="shrink-0 font-medium underline">Les traiter →</span>
+        </Link>
+      )}
+      {(m.excludedCount > 0 || y.excludedCount > 0) && (
+        <p className="mb-4 rounded-lg border border-[var(--danger-bg)] bg-[var(--danger-bg)] px-3 py-2 text-xs text-[var(--danger)]">
+          ⚠️ {Math.max(m.excludedCount, y.excludedCount)} facture(s) exclue(s) des totaux faute de date
+          ou de montant exploitable — corrigez-les dans la liste des factures.
+        </p>
+      )}
 
       <section className="mb-3">
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">

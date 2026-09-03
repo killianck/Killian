@@ -107,6 +107,13 @@ export async function getPartyNames(): Promise<string[]> {
   return rows.map((r) => r.name);
 }
 
+/** Nombre de factures encore à traiter (à analyser / à vérifier / en erreur). */
+export async function countToReview(): Promise<number> {
+  return prisma.invoice.count({
+    where: { status: { in: ["a_analyser", "analyse_en_cours", "a_verifier", "erreur"] } },
+  });
+}
+
 /** Prochaines échéances (dueDate >= aujourd'hui), triées, limitées. */
 export async function getUpcomingDueDates(limit = 8) {
   const today = new Date();

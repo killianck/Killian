@@ -27,6 +27,7 @@ export default async function FacturesPage({ searchParams }: { searchParams: Pro
     rate: one(sp.rate),
     sort: one(sp.sort) || "date_desc",
     onlyDuplicates: one(sp.doublons),
+    statut: one(sp.statut),
   };
 
   const years = await getAvailableYears();
