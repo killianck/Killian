@@ -15,6 +15,11 @@ export type InvoiceAmountsInput = {
   totalVAT: number;
   totalTTC: number;
   vatLines: VatLineInput[];
+  /** Type de document : un avoir peut légitimement porter des montants négatifs. */
+  documentType?: "facture" | "avoir";
+  /** Dates ISO (AAAA-MM-JJ) : contrôle échéance ≥ date de facture. */
+  invoiceDate?: string;
+  dueDate?: string;
 };
 
 export type CoherenceIssue = {
@@ -27,8 +32,10 @@ export type CoherenceReport = {
   issues: CoherenceIssue[];
 };
 
-// Tolérance d'arrondi : 2 centimes pour les totaux, un peu plus pour la somme des lignes.
+// Tolérance d'arrondi de base : 2 centimes.
 const TOL = 0.02;
+/** Tolérance en euros proportionnelle au montant : ~0,1 % (arrondis multi-lignes). */
+const rel = (amount: number) => Math.max(TOL, Math.abs(amount) * 0.001);
 
 /**
  * Vérifie la cohérence des montants.
@@ -37,6 +44,7 @@ const TOL = 0.02;
 export function checkCoherence(input: InvoiceAmountsInput): CoherenceReport {
   const issues: CoherenceIssue[] = [];
   const { totalHT, totalVAT, totalTTC, vatLines } = input;
+  const isAvoir = input.documentType === "avoir";
 
   // 1) HT + TVA = TTC
   const expectedTTC = round2(totalHT + totalVAT);
@@ -47,36 +55,65 @@ export function checkCoherence(input: InvoiceAmountsInput): CoherenceReport {
     });
   }
 
-  // 2) Montants négatifs inattendus
-  if (totalHT < 0 || totalTTC < 0) {
+  // 2) Signe des montants
+  if (totalVAT < 0 && !isAvoir) {
+    issues.push({
+      severity: "error",
+      message: "Le montant de TVA est négatif : lecture ou saisie probablement erronée.",
+    });
+  }
+  if ((totalHT < 0 || totalTTC < 0) && !isAvoir) {
+    issues.push({
+      severity: "error",
+      message: "Un montant total est négatif alors que ce document n'est pas un avoir.",
+    });
+  }
+  if ((totalHT < 0 || totalVAT < 0 || totalTTC < 0) && isAvoir) {
     issues.push({
       severity: "warning",
-      message: "Un montant total est négatif (normal seulement pour un avoir).",
+      message: "Avoir : saisissez les montants en valeur POSITIVE (le signe est appliqué au calcul de TVA).",
     });
   }
 
+  // 3) TVA ne peut pas dépasser le TTC ; HT ne peut pas dépasser le TTC
+  const absHT = Math.abs(totalHT);
+  const absVAT = Math.abs(totalVAT);
+  const absTTC = Math.abs(totalTTC);
+  if (absVAT > absTTC + TOL) {
+    issues.push({ severity: "error", message: "Le montant de TVA dépasse le total TTC." });
+  }
+  if (absHT > absTTC + TOL) {
+    issues.push({ severity: "error", message: "Le total HT dépasse le total TTC." });
+  }
+
+  // 4) Échéance ≥ date de facture
+  if (input.invoiceDate && input.dueDate && input.dueDate < input.invoiceDate) {
+    issues.push({ severity: "warning", message: "La date d'échéance précède la date de facture." });
+  }
+
   if (vatLines.length > 0) {
-    // 3) Somme des lignes = totaux
+    // 5) Somme des lignes = totaux (tolérance quasi constante).
     const sumBase = round2(vatLines.reduce((s, l) => s + l.baseHT, 0));
     const sumVat = round2(vatLines.reduce((s, l) => s + l.vatAmount, 0));
+    const lineTol = Math.max(TOL, 0.005 * vatLines.length);
 
-    if (Math.abs(sumBase - totalHT) > TOL * vatLines.length + TOL) {
+    if (Math.abs(sumBase - totalHT) > lineTol) {
       issues.push({
         severity: "warning",
         message: `La somme des bases HT par taux (${sumBase}) ne correspond pas au total HT (${totalHT}).`,
       });
     }
-    if (Math.abs(sumVat - totalVAT) > TOL * vatLines.length + TOL) {
+    if (Math.abs(sumVat - totalVAT) > lineTol) {
       issues.push({
         severity: "warning",
         message: `La somme des TVA par taux (${sumVat}) ne correspond pas au total TVA (${totalVAT}).`,
       });
     }
 
-    // 4) Pour chaque ligne : TVA ≈ baseHT * taux / 100
+    // 6) Pour chaque ligne : TVA ≈ baseHT * taux / 100 (tolérance ~0,1 %).
     for (const l of vatLines) {
       const expected = round2((l.baseHT * l.rate) / 100);
-      if (Math.abs(expected - l.vatAmount) > Math.max(TOL, Math.abs(expected) * 0.01)) {
+      if (Math.abs(expected - l.vatAmount) > rel(expected)) {
         issues.push({
           severity: "warning",
           message: `Ligne ${l.rate} % : ${l.baseHT} × ${l.rate} % = ${expected}, mais la TVA indiquée est ${l.vatAmount}.`,
@@ -89,16 +126,18 @@ export function checkCoherence(input: InvoiceAmountsInput): CoherenceReport {
         });
       }
     }
-  } else if (totalHT > 0 && totalVAT > 0) {
-    // 5) Pas de détail par taux : on vérifie un taux global plausible.
-    //    Tolérance de 0,5 point pour absorber les arrondis (fréquents sur les
-    //    factures télécom, énergie, etc.).
-    const impliedRate = round2((totalVAT / totalHT) * 100);
-    const nearStandard = KNOWN_VAT_RATES.some((r) => Math.abs(r - impliedRate) <= 0.5);
-    if (!nearStandard) {
+  } else if (absHT > 0 && absVAT > 0) {
+    // 7) Pas de détail par taux : le taux global implicite doit produire une
+    //    TVA proche (borne EN EUROS, pas en points), et 0 % n'est pas un repère.
+    const positiveRates = KNOWN_VAT_RATES.filter((r) => r > 0);
+    const near = positiveRates.some(
+      (r) => Math.abs(absVAT - round2((absHT * r) / 100)) <= rel(absHT),
+    );
+    if (!near) {
+      const impliedRate = round2((absVAT / absHT) * 100);
       issues.push({
-        severity: "warning",
-        message: `Le taux de TVA global implicite (${impliedRate} %) n'est pas un taux standard : à vérifier.`,
+        severity: Math.abs(absVAT - round2((absHT * 20) / 100)) > absHT * 0.01 ? "error" : "warning",
+        message: `Le taux de TVA global implicite (${impliedRate} %) ne correspond à aucun taux standard : à vérifier.`,
       });
     }
   }

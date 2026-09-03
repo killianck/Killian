@@ -3,12 +3,14 @@
 // Ces fonctions sont volontairement "pures" (texte -> données) pour pouvoir être
 // testées facilement, indépendamment de la lecture du PDF.
 //
-// ⚠️ L'extraction automatique n'est jamais fiable à 100 % : le résultat doit
-//    toujours être vérifié par l'utilisateur.
+// ⚠️ RÈGLE FONDAMENTALE : ne JAMAIS inventer une valeur. En cas de doute, un
+//    champ reste `undefined` (jamais 0 ni une valeur devinée présentée comme
+//    sûre) et un avertissement l'explique. Chaque montant garde la trace de sa
+//    PROVENANCE (lu / calculé / deviné) ; l'indice de confiance en tient compte.
 
 import type { ParsedInvoice, ParsedVatLine } from "./types";
 import { findMoneyTokens, parseFrAmount } from "./frenchNumbers";
-import { round2 } from "@/lib/tva/rules";
+import { round2, EXTRACTION_VAT_RATES, isPlausibleVatRate } from "@/lib/tva/rules";
 
 /** Enlève les accents pour comparer les mots-clés sans se soucier de la casse. */
 const COMBINING_MARKS = /[̀-ͯ]/g;
@@ -25,17 +27,21 @@ const MONTHS_FR: Record<string, number> = {
 
 function toIso(day: number, month: number, year: number): string | undefined {
   if (year < 100) year += year < 70 ? 2000 : 1900;
-  if (month < 1 || month > 12 || day < 1 || day > 31 || year < 1990 || year > 2100) return undefined;
+  if (month < 1 || month > 12 || day < 1 || day > 31 || year < 2000 || year > 2100) return undefined;
   return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
 /** Toutes les dates d'une ligne (format JJ/MM/AAAA ou "15 août 2026"). */
 export function datesInLine(line: string): string[] {
   const out: string[] = [];
-  const numeric = /\b(\d{1,2})[/.\-](\d{1,2})[/.\-](\d{2,4})\b/g;
+  const numeric = /(\d{1,2})([/.\-])(\d{1,2})\2(\d{4}|\d{2})\b/g;
   let m: RegExpExecArray | null;
   while ((m = numeric.exec(line))) {
-    const iso = toIso(Number(m[1]), Number(m[2]), Number(m[3]));
+    const [, a, sep, b, y] = m;
+    // « 3.1.2026 » (jour + mois à 1 chiffre, séparateur point ou tiret, année à
+    // 4 chiffres) ressemble bien plus à un numéro de version qu'à une date.
+    if (sep !== "/" && a.length === 1 && b.length === 1 && y.length === 4) continue;
+    const iso = toIso(Number(a), Number(b), Number(y));
     if (iso) out.push(iso);
   }
   const textual = /\b(\d{1,2})\s+([A-Za-zÀ-ÿ]+)\s+(\d{4})\b/g;
@@ -49,44 +55,71 @@ export function datesInLine(line: string): string[] {
   return out;
 }
 
-export function extractDates(text: string): { invoiceDate?: string; dueDate?: string } {
+/**
+ * Une date de facture est-elle plausible ? On accepte largement (comptabilité
+ * en retard) mais on écarte l'absurde : > 45 j dans le futur, ou > 5 ans dans
+ * le passé (ex. « signé le 04/09/2018 » pris pour la date de facture).
+ */
+function isPlausibleInvoiceDate(iso: string, today = new Date()): boolean {
+  const d = new Date(iso + "T00:00:00Z");
+  if (Number.isNaN(d.getTime())) return false;
+  const now = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate());
+  const DAY = 86_400_000;
+  return d.getTime() <= now + 45 * DAY && d.getTime() >= now - 1826 * DAY;
+}
+
+export type ExtractedDates = { invoiceDate?: string; dueDate?: string; notes: string[] };
+
+export function extractDates(text: string): ExtractedDates {
   const stripped = stripBoilerplate(text);
   const lines = stripped.split(/\r?\n/);
+  const notes: string[] = [];
   let invoiceDate: string | undefined;
   let dueDate: string | undefined;
 
   const DUE = /(echeance|date limite|a regler (avant|le)|payable (le|avant)|reglement (avant|au|le)|a payer (avant|le)|date de (reglement|paiement)|paiement (au|le))/;
-  const INVOICE = /(date de facture|date facture|date d.?emission|date d.?edition|emise? le|edite le|fait le|^date\b|date\s*:)/;
-  const OTHER = /(livraison|commande|prestation|periode|reception|expedi)/;
+  const INVOICE = /(date de facture|date facture|date d.?emission|date d.?edition|emise? le|edite le|fait le|facture du|^date\b|date\s*:)/;
+  const OTHER = /(livraison|commande|prestation|periode|reception|expedi|creee? le|inscription|immatricul)/;
 
   for (let i = 0; i < lines.length; i++) {
     const d = deburr(lines[i]);
     const dates = datesInLine(lines[i]);
-    // date sur la même ligne, ou sur la ligne suivante si la ligne courante
-    // n'est qu'un libellé ("Règlement au" \n "31/07/2026")
     const nextDates = dates.length ? dates : datesInLine(lines[i + 1] ?? "");
 
-    if (DUE.test(d) && !dueDate && nextDates.length) dueDate = nextDates[0];
-    else if (INVOICE.test(d) && !OTHER.test(d) && !invoiceDate && dates.length) invoiceDate = dates[0];
+    if (DUE.test(d) && !dueDate && nextDates.length && isPlausibleInvoiceDate(nextDates[0])) {
+      dueDate = nextDates[0];
+    } else if (INVOICE.test(d) && !OTHER.test(d) && !invoiceDate && dates.length) {
+      invoiceDate = dates[0];
+    }
   }
 
-  // À défaut : première date "raisonnable" du document = date de facture
+  // À défaut : première date "plausible" du document = date de facture, MAIS on
+  // le signale (c'est une supposition, pas une lecture fiable).
   if (!invoiceDate) {
     for (const line of lines) {
-      const dates = datesInLine(line);
-      if (dates.length) {
-        invoiceDate = dates[0];
+      const candidate = datesInLine(line).find((iso) => isPlausibleInvoiceDate(iso));
+      if (candidate) {
+        invoiceDate = candidate;
+        notes.push(
+          "Date de facture non libellée : première date plausible du document retenue — à vérifier impérativement.",
+        );
         break;
       }
     }
   }
 
-  // Termes "à réception" / "comptant" => échéance = date de facture
+  if (invoiceDate && !isPlausibleInvoiceDate(invoiceDate)) {
+    notes.push(`Date de facture détectée (${invoiceDate}) inhabituelle — à vérifier.`);
+  }
+  if (invoiceDate && dueDate && dueDate < invoiceDate) {
+    notes.push("La date d'échéance précède la date de facture — à vérifier.");
+  }
+
   if (!dueDate && /(a reception|comptant|paiement immediat|des reception)/.test(deburr(stripped)) && invoiceDate) {
     dueDate = invoiceDate;
   }
 
-  return { invoiceDate, dueDate };
+  return { invoiceDate, dueDate, notes };
 }
 
 // ---------------------------------------------------------------------------
@@ -105,44 +138,70 @@ const NUMBER_BLOCKLIST = /^(mail|https?|www|tel|fax|iban|bic|siret|siren|tva|rcs
 
 /**
  * Lignes de « bas de page » juridiques (conditions générales, loi, pénalités…).
- * On les écarte avant de chercher un numéro, une date ou un montant : elles
- * contiennent souvent des nombres et des dates trompeurs (« loi n° 93.122 du
- * 31/12/1992 », « indemnité de 40 € »…).
+ * On ne retire une ligne QUE si elle ne porte aucun montant NI mot-clé de total :
+ * une vraie ligne de totaux contenant le mot « article » ou « escompte » doit
+ * être conservée.
  */
-const BOILERPLATE =
-  /(conditions?\s+generales|\bloi\s+n|\bdecret\b|ministeriel|\btribunal\b|competent|penalit|escompte|recouvrement|reserve de propriete|clause|litige|article\s+l?\s?\d|nos factures sont|c\.?g\.?v\.?|delai de paiement legal|indemnite forfaitaire)/;
+const BOILERPLATE_STRONG =
+  /(conditions?\s+generales|reserve de propriete|\bc\.?g\.?v\.?\b|tribunal|seul competent|indemnite forfaitaire|nos factures sont payables|penalit(e|es|es de retard)|taux de penalite|\bloi\s+n|\bdecret\b|\barrete\s+(du|ministeriel)|ministeriel|escompte|frais de recouvrement|reglement (posterieur|a l.?echeance)|mentions? legales|code de commerce|pas d.?escompte|\brcs\b|greffe)/;
+const BOILERPLATE_HEAD = /^\s*(article\s+l\.?\s?\d)/;
 
-/** Retire les lignes de bas de page juridiques. */
+const TOTAL_KW_ANY = /(total|montant|\bht\b|\bttc\b|\btva\b|\bt\.v\.a|net a payer|a payer|toutes taxes|base|taxe)/;
+
+/** Retire les lignes de bas de page juridiques (sans jamais perdre un montant). */
 export function stripBoilerplate(text: string): string {
   return text
     .split(/\r?\n/)
-    .filter((line) => !BOILERPLATE.test(deburr(line)))
+    .filter((line) => {
+      const d = deburr(line);
+      if (BOILERPLATE_HEAD.test(d)) return false;
+      if (!BOILERPLATE_STRONG.test(d)) return true;
+      // ligne « juridique » : on ne la retire que si elle ne contient ni montant
+      // ni mot-clé de total (sinon c'est peut-être une vraie ligne de totaux).
+      return findMoneyTokens(line).length > 0 && TOTAL_KW_ANY.test(d);
+    })
     .join("\n");
 }
 
 const NUMBER_TOKEN = /^[A-Za-z]{0,5}\d[A-Za-z0-9/\-_.]{2,20}$/;
 /** Un « numéro » qui n'est en fait qu'un nombre décimal (montant, référence de loi…). */
 const LOOKS_NUMERIC = /^\d{1,3}([.,]\d{1,3})+$/;
+/** Contextes qui ne sont PAS un numéro de facture (bon de commande client, devis…). */
+const NOT_INVOICE_NUM_CONTEXT = /(commande|bon de commande|\bb\.?c\.?\b|devis|votre (ref|reference|commande)|client|contrat|dossier)/;
 
 export function extractInvoiceNumber(input: string): string | undefined {
   const text = stripBoilerplate(input);
-  const patterns = [
-    /\bn[o°º]\s*(?:de\s+)?facture\s*[:.]?\s*([A-Za-z0-9][A-Za-z0-9/\-_.]{3,20})/i,
-    /\bfacture\s*n[o°º]\s*[:.]?\s*([A-Za-z0-9][A-Za-z0-9/\-_.]{3,20})/i,
+  const isDate = /^(\d{1,2}[/.\-]\d{1,2}[/.\-]\d{2,4}|\d{4}-\d{2}-\d{2})$/;
+  const ok = (v: string) =>
+    v && !NUMBER_BLOCKLIST.test(v) && /\d/.test(v) && !isDate.test(v) && !LOOKS_NUMERIC.test(v);
+
+  // On priorise les libellés explicites « n° facture » / « facture n° ».
+  const strong = [
+    /\bn[o°º]\s*(?:de\s+)?facture\s*[:.]?\s*([A-Za-z0-9][A-Za-z0-9/\-_.]{2,20})/i,
+    /\bfacture\s*(?:n[o°º]|#)\s*[:.]?\s*([A-Za-z0-9][A-Za-z0-9/\-_.]{2,20})/i,
+  ];
+  const weak = [
     /\b(?:facture|avoir|invoice)\s*(?:n[o°º]|number|#)?\s*[:.]?\s*([A-Za-z0-9][A-Za-z0-9/\-_.]{3,20})/i,
     /\bn[o°º]\s*[:.]?\s*([A-Za-z0-9][A-Za-z0-9/\-_.]{4,20})/i,
     /\bref(?:erence)?\s*[:.]?\s*([A-Za-z0-9][A-Za-z0-9/\-_.]{3,20})/i,
   ];
-  const isDate = /^\d{1,2}[/.\-]\d{1,2}[/.\-]\d{2,4}$/;
-  const ok = (v: string) =>
-    v && !NUMBER_BLOCKLIST.test(v) && /\d/.test(v) && !isDate.test(v) && !LOOKS_NUMERIC.test(v);
 
-  for (const re of patterns) {
-    for (const m of text.matchAll(new RegExp(re, "gi"))) {
-      const v = m[1].replace(/[.,;:]+$/, "").trim();
-      if (ok(v)) return v;
+  const tryPatterns = (patterns: RegExp[], guardContext: boolean) => {
+    for (const re of patterns) {
+      for (const m of text.matchAll(new RegExp(re, "gi"))) {
+        if (guardContext) {
+          const around = deburr(text.slice(Math.max(0, m.index - 40), m.index + 10));
+          if (NOT_INVOICE_NUM_CONTEXT.test(around)) continue;
+        }
+        const v = m[1].replace(/[.,;:]+$/, "").trim();
+        if (ok(v)) return v;
+      }
     }
-  }
+    return undefined;
+  };
+
+  const fromStrong = tryPatterns(strong, false);
+  if (fromStrong) return fromStrong;
 
   // Mise en page « en-tête de tableau » : le libellé (« Facture N° ») est sur une
   // ligne et la valeur sur la ligne suivante (« FAT000546  08/06/2026 »).
@@ -156,7 +215,8 @@ export function extractInvoiceNumber(input: string): string | undefined {
       if (NUMBER_TOKEN.test(v) && ok(v) && /[A-Za-z]/.test(v)) return v;
     }
   }
-  return undefined;
+
+  return tryPatterns(weak, true);
 }
 
 export function extractSiret(text: string): string | undefined {
@@ -178,23 +238,28 @@ export function extractVatNumber(text: string): string | undefined {
   return m ? m[0].replace(/\s/g, "").toUpperCase() : undefined;
 }
 
-export function extractCurrency(text: string): string {
-  if (/€|\beur\b/i.test(text)) return "EUR";
-  if (/\$|\busd\b/i.test(text)) return "USD";
-  if (/£|\bgbp\b/i.test(text)) return "GBP";
-  if (/\bchf\b/i.test(text)) return "CHF";
-  return "EUR";
+export function extractCurrency(text: string): { currency: string; ambiguous: boolean } {
+  const t = stripBoilerplate(text);
+  const eur = (t.match(/€|\beur\b/gi) ?? []).length;
+  const usd = (t.match(/\$|\busd\b/gi) ?? []).length;
+  const gbp = (t.match(/£|\bgbp\b/gi) ?? []).length;
+  const chf = (t.match(/\bchf\b/gi) ?? []).length;
+  const max = Math.max(eur, usd, gbp, chf);
+  if (max === 0) return { currency: "EUR", ambiguous: false };
+  const ambiguous = [eur, usd, gbp, chf].filter((n) => n > 0).length > 1;
+  if (usd === max) return { currency: "USD", ambiguous };
+  if (gbp === max) return { currency: "GBP", ambiguous };
+  if (chf === max) return { currency: "CHF", ambiguous };
+  return { currency: "EUR", ambiguous };
 }
 
 const ORG_SUFFIX = /\b(SARL|SASU|SAS|EURL|SCI|SA|EI|SNC|SCOP|Sàrl|S\.A\.S\.?|S\.A\.R\.L\.?)\b/i;
 
 export function extractSupplier(text: string): string | undefined {
-  // 1) Une ligne du type "MA SOCIÉTÉ SARL"
   for (const line of text.split(/\r?\n/).slice(0, 12)) {
     const m = line.match(new RegExp(`([A-Za-zÀ-ÿ0-9][\\w &'.\\-À-ÿ]{1,55}?${ORG_SUFFIX.source})\\b`, "i"));
-    if (m && !/facture|facture?e a|livre a/i.test(m[1])) return m[1].trim();
+    if (m && !/factur|livre a|adresse? a|client/i.test(deburr(m[1]))) return m[1].trim();
   }
-  // 2) À défaut : la première ligne significative (souvent l'en-tête du vendeur)
   for (const raw of text.split(/\r?\n/).slice(0, 6)) {
     const line = raw.trim();
     if (line.length < 3) continue;
@@ -211,17 +276,16 @@ export function extractSupplier(text: string): string | undefined {
 // ---------------------------------------------------------------------------
 
 const KW = {
-  ht: /(total|montant|base|sous.?total)\s*h\.?\s?t\.?\b|total\s+hors\s+taxe|\bht\s*[:=]/,
-  ttc: /(total|montant|net)\s*(t\.?\s?t\.?c\.?|a\s+payer|du|net)\b|toutes taxes comprises|net a payer|\bttc\s*[:=]/,
+  ht: /(total|montant|base|sous.?total)\s*h\.?\s?t\.?\b|total\s+hors\s+taxe|\bht\s*[:=]|base\s+(?:hors\s+taxe|ht)/,
+  ttc: /(total|montant|net|reste)\s*(t\.?\s?t\.?c\.?|a\s+payer|du|net|a\s+regler)\b|toutes taxes comprises|net a payer|montant du|\bttc\s*[:=]/,
   // "Total TVA", "Montant TVA", "TVA :", ou une ligne de récap "TVA 20 % ..."
   tva: /(total|montant)\s*(de\s+)?(la\s+)?t\.?\s?v\.?\s?a\.?\b|\bt\.?\s?v\.?\s?a\.?\s*[:=]|\bt\.?\s?v\.?\s?a\.?\s*\(?\s*\d{1,2}([.,]\d{1,2})?\s*%/,
 };
+/** Un libellé qui décrit une BASE, pas un montant de taxe. */
+const KW_IS_BASE = /(base|montant\s+ht|assiette|ht\s+soumis|soumis a (la )?tva)/;
 
-/** Dernier montant d'une ligne (les montants sont souvent alignés à droite). */
-function lastMoney(line: string): number | undefined {
-  const tokens = findMoneyTokens(line);
-  return tokens.length ? tokens[tokens.length - 1] : undefined;
-}
+/** Provenance d'un montant : influe fortement sur la confiance. */
+type Provenance = "observed" | "table" | "computed" | "guessed";
 
 /** Valeur la plus fréquente d'une liste (sinon la plus grande). */
 function mostFrequent(values: number[]): number {
@@ -238,52 +302,58 @@ function mostFrequent(values: number[]): number {
   return best;
 }
 
-const STANDARD_RATES = [20, 10, 5.5, 2.1, 8.5];
+/** Taux « plausible » le plus proche du ratio vat/ht (tolérance stricte : 0,15 pt). */
+function impliedStandardRate(vat: number, ht: number): number | undefined {
+  if (ht <= 0 || vat < 0) return undefined;
+  const r = (vat / ht) * 100;
+  return EXTRACTION_VAT_RATES.find((s) => Math.abs(s - r) <= 0.15);
+}
 
 /**
  * Cherche, sur une même ligne, un triplet (HT, TVA, TTC) cohérent :
- * HT + TVA ≈ TTC et TVA / HT ≈ un taux de TVA standard.
- * Utile quand les totaux sont présentés dans un tableau (libellés et valeurs
- * sur des lignes séparées). Renvoie le triplet dont le HT est le plus élevé.
+ *   HT + TVA ≈ TTC   et   TVA / HT ≈ un taux de TVA standard,
+ * ET le TTC est RÉELLEMENT présent sur la ligne (pas seulement calculé),
+ * OU la ligne porte un mot-clé de total (HT / TVA / TTC / net à payer).
+ * C'est le cas des tableaux de totaux où libellés et valeurs sont sur des
+ * lignes différentes. Renvoie le meilleur candidat, ou undefined.
  */
 function bestCoherentTriple(
   lines: string[],
   isRateValue: (v: number) => boolean,
-): { ht: number; vat: number; ttc: number } | undefined {
-  const rateOf = (vat: number, ht: number) => {
-    if (ht <= 0) return undefined;
-    const r = (vat / ht) * 100;
-    return STANDARD_RATES.find((s) => Math.abs(s - r) <= 0.4);
-  };
-
-  type Cand = { ht: number; vat: number; ttc: number; score: number };
+): { ht: number; vat: number; ttc: number; observedTtc: boolean } | undefined {
+  type Cand = { ht: number; vat: number; ttc: number; observedTtc: boolean; score: number };
   let best: Cand | undefined;
 
   for (const raw of lines) {
     const d = deburr(raw);
-    if (/intracommunautaire|n[o°]\s*tva|iban|siret/.test(d)) continue;
+    if (/intracommunautaire|n[o°]\s*tva|iban|siret|\brib\b/.test(d)) continue;
+    const hasTotalKw = KW.ht.test(d) || KW.tva.test(d) || KW.ttc.test(d);
     const tokens = [...new Set(findMoneyTokens(raw).filter((v) => v > 0 && !isRateValue(v)))];
     if (tokens.length < 2) continue;
 
     for (const ht of tokens) {
       for (const vat of tokens) {
         if (vat >= ht) continue;
-        const rate = rateOf(vat, ht);
+        const rate = impliedStandardRate(vat, ht);
         if (!rate) continue;
         const expectedTtc = round2(ht + vat);
-        const found = tokens.find((t) => Math.abs(t - expectedTtc) <= 0.05);
-        // On préfère : un TTC réellement présent sur la ligne, puis un taux
-        // « courant » (20 / 10 / 5,5), puis le HT le plus élevé.
+        const found = tokens.find((t) => Math.abs(t - expectedTtc) <= 0.02);
+        const observedTtc = found !== undefined;
+        // On n'accepte un triplet QUE si le TTC est observé, ou si la ligne
+        // porte un mot-clé de total (tableau récapitulatif).
+        if (!observedTtc && !hasTotalKw) continue;
         const score =
-          (found !== undefined ? 100 : 0) + ([20, 10, 5.5].includes(rate) ? 10 : 0);
-        const cand: Cand = { ht, vat, ttc: found ?? expectedTtc, score };
+          (observedTtc ? 100 : 0) +
+          (hasTotalKw ? 20 : 0) +
+          ([20, 10, 5.5].includes(rate) ? 10 : 0);
+        const cand: Cand = { ht, vat, ttc: found ?? expectedTtc, observedTtc, score };
         if (!best || cand.score > best.score || (cand.score === best.score && cand.ht > best.ht)) {
           best = cand;
         }
       }
     }
   }
-  return best ? { ht: best.ht, vat: best.vat, ttc: best.ttc } : undefined;
+  return best ? { ht: best.ht, vat: best.vat, ttc: best.ttc, observedTtc: best.observedTtc } : undefined;
 }
 
 export type ExtractedAmounts = {
@@ -293,21 +363,31 @@ export type ExtractedAmounts = {
   vatLines: ParsedVatLine[];
   rates: number[];
   notes: string[];
+  /** true si au moins un total a été calculé/deviné (et non lu tel quel). */
+  uncertain: boolean;
+  provenance: { ht?: Provenance; vat?: Provenance; ttc?: Provenance };
 };
 
 export function extractAmounts(input: string): ExtractedAmounts {
   const text = stripBoilerplate(input);
   const lines = text.split(/\r?\n/);
   const notes: string[] = [];
+  const provenance: ExtractedAmounts["provenance"] = {};
 
-  // Taux de TVA présents dans le document
-  const rates = [
-    ...new Set(
-      (text.match(/(?<![\d.,])(\d{1,2}(?:[.,]\d{1,2})?)\s*%/g) ?? [])
-        .map((r) => parseFrAmount(r.replace("%", "")))
-        .filter((n): n is number => n !== null && n >= 0 && n <= 30),
-    ),
-  ];
+  // Taux de TVA présents : uniquement des taux PLAUSIBLES, et pas ceux annoncés
+  // comme une remise / un acompte / une pénalité.
+  const rateHits: number[] = [];
+  const rateRe = /(?<![\d.,])(-?\d{1,2}(?:[.,]\d{1,2})?)\s*%/g;
+  let rm: RegExpExecArray | null;
+  while ((rm = rateRe.exec(text))) {
+    const before = deburr(text.slice(Math.max(0, rm.index - 24), rm.index));
+    if (rm[1].startsWith("-") || /(remise|escompte|rabais|ristourne|acompte|penalit|majoration|reduction)/.test(before)) {
+      continue;
+    }
+    const n = parseFrAmount(rm[1]);
+    if (n !== null && n >= 0 && n <= 30 && isPlausibleVatRate(n)) rateHits.push(n);
+  }
+  const rates = [...new Set(rateHits)];
   const nonZeroRates = rates.filter((r) => r > 0);
   const isRateValue = (v: number) => rates.some((r) => Math.abs(r - v) < 0.001);
 
@@ -324,69 +404,126 @@ export function extractAmounts(input: string): ExtractedAmounts {
     const tokens = findMoneyTokens(raw).filter((v) => !isRateValue(v));
     if (!tokens.length) continue;
 
-    if (KW.ttc.test(d)) ttcCandidates.push(...tokens);
-    else if (KW.tva.test(d)) vatCandidates.push(Math.max(...tokens));
-    else if (KW.ht.test(d)) htCandidates.push(tokens[tokens.length - 1]);
-  }
-
-  if (ttcCandidates.length) totalTTC = Math.max(...ttcCandidates);
-  if (vatCandidates.length) totalVAT = Math.max(...vatCandidates);
-  if (htCandidates.length) totalHT = mostFrequent(htCandidates);
-
-  // Mise en page « tableau de totaux » : les libellés (Base / Taux / Taxe /
-  // Total HT / Total TTC / NET A PAYER) sont sur une ligne, les valeurs sur la
-  // suivante — donc aucun mot-clé ne tombe sur la même ligne qu'un montant.
-  // On repère alors, sur une même ligne, un triplet (HT, TVA, TTC) cohérent :
-  //   HT + TVA ≈ TTC   et   TVA / HT ≈ un taux standard.
-  const coherent = bestCoherentTriple(lines, isRateValue);
-  if (coherent) {
-    const allKnownAndCoherent =
-      totalHT !== undefined &&
-      totalVAT !== undefined &&
-      totalTTC !== undefined &&
-      Math.abs(totalHT + totalVAT - totalTTC) <= 0.05;
-    if (!allKnownAndCoherent) {
-      totalHT = coherent.ht;
-      totalVAT = coherent.vat;
-      totalTTC = coherent.ttc;
+    // HT testé AVANT TVA (une ligne « Base HT … TVA : » décrit une base).
+    if (KW.ht.test(d) || (KW.tva.test(d) && KW_IS_BASE.test(d))) {
+      htCandidates.push(tokens[tokens.length - 1]);
+    } else if (KW.ttc.test(d)) {
+      ttcCandidates.push(...tokens);
+    } else if (KW.tva.test(d)) {
+      // sur une ligne de TVA, prendre le token cohérent avec un taux ×base,
+      // à défaut le dernier (aligné à droite), jamais Math.max aveugle.
+      const consistent = tokens.find((t) =>
+        tokens.some((b) => b !== t && impliedStandardRate(t, b) !== undefined),
+      );
+      vatCandidates.push(consistent ?? tokens[tokens.length - 1]);
     }
   }
 
-  // Filet de sécurité : une ligne "Total ... montant" en bas de page
-  if (totalTTC === undefined) {
-    for (let i = lines.length - 1; i >= 0 && i > lines.length - 15; i--) {
-      const d = deburr(lines[i]);
-      if (/\btotal\b/.test(d) && !KW.ht.test(d) && !KW.tva.test(d)) {
-        const m = lastMoney(lines[i]);
-        if (m !== undefined) { totalTTC = m; break; }
+  if (ttcCandidates.length) {
+    totalTTC = Math.max(...ttcCandidates);
+    provenance.ttc = "observed";
+    if (Math.max(...ttcCandidates) - Math.min(...ttcCandidates) > 0.05 * Math.max(...ttcCandidates)) {
+      notes.push("Plusieurs montants « TTC » possibles ont été trouvés — vérifiez le total retenu.");
+    }
+  }
+  if (vatCandidates.length) {
+    totalVAT = Math.max(...vatCandidates);
+    provenance.vat = "observed";
+  }
+  if (htCandidates.length) {
+    totalHT = mostFrequent(htCandidates);
+    provenance.ht = "observed";
+  }
+
+  // Tableau de totaux (libellés séparés des valeurs).
+  const triple = bestCoherentTriple(lines, isRateValue);
+  if (triple) {
+    const haveAll = totalHT !== undefined && totalVAT !== undefined && totalTTC !== undefined;
+    const coherentAll = haveAll && Math.abs(totalHT! + totalVAT! - totalTTC!) <= 0.05;
+    const conflictsTtc = totalTTC !== undefined && Math.abs(totalTTC - triple.ttc) > 0.05;
+
+    if (haveAll && !coherentAll) {
+      // Les 3 totaux « mots-clés » se contredisent : on fait confiance au
+      // triplet, lui, arithmétiquement cohérent — mais on le signale.
+      totalHT = triple.ht;
+      totalVAT = triple.vat;
+      totalTTC = triple.ttc;
+      provenance.ht = "table";
+      provenance.vat = "table";
+      provenance.ttc = triple.observedTtc ? "table" : "computed";
+      notes.push("Les totaux lus se contredisaient : recalculés depuis le tableau — à vérifier.");
+    } else if (!haveAll && conflictsTtc) {
+      // Le triplet contredit un TTC pourtant lu : on garde le TTC lu, on ne
+      // fabrique rien, on avertit fortement.
+      notes.push(
+        "Plusieurs totaux possibles ont été détectés (bloc de totaux vs. lignes du tableau) — vérifiez chaque montant.",
+      );
+      provenance.ttc = "guessed";
+    } else if (!haveAll) {
+      // On comble uniquement les trous.
+      if (totalHT === undefined) { totalHT = triple.ht; provenance.ht = "table"; }
+      if (totalVAT === undefined) { totalVAT = triple.vat; provenance.vat = "table"; }
+      if (totalTTC === undefined) {
+        totalTTC = triple.ttc;
+        provenance.ttc = triple.observedTtc ? "table" : "computed";
       }
     }
   }
 
-  // Complétion par calcul si un seul montant manque
-  const known = [totalHT, totalVAT, totalTTC].filter((v) => v !== undefined).length;
-  if (known === 2) {
-    if (totalHT === undefined && totalTTC !== undefined && totalVAT !== undefined) {
-      totalHT = round2(totalTTC - totalVAT);
-      notes.push("Total HT calculé (TTC − TVA).");
-    } else if (totalVAT === undefined && totalTTC !== undefined && totalHT !== undefined) {
-      totalVAT = round2(totalTTC - totalHT);
-      notes.push("Montant de TVA calculé (TTC − HT).");
-    } else if (totalTTC === undefined && totalHT !== undefined && totalVAT !== undefined) {
-      totalTTC = round2(totalHT + totalVAT);
-      notes.push("Total TTC calculé (HT + TVA).");
+  // Filet de sécurité : UNIQUEMENT une ligne explicitement « TTC / net à payer /
+  // montant dû » en bas de page, avec un contexte monétaire (pas « poids total »).
+  if (totalTTC === undefined) {
+    for (let i = lines.length - 1; i >= 0 && i > lines.length - 18; i--) {
+      const d = deburr(lines[i]);
+      if (!/(net a payer|montant du|\bttc\b|toutes taxes|reste a payer|a regler)/.test(d)) continue;
+      if (/(kg|km|\bh\b|heures?|jours?|colis|poids|points?|unites?)/.test(d)) continue;
+      const tokens = findMoneyTokens(lines[i]);
+      if (tokens.length) {
+        totalTTC = tokens[tokens.length - 1];
+        provenance.ttc = "guessed";
+        notes.push("Total TTC incertain (déduit d'une ligne de pied de page) — à vérifier.");
+        break;
+      }
     }
   }
 
-  // Taux déduit du rapport TVA / HT si aucun taux clair n'a été lu
-  // (tolérance de 0,5 point pour absorber les arrondis).
-  let inferredRate: number | undefined;
-  if (!nonZeroRates.length && totalHT && totalVAT) {
-    const raw = (totalVAT / totalHT) * 100;
-    inferredRate = [20, 10, 5.5, 2.1].find((r) => Math.abs(r - raw) <= 0.5);
+  // Complétion par calcul si un seul montant manque.
+  const known = [totalHT, totalVAT, totalTTC].filter((v) => v !== undefined).length;
+  if (known === 2) {
+    if (totalHT === undefined) {
+      totalHT = round2(totalTTC! - totalVAT!);
+      provenance.ht = "computed";
+      notes.push("Total HT calculé (TTC − TVA) — à vérifier.");
+    } else if (totalVAT === undefined) {
+      totalVAT = round2(totalTTC! - totalHT!);
+      provenance.vat = "computed";
+      notes.push("Montant de TVA calculé (TTC − HT) — à vérifier.");
+    } else if (totalTTC === undefined) {
+      totalTTC = round2(totalHT! + totalVAT!);
+      provenance.ttc = "computed";
+      notes.push("Total TTC calculé (HT + TVA) — à vérifier.");
+    }
   }
 
-  // Lignes de TVA
+  // Contrôles de vraisemblance sur le résultat (jamais silencieux).
+  if (totalVAT !== undefined && totalVAT < 0) {
+    notes.push("Montant de TVA négatif obtenu — lecture peu fiable, à corriger.");
+  }
+  if (
+    totalHT !== undefined && totalVAT !== undefined && totalHT > 0 &&
+    (totalVAT ?? 0) !== 0 && impliedStandardRate(totalVAT, totalHT) === undefined
+  ) {
+    const r = round2((totalVAT / totalHT) * 100);
+    notes.push(`Le taux de TVA implicite (${r} %) ne correspond à aucun taux connu — vérifiez HT et TVA.`);
+  }
+
+  // Taux déduit du rapport TVA / HT si aucun taux clair n'a été lu.
+  let inferredRate: number | undefined;
+  if (!nonZeroRates.length && totalHT && totalVAT) {
+    inferredRate = impliedStandardRate(totalVAT, totalHT);
+  }
+
+  // Lignes de TVA.
   let vatLines: ParsedVatLine[] = [];
   if (nonZeroRates.length === 1 && totalHT !== undefined && totalVAT !== undefined) {
     vatLines = [{ rate: nonZeroRates[0], baseHT: totalHT, vatAmount: totalVAT }];
@@ -397,24 +534,22 @@ export function extractAmounts(input: string): ExtractedAmounts {
   } else if (nonZeroRates.length > 1) {
     const found: ParsedVatLine[] = [];
     for (const raw of lines) {
-      const rateMatch = raw.match(/(\d{1,2}(?:[.,]\d{1,2})?)\s*%/);
-      if (!rateMatch) continue;
-      const rate = parseFrAmount(rateMatch[1]);
-      if (rate === null || rate <= 0) continue;
-      const tokens = findMoneyTokens(raw);
-      if (tokens.length < 2) continue;
-      // cherche (base, tva) tel que tva ≈ base * taux / 100
-      for (let a = 0; a < tokens.length; a++) {
-        for (let b = 0; b < tokens.length; b++) {
-          if (a === b) continue;
-          const expected = round2((tokens[a] * rate) / 100);
-          if (Math.abs(expected - tokens[b]) <= Math.max(0.02, expected * 0.01)) {
-            found.push({ rate, baseHT: tokens[a], vatAmount: tokens[b] });
+      for (const rMatch of raw.matchAll(/(\d{1,2}(?:[.,]\d{1,2})?)\s*%/g)) {
+        const rate = parseFrAmount(rMatch[1]);
+        if (rate === null || rate <= 0 || !isPlausibleVatRate(rate)) continue;
+        const tokens = findMoneyTokens(raw);
+        if (tokens.length < 2) continue;
+        for (let a = 0; a < tokens.length; a++) {
+          for (let b = 0; b < tokens.length; b++) {
+            if (a === b) continue;
+            const expected = round2((tokens[a] * rate) / 100);
+            if (Math.abs(expected - tokens[b]) <= Math.max(0.02, expected * 0.002)) {
+              found.push({ rate, baseHT: tokens[a], vatAmount: tokens[b] });
+            }
           }
         }
       }
     }
-    // déduplique par taux
     const byRate = new Map<number, ParsedVatLine>();
     for (const l of found) if (!byRate.has(l.rate)) byRate.set(l.rate, l);
     const candidate = [...byRate.values()];
@@ -422,17 +557,23 @@ export function extractAmounts(input: string): ExtractedAmounts {
     const sumVAT = round2(candidate.reduce((s, l) => s + l.vatAmount, 0));
     const okHT = totalHT === undefined || Math.abs(sumHT - totalHT) <= 0.05;
     const okVAT = totalVAT === undefined || Math.abs(sumVAT - totalVAT) <= 0.05;
-    if (candidate.length >= 2 && okHT && okVAT) {
+    // On ne peuple les totaux depuis les sommes QUE si elles recoupent un total lu.
+    if (candidate.length >= 2 && okHT && okVAT && (totalHT !== undefined || totalTTC !== undefined)) {
       vatLines = candidate;
-      if (totalHT === undefined) totalHT = sumHT;
-      if (totalVAT === undefined) totalVAT = sumVAT;
-      if (totalTTC === undefined) totalTTC = round2(sumHT + sumVAT);
+      if (totalHT === undefined) { totalHT = sumHT; provenance.ht = "table"; }
+      if (totalVAT === undefined) { totalVAT = sumVAT; provenance.vat = "table"; }
+      if (totalTTC === undefined) { totalTTC = round2(sumHT + sumVAT); provenance.ttc = "computed"; }
     } else {
       notes.push("Plusieurs taux de TVA détectés mais le détail par taux n'a pas pu être reconstitué de façon fiable.");
     }
   }
 
-  return { totalHT, totalVAT, totalTTC, vatLines, rates: nonZeroRates, notes };
+  const uncertain =
+    provenance.ht === "computed" || provenance.ht === "guessed" ||
+    provenance.vat === "computed" || provenance.vat === "guessed" ||
+    provenance.ttc === "computed" || provenance.ttc === "guessed";
+
+  return { totalHT, totalVAT, totalTTC, vatLines, rates: nonZeroRates, notes, uncertain, provenance };
 }
 
 // ---------------------------------------------------------------------------
@@ -440,13 +581,14 @@ export function extractAmounts(input: string): ExtractedAmounts {
 // ---------------------------------------------------------------------------
 
 export function buildParsedInvoice(text: string, engine: string): ParsedInvoice {
-  const clean = (text ?? "").replace(/ /g, " ");
+  const clean = (text ?? "").replace(/ /g, " ");
   const warnings: string[] = [];
 
   if (clean.replace(/\s/g, "").length < 25) {
     return {
       confidence: 0,
       engine,
+      amountsUncertain: true,
       warnings: [
         "Ce PDF ne contient pas de texte lisible (il s'agit probablement d'un scan ou d'une image). " +
           "Veuillez saisir les informations manuellement.",
@@ -454,41 +596,66 @@ export function buildParsedInvoice(text: string, engine: string): ParsedInvoice 
     };
   }
 
-  // extractDates / extractAmounts / extractInvoiceNumber ignorent déjà les
-  // mentions légales de bas de page (nombres et dates trompeurs).
-  const { invoiceDate, dueDate } = extractDates(clean);
-  const amounts = extractAmounts(clean);
-  warnings.push(...amounts.notes);
-
   const documentType = extractDocumentType(clean);
+  const { invoiceDate, dueDate, notes: dateNotes } = extractDates(clean);
+  const amounts = extractAmounts(clean);
+  warnings.push(...amounts.notes, ...dateNotes);
+
   const number = extractInvoiceNumber(clean);
   const siret = extractSiret(clean);
   const vatNumber = extractVatNumber(clean);
-  const currency = extractCurrency(clean);
+  const { currency, ambiguous: currencyAmbiguous } = extractCurrency(clean);
   const partyName = extractSupplier(clean);
 
+  // Un AVOIR se stocke en valeurs POSITIVES (le signe est porté par l'agrégation).
+  let { totalHT, totalVAT, totalTTC } = amounts;
+  let vatLines = amounts.vatLines;
+  if (documentType === "avoir") {
+    const abs = (n: number | undefined) => (n === undefined ? undefined : Math.abs(n));
+    if ([totalHT, totalVAT, totalTTC].some((n) => n !== undefined && n < 0)) {
+      warnings.push("Avoir : montants enregistrés en valeur positive (le signe est appliqué au calcul de TVA).");
+    }
+    totalHT = abs(totalHT);
+    totalVAT = abs(totalVAT);
+    totalTTC = abs(totalTTC);
+    vatLines = vatLines.map((l) => ({ rate: l.rate, baseHT: Math.abs(l.baseHT), vatAmount: Math.abs(l.vatAmount) }));
+  } else if ([totalHT, totalVAT, totalTTC].some((n) => n !== undefined && n < 0)) {
+    warnings.push("Un montant total est négatif alors que ce document est une facture — à vérifier (avoir ?).");
+  }
+
+  if (currencyAmbiguous) warnings.push("Devise ambiguë (plusieurs symboles monétaires détectés) — à vérifier.");
   if (!number) warnings.push("Numéro de facture non détecté.");
   if (!invoiceDate) warnings.push("Date de facture non détectée.");
   if (!dueDate) warnings.push("Date d'échéance non détectée (« Échéance non indiquée »).");
-  if (amounts.totalHT === undefined) warnings.push("Total HT non détecté.");
-  if (amounts.totalVAT === undefined) warnings.push("Montant de TVA non détecté.");
-  if (amounts.totalTTC === undefined) warnings.push("Total TTC non détecté.");
+  if (totalHT === undefined) warnings.push("Total HT non détecté.");
+  if (totalVAT === undefined) warnings.push("Montant de TVA non détecté.");
+  if (totalTTC === undefined) warnings.push("Total TTC non détecté.");
   if (!partyName) warnings.push("Nom du fournisseur / client non détecté.");
 
-  // Cohérence HT + TVA = TTC
+  // Cohérence HT + TVA = TTC : n'a de valeur que si les 3 ont été OBSERVÉS.
+  const allObserved =
+    amounts.provenance.ht === "observed" &&
+    amounts.provenance.vat === "observed" &&
+    amounts.provenance.ttc === "observed";
   let coherent = false;
-  if (amounts.totalHT !== undefined && amounts.totalVAT !== undefined && amounts.totalTTC !== undefined) {
-    coherent = Math.abs(amounts.totalHT + amounts.totalVAT - amounts.totalTTC) <= 0.02;
-    if (!coherent) warnings.push("Attention : HT + TVA ne correspond pas au TTC détecté. Vérifiez les montants.");
+  if (totalHT !== undefined && totalVAT !== undefined && totalTTC !== undefined) {
+    coherent = Math.abs(totalHT + totalVAT - totalTTC) <= 0.02;
+    if (!coherent) {
+      warnings.push("Attention : HT + TVA ne correspond pas au TTC détecté. Vérifiez les montants.");
+    }
   }
 
+  // Confiance : la PROVENANCE prime. Un total calculé / deviné plafonne la confiance.
+  const weight = (p?: Provenance) => (p === "observed" ? 1 : p === "table" ? 0.6 : p === "computed" ? 0.35 : p === "guessed" ? 0.15 : 0);
   const score =
-    (amounts.totalTTC !== undefined ? 0.4 : 0) +
-    (amounts.totalHT !== undefined ? 0.2 : 0) +
-    (amounts.totalVAT !== undefined ? 0.15 : 0) +
+    0.4 * weight(amounts.provenance.ttc) +
+    0.2 * weight(amounts.provenance.ht) +
+    0.15 * weight(amounts.provenance.vat) +
     (number ? 0.1 : 0) +
-    (invoiceDate ? 0.1 : 0) +
-    (coherent ? 0.05 : 0);
+    (invoiceDate && !dateNotes.length ? 0.1 : invoiceDate ? 0.04 : 0) +
+    (coherent && allObserved ? 0.05 : 0);
+  let confidence = Math.min(1, round2(score));
+  if (amounts.uncertain) confidence = Math.min(confidence, 0.5);
 
   return {
     documentType,
@@ -499,11 +666,12 @@ export function buildParsedInvoice(text: string, engine: string): ParsedInvoice 
     siret,
     vatNumber,
     currency,
-    totalHT: amounts.totalHT,
-    totalVAT: amounts.totalVAT,
-    totalTTC: amounts.totalTTC,
-    vatLines: amounts.vatLines.length ? amounts.vatLines : undefined,
-    confidence: Math.min(1, round2(score)),
+    totalHT,
+    totalVAT,
+    totalTTC,
+    vatLines: vatLines.length ? vatLines : undefined,
+    confidence,
+    amountsUncertain: amounts.uncertain || totalHT === undefined || totalVAT === undefined || totalTTC === undefined || !coherent,
     warnings,
     engine,
   };

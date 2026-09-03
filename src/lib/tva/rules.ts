@@ -31,9 +31,23 @@ export const VAT_RATES: ReadonlyArray<{ rate: number; label: string; note?: stri
 
 export const KNOWN_VAT_RATES = VAT_RATES.map((r) => r.rate);
 
+/**
+ * Taux NON NULS utilisés par l'analyse automatique des factures pour reconnaître
+ * un « taux de TVA » (par opposition à une remise, un acompte, une pénalité…).
+ * Inclut les taux particuliers d'Outre-mer et de Corse.
+ * SEULE source de vérité : l'extraction (src/lib/parsing) importe cette liste,
+ * elle ne code aucun taux en dur.
+ */
+export const EXTRACTION_VAT_RATES = [20, 13, 10, 8.5, 5.5, 2.1, 1.75, 1.05, 0.9] as const;
+
 /** Un taux est-il un taux français « standard » connu ? (sinon : à vérifier) */
 export function isKnownVatRate(rate: number): boolean {
   return KNOWN_VAT_RATES.some((r) => Math.abs(r - rate) < 0.001);
+}
+
+/** Le taux fait-il partie des taux reconnus par l'analyse automatique ? */
+export function isPlausibleVatRate(rate: number): boolean {
+  return EXTRACTION_VAT_RATES.some((r) => Math.abs(r - rate) < 0.001);
 }
 
 // -----------------------------------------------------------------------------
@@ -84,7 +98,12 @@ export function netVat(collected: number, deductible: number): number {
   return round2(collected - deductible);
 }
 
-/** Arrondi comptable à 2 décimales. */
+/**
+ * Arrondi comptable à 2 décimales, symétrique (les valeurs négatives sont
+ * arrondies avec la même règle que les positives : |−2,005| → 2,01 → −2,01).
+ */
 export function round2(n: number): number {
-  return Math.round((n + Number.EPSILON) * 100) / 100;
+  if (!Number.isFinite(n)) return 0;
+  const sign = n < 0 ? -1 : 1;
+  return (sign * Math.round((Math.abs(n) + Number.EPSILON) * 100)) / 100;
 }

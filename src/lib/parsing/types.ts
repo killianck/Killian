@@ -30,6 +30,12 @@ export type ParsedInvoice = {
 
   /** Indice de confiance global de 0 à 1 (0 = rien trouvé). */
   confidence: number;
+  /**
+   * true si les montants doivent être considérés comme NON fiables : un total
+   * manque, a été calculé/deviné, ou HT + TVA ≠ TTC. Sert à ne jamais afficher
+   * « cohérent » pour une facture dont l'analyse est incertaine.
+   */
+  amountsUncertain?: boolean;
   /** Messages destinés à l'utilisateur (pas de codes techniques). */
   warnings: string[];
   /** Nom du moteur d'analyse utilisé. */
@@ -37,9 +43,11 @@ export type ParsedInvoice = {
 };
 
 export type ParseInput = {
-  /** Contenu binaire du PDF. */
+  /** Contenu binaire du fichier (PDF ou image). */
   fileBuffer: Buffer;
   fileName: string;
+  /** Type MIME si connu (ex. "application/pdf", "image/jpeg"). */
+  mimeType?: string;
 };
 
 export interface InvoiceParser {

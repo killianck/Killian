@@ -10,7 +10,7 @@
 //   "20,00 %"     -> 20
 //   "-49,90"      -> -49.9
 
-const SPACES = /[\s   ]/g;
+const SPACES = /[\s   ]/g;
 
 export function parseFrAmount(raw: string | number | null | undefined): number | null {
   if (typeof raw === "number") return Number.isFinite(raw) ? raw : null;
@@ -55,16 +55,39 @@ export function parseFrAmount(raw: string | number | null | undefined): number |
   return neg ? -n : n;
 }
 
+// Un « montant » = nombre avec EXACTEMENT 2 décimales. Les groupes de milliers
+// doivent faire exactement 3 chiffres : ainsi « 1  2 500,00 » (quantité 1 collée
+// au prix par la mise en page / l'OCR) ne se lit PAS « 12 500,00 » — seul
+// « 2 500,00 » est capturé. Formats gérés :
+//   12,500.00        (anglo, virgule = milliers)
+//   1.234,56         (européen, point = milliers)
+//   2 500,00 / 12,50 (espace = milliers, groupes de 3 exacts)
+//   1234.56 / 40,00  (sans séparateur de milliers)
+const SP = "[ \\u00a0\\u202f\\u2007]";
+const MONEY_RE = new RegExp(
+  "(?<![\\p{L}\\d.,])-?(?:" +
+    `\\d{1,3}(?:,\\d{3})+\\.\\d{2}` + // 12,500.00
+    `|\\d{1,3}(?:\\.\\d{3})+,\\d{2}` + // 1.234,56
+    `|\\d{1,3}(?:${SP}\\d{3})+[.,]\\d{2}` + // 2 500,00  (≥ 1 groupe d'espace)
+    `|\\d+[.,]\\d{2}` + // 12,50 / 1234.56 / 40,00
+    ")(?!\\d)",
+  "gu",
+);
+
 /** Montants « monétaires » (2 décimales) présents dans une ligne de texte. */
 export function findMoneyTokens(line: string): number[] {
   const out: number[] = [];
-  const re = /-?\d[\d\s  .]*[.,]\d{2}(?!\d)/g;
+  MONEY_RE.lastIndex = 0;
   let m: RegExpExecArray | null;
-  while ((m = re.exec(line))) {
+  while ((m = MONEY_RE.exec(line))) {
     const v = parseFrAmount(m[0]);
     if (v === null) continue;
-    // ignore un petit nombre suivi de « % » (c'est un taux, pas un montant)
-    if (Math.abs(v) <= 30 && /^\s*%/.test(line.slice(m.index + m[0].length))) continue;
+    // ignore un petit nombre collé à « % » (avant ou après) : c'est un taux.
+    if (Math.abs(v) <= 30) {
+      const after = line.slice(m.index + m[0].length);
+      const before = line.slice(0, m.index);
+      if (/^\s*%/.test(after) || /%\s*$/.test(before)) continue;
+    }
     out.push(v);
   }
   return out;

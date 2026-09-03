@@ -3,13 +3,15 @@
 
 import { parseAmount } from "@/lib/format";
 import { checkCoherence } from "@/lib/tva/coherence";
+import { round2 } from "@/lib/tva/rules";
 import { totalsFromLines } from "@/lib/tva/lines";
+import { CATEGORIES } from "@/lib/domain/enums";
 import type { CoherenceLevel } from "@/lib/domain/enums";
 
 export type InvoiceLine = { rate: number; baseHT: number; vatAmount: number };
 
 /** État renvoyé par les actions de création / modification (pour useActionState). */
-export type InvoiceFormState = { error?: string };
+export type InvoiceFormState = { error?: string; ok?: boolean };
 
 export type InvoiceFormData = {
   documentType: "facture" | "avoir";
@@ -41,9 +43,18 @@ function parseDate(v: string): Date | null {
   const d = new Date(v);
   return Number.isNaN(d.getTime()) ? null : d;
 }
+/** "AAAA-MM-JJ" d'une Date (UTC), pour les contrôles de cohérence. */
+function isoDay(d: Date | null): string | undefined {
+  if (!d) return undefined;
+  return d.toISOString().slice(0, 10);
+}
 
 export function parseInvoiceForm(fd: FormData): ParsedInvoiceForm {
-  // Lignes de TVA (champ caché JSON alimenté par le formulaire)
+  const documentType = str(fd, "documentType") === "avoir" ? "avoir" : "facture";
+  const isAvoir = documentType === "avoir";
+
+  // Lignes de TVA (champ caché JSON alimenté par le formulaire).
+  // Une ligne « fantôme » {taux, 0, 0} (aucun montant) est ignorée.
   let lines: InvoiceLine[] = [];
   try {
     const raw = JSON.parse(str(fd, "vatLinesJson") || "[]") as Array<Record<string, unknown>>;
@@ -53,45 +64,90 @@ export function parseInvoiceForm(fd: FormData): ParsedInvoiceForm {
         baseHT: parseAmount(l.baseHT as string),
         vatAmount: parseAmount(l.vatAmount as string),
       }))
-      .filter((l) => l.baseHT !== 0 || l.vatAmount !== 0 || l.rate !== 0);
+      .filter((l) => l.baseHT !== 0 || l.vatAmount !== 0);
   } catch {
     return { ok: false, error: "Les lignes de TVA sont mal formées." };
   }
 
   const invoiceDate = parseDate(str(fd, "invoiceDate"));
   if (!invoiceDate) return { ok: false, error: "La date de facture est obligatoire." };
+  const dueDate = parseDate(str(fd, "dueDate"));
 
   const fromLines = totalsFromLines(lines);
-  const hasManualTotals =
-    str(fd, "totalHT") !== "" || str(fd, "totalVAT") !== "" || str(fd, "totalTTC") !== "";
-  const totalHT = hasManualTotals ? parseAmount(str(fd, "totalHT")) : fromLines.totalHT;
-  const totalVAT = hasManualTotals ? parseAmount(str(fd, "totalVAT")) : fromLines.totalVAT;
-  const totalTTC = hasManualTotals
-    ? parseAmount(str(fd, "totalTTC")) || Math.round((totalHT + totalVAT) * 100) / 100
+  const rawHT = str(fd, "totalHT");
+  const rawVAT = str(fd, "totalVAT");
+  const rawTTC = str(fd, "totalTTC");
+  const hasManualTotals = rawHT !== "" || rawVAT !== "" || rawTTC !== "";
+  const hasRealLines = lines.length > 0;
+
+  // GARDE-FOU : sans ligne réelle ET sans total saisi, on n'écrit PAS 0/0/0
+  // (cela effacerait silencieusement les montants d'une facture importée).
+  if (!hasRealLines && !hasManualTotals) {
+    return {
+      ok: false,
+      error:
+        "Renseignez les montants : soit au moins une ligne de TVA, soit les totaux " +
+        "(cochez « Saisir les totaux manuellement »).",
+    };
+  }
+
+  let totalHT = hasManualTotals ? parseAmount(rawHT) : fromLines.totalHT;
+  let totalVAT = hasManualTotals ? parseAmount(rawVAT) : fromLines.totalVAT;
+  let totalTTC = hasManualTotals
+    ? rawTTC !== ""
+      ? parseAmount(rawTTC)
+      : round2(totalHT + totalVAT)
     : fromLines.totalTTC;
 
+  // Un AVOIR se stocke en valeurs POSITIVES ; sinon un montant négatif est refusé.
+  if (isAvoir) {
+    totalHT = Math.abs(totalHT);
+    totalVAT = Math.abs(totalVAT);
+    totalTTC = Math.abs(totalTTC);
+    lines = lines.map((l) => ({ rate: l.rate, baseHT: Math.abs(l.baseHT), vatAmount: Math.abs(l.vatAmount) }));
+  } else if (totalHT < 0 || totalVAT < 0 || totalTTC < 0) {
+    return {
+      ok: false,
+      error: "Un montant est négatif. Pour un remboursement, choisissez le type « Avoir ».",
+    };
+  }
+
   const direction = str(fd, "direction") === "vente" ? "vente" : "achat";
+  const currencyRaw = str(fd, "currency").toUpperCase();
+  if (currencyRaw && !/^[A-Z]{3}$/.test(currencyRaw)) {
+    return { ok: false, error: "Code devise invalide (3 lettres, ex. EUR, USD, CHF)." };
+  }
+  const categoryRaw = str(fd, "category");
+  const category = categoryRaw && categoryRaw in CATEGORIES ? categoryRaw : null;
+
   const data: InvoiceFormData = {
-    documentType: str(fd, "documentType") === "avoir" ? "avoir" : "facture",
+    documentType,
     direction,
-    category: orNull(str(fd, "category")),
+    category,
     number: orNull(str(fd, "number")),
     invoiceDate,
-    dueDate: parseDate(str(fd, "dueDate")),
+    dueDate,
     partyName: orNull(str(fd, "partyName")),
     partyAddress: orNull(str(fd, "partyAddress")),
     siret: orNull(str(fd, "siret")),
     vatNumber: orNull(str(fd, "vatNumber")),
-    currency: orNull(str(fd, "currency")) ?? "EUR",
+    currency: currencyRaw || "EUR",
     notes: orNull(str(fd, "notes")),
     totalHT,
     totalVAT,
     totalTTC,
-    // pour une vente, la notion ne s'applique pas -> true ; pour un achat,
-    // la case cochée envoie "1", décochée -> absente
     deductible: direction === "vente" ? true : fd.get("deductible") === "1",
   };
 
-  const coherence = checkCoherence({ totalHT, totalVAT, totalTTC, vatLines: lines }).level;
+  const coherence = checkCoherence({
+    totalHT,
+    totalVAT,
+    totalTTC,
+    vatLines: lines,
+    documentType,
+    invoiceDate: isoDay(invoiceDate),
+    dueDate: isoDay(dueDate),
+  }).level;
+
   return { ok: true, data, lines, coherence };
 }

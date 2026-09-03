@@ -56,4 +56,11 @@ describe("round2", () => {
     expect(round2(19.999)).toBe(20);
     expect(round2(0.1 + 0.2)).toBe(0.3);
   });
+  it("arrondit symétriquement les valeurs négatives", () => {
+    expect(round2(-2.005)).toBe(-2.01);
+    expect(round2(-2.005)).toBe(-round2(2.005));
+  });
+  it("renvoie 0 pour une valeur non finie", () => {
+    expect(round2(Number.NaN)).toBe(0);
+  });
 });

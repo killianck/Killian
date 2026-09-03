@@ -1,23 +1,48 @@
-// Analyseur "heuristique" : lit le TEXTE du PDF et repère les informations
+// Analyseur "heuristique" : lit le TEXTE du document et repère les informations
 // courantes d'une facture française (montants, dates, numéro, TVA...).
 //
 // Ce n'est pas de l'IA : c'est un ensemble de règles. Le résultat doit toujours
 // être vérifié par l'utilisateur.
 //
-// Deux sources de texte :
+// Sources de texte, dans l'ordre :
 //   1. le texte intégré au PDF (rapide, fiable) ;
-//   2. si le PDF est un scan (aucun texte), la reconnaissance de caractères
-//      (OCR) reconstruit le texte à partir de l'image des pages.
+//   2. si le PDF est un scan (peu de texte) ou une PHOTO : la reconnaissance de
+//      caractères (OCR) reconstruit le texte à partir de l'image.
 
 import type { InvoiceParser, ParsedInvoice, ParseInput } from "./types";
 import { extractPdfText } from "./pdfText";
 import { buildParsedInvoice } from "./extract";
-import { ocrPdf } from "./ocr";
+import { ocrPdf, ocrImage, type OcrResult } from "./ocr";
+
+const IMAGE_MIME = /^image\//i;
+const IMAGE_EXT = /\.(jpe?g|png|webp|tiff?|bmp|heic|heif)$/i;
+
+function isImage(input: ParseInput): boolean {
+  return IMAGE_MIME.test(input.mimeType ?? "") || IMAGE_EXT.test(input.fileName);
+}
 
 export class HeuristicParser implements InvoiceParser {
   readonly name = "heuristic";
 
   async parse(input: ParseInput): Promise<ParsedInvoice> {
+    // --- Photo : directement en OCR ---
+    if (isImage(input)) {
+      let ocr: OcrResult = { text: "", warnings: [] };
+      try {
+        ocr = await ocrImage(input.fileBuffer);
+      } catch (e) {
+        console.error("OCR de l'image impossible :", e);
+      }
+      const result = buildParsedInvoice(ocr.text, "photo + OCR");
+      result.warnings.unshift(
+        "Photo de facture : le texte a été reconstruit automatiquement (OCR). " +
+          "Vérifiez attentivement chaque montant, la date et le numéro.",
+      );
+      result.warnings.push(...ocr.warnings);
+      return this.degradeIfNoisyOcr(result, ocr.meanConfidence);
+    }
+
+    // --- PDF : texte intégré d'abord ---
     let text = "";
     try {
       text = await extractPdfText(input.fileBuffer);
@@ -27,21 +52,31 @@ export class HeuristicParser implements InvoiceParser {
 
     let result = buildParsedInvoice(text, this.name);
 
-    // Le PDF n'a pas de texte exploitable (scan / image) ou l'analyse est très
-    // incomplète : on tente l'OCR. Plus lent, donc en dernier recours seulement.
-    const weak = result.confidence < 0.35 || result.totalTTC === undefined;
+    const weak =
+      result.confidence < 0.35 ||
+      result.totalTTC === undefined ||
+      text.replace(/\s/g, "").length < 600;
+
     if (weak) {
       try {
-        const ocrText = await ocrPdf(input.fileBuffer);
-        if (ocrText.replace(/\s/g, "").length > 40) {
-          const ocrResult = buildParsedInvoice(ocrText, "heuristique + OCR");
-          if (ocrResult.confidence >= result.confidence) {
+        const ocr = await ocrPdf(input.fileBuffer);
+        if (ocr.text.replace(/\s/g, "").length > 15) {
+          const ocrResult = buildParsedInvoice(ocr.text, "heuristique + OCR");
+          // On adopte l'OCR s'il est nettement meilleur, ou si le texte natif
+          // n'a rien donné de fiable.
+          if (
+            ocrResult.confidence > result.confidence + 0.1 ||
+            result.totalTTC === undefined
+          ) {
             ocrResult.warnings.unshift(
               "PDF scanné : le texte a été reconstruit automatiquement (OCR). " +
                 "Vérifiez attentivement les montants, les dates et le numéro.",
             );
-            result = ocrResult;
+            result = this.degradeIfNoisyOcr(ocrResult, ocr.meanConfidence);
           }
+          result.warnings.push(...ocr.warnings);
+        } else {
+          result.warnings.push(...ocr.warnings);
         }
       } catch (e) {
         console.error("OCR du PDF impossible :", e);
@@ -50,9 +85,32 @@ export class HeuristicParser implements InvoiceParser {
 
     if (result.confidence === 0 && result.warnings.length === 0) {
       result.warnings.push(
-        "Impossible de lire automatiquement ce PDF. " +
-          "Veuillez saisir les informations manuellement.",
+        "Impossible de lire automatiquement ce document. Veuillez saisir les informations manuellement.",
       );
+    }
+    return result;
+  }
+
+  /** Un OCR de mauvaise qualité ne doit jamais présenter des montants comme sûrs. */
+  private degradeIfNoisyOcr(result: ParsedInvoice, meanConfidence?: number): ParsedInvoice {
+    if (meanConfidence !== undefined && meanConfidence < 55) {
+      return {
+        ...result,
+        confidence: 0,
+        amountsUncertain: true,
+        warnings: [
+          "Reconnaissance de texte de trop mauvaise qualité pour être exploitée : " +
+            "saisissez les informations manuellement.",
+          ...result.warnings,
+        ],
+      };
+    }
+    if (meanConfidence !== undefined && meanConfidence < 75) {
+      return {
+        ...result,
+        confidence: Math.min(result.confidence, 0.4),
+        amountsUncertain: true,
+      };
     }
     return result;
   }

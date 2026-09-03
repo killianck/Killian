@@ -55,13 +55,18 @@ describe("extractInvoiceNumber", () => {
 
 describe("extractDates", () => {
   it("distingue date de facture et échéance", () => {
-    expect(extractDates(FACTURE_SIMPLE)).toEqual({
-      invoiceDate: "2026-03-15",
-      dueDate: "2026-04-14",
-    });
+    const d = extractDates(FACTURE_SIMPLE);
+    expect(d.invoiceDate).toBe("2026-03-15");
+    expect(d.dueDate).toBe("2026-04-14");
+    expect(d.notes).toEqual([]);
   });
-  it("prend la première date à défaut", () => {
+  it("lit la date libellée « Date : »", () => {
     expect(extractDates(FACTURE_MULTI_TAUX).invoiceDate).toBe("2026-04-03");
+  });
+  it("signale une date de facture devinée (aucun libellé)", () => {
+    const d = extractDates("STUDIO PIXEL\n15/08/2026\nPrestation\nTotal 100,00");
+    expect(d.invoiceDate).toBe("2026-08-15");
+    expect(d.notes.some((n) => /non libellée/i.test(n))).toBe(true);
   });
   it("lit une date en toutes lettres", () => {
     expect(extractDates("Date de facture : 15 août 2026").invoiceDate).toBe("2026-08-15");
@@ -188,6 +193,68 @@ En cas de contestation le Tribunal d'Aix en Provence est seul compétent`;
     expect(p.totalTTC).toBe(507.55);
     expect(p.vatLines).toEqual([{ rate: 20, baseHT: 422.96, vatAmount: 84.59 }]);
     expect(p.warnings.some((w) => w.includes("HT + TVA"))).toBe(false);
+  });
+});
+
+describe("fiabilité des montants (garde-fous)", () => {
+  it("ne fusionne pas une quantité collée au prix (« 1  2 500,00 »)", () => {
+    const a = extractAmounts(
+      "Création site vitrine   1   2 500,00   2 500,00\nTotal HT 2 500,00\nTVA 20 % 500,00\nTotal TTC 3 000,00",
+    );
+    expect(a.totalHT).toBe(2500);
+    expect(a.totalVAT).toBe(500);
+    expect(a.totalTTC).toBe(3000);
+  });
+
+  it("n'invente pas de triplet à partir d'une ligne d'acompte (2,1 % fortuit)", () => {
+    const a = extractAmounts("Acompte 500,00 sur 23 800,00");
+    expect(a.totalHT).toBeUndefined();
+    expect(a.totalVAT).toBeUndefined();
+    expect(a.totalTTC).toBeUndefined();
+  });
+
+  it("ne prend pas « Total des remises » comme TTC", () => {
+    const a = extractAmounts("Total HT   1 000,00\nTotal des remises accordées : 60,00");
+    expect(a.totalTTC).toBeUndefined();
+    expect(a.totalVAT).toBeUndefined();
+  });
+
+  it("lit une ligne « Base HT … / Montant de TVA … » sans permuter HT et TVA", () => {
+    const a = extractAmounts(
+      "Base HT soumise à TVA :   2 000,00\nTaux : 20 %\nMontant de TVA :   400,00\nTotal TTC :   2 400,00",
+    );
+    expect(a.totalHT).toBe(2000);
+    expect(a.totalVAT).toBe(400);
+    expect(a.totalTTC).toBe(2400);
+  });
+
+  it("ignore un pourcentage de remise dans la détection des taux", () => {
+    const a = extractAmounts(
+      "Remise commerciale -15 %\nTVA 20 % base 1 000,00 taxe 200,00\nTotal HT 1 000,00\nTotal TTC 1 200,00",
+    );
+    expect(a.rates).toEqual([20]);
+  });
+
+  it("marque « incertain » une facture dont un total est calculé", () => {
+    const p = buildParsedInvoice(
+      "FACTURE N° X1\nDate de facture : 15/08/2026\nTotal HT 1 000,00\nTotal TTC 1 200,00",
+      "heuristic",
+    );
+    expect(p.totalVAT).toBe(200);
+    expect(p.amountsUncertain).toBe(true);
+    expect(p.confidence).toBeLessThanOrEqual(0.5);
+  });
+
+  it("un avoir à montants négatifs est stocké en positif", () => {
+    const p = buildParsedInvoice(
+      "AVOIR N° AV-3\nDate de facture : 15/08/2026\nTotal HT -1 000,00\nTVA 20 % -200,00\nTotal TTC -1 200,00",
+      "heuristic",
+    );
+    expect(p.documentType).toBe("avoir");
+    expect(p.totalHT).toBe(1000);
+    expect(p.totalVAT).toBe(200);
+    expect(p.totalTTC).toBe(1200);
+    expect(p.warnings.some((w) => /valeur positive/i.test(w))).toBe(true);
   });
 });
 

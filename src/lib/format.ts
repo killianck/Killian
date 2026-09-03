@@ -1,5 +1,7 @@
 // Formatage à la française : dates JJ/MM/AAAA et montants "1 250,00 €".
 
+import { parseFrAmount } from "@/lib/parsing/frenchNumbers";
+
 const EUR = new Intl.NumberFormat("fr-FR", {
   style: "currency",
   currency: "EUR",
@@ -73,15 +75,13 @@ export function toDateInputValue(value: Date | string | null | undefined): strin
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
 
-/** Convertit une saisie texte "1 250,50" ou "1250.5" en nombre. */
+/**
+ * Convertit une saisie texte en nombre (repli 0 si illisible).
+ * Délègue à `parseFrAmount` — SEUL analyseur de nombres du projet — qui gère
+ * « 1 250,50 », « 1.250,50 », « 1,250.50 », « 1250.5 », les signes, etc.
+ */
 export function parseAmount(input: string | number | null | undefined): number {
-  if (typeof input === "number") return input;
-  if (!input) return 0;
-  const cleaned = String(input)
-    .replace(/\s/g, "")
-    .replace(/ /g, "")
-    .replace(/€/g, "")
-    .replace(",", ".");
-  const n = Number.parseFloat(cleaned);
-  return Number.isFinite(n) ? n : 0;
+  const n = parseFrAmount(input);
+  return n === null ? 0 : n;
 }
+

@@ -49,13 +49,16 @@ export function InvoiceForm({
 }) {
   const [state, formAction, pending] = useActionState<InvoiceFormState, FormData>(action, {});
 
+  const hasLines = invoice.vatLines.length > 0;
   const [lines, setLines] = useState<Line[]>(
-    invoice.vatLines.length
-      ? invoice.vatLines.map((l) => ({ rate: String(l.rate), baseHT: String(l.baseHT), vatAmount: String(l.vatAmount) }))
-      : [{ rate: "20", baseHT: "", vatAmount: "" }],
+    invoice.vatLines.map((l) => ({ rate: String(l.rate), baseHT: String(l.baseHT), vatAmount: String(l.vatAmount) })),
   );
   const [direction, setDirection] = useState(invoice.direction);
-  const [manualTotals, setManualTotals] = useState(false);
+  // Pas de lignes détaillées mais des totaux connus (cas courant d'un import) :
+  // on saisit d'emblée en « totaux manuels », préremplis avec les valeurs de la
+  // facture, pour ne jamais les remettre à 0 par accident.
+  const hasTotals = invoice.totalHT !== 0 || invoice.totalVAT !== 0 || invoice.totalTTC !== 0;
+  const [manualTotals, setManualTotals] = useState(!hasLines && hasTotals);
   const [totals, setTotals] = useState({
     totalHT: String(invoice.totalHT),
     totalVAT: String(invoice.totalVAT),
@@ -202,6 +205,12 @@ export function InvoiceForm({
             + Ajouter une ligne
           </button>
         </div>
+        {lines.length === 0 && (
+          <p className="rounded-lg bg-[#f9fafb] px-3 py-2 text-xs text-[var(--muted)]">
+            Aucun détail par taux. Renseignez les totaux ci-dessous (« Saisir les totaux
+            manuellement »), ou ajoutez une ligne si la facture détaille plusieurs taux.
+          </p>
+        )}
         <div className="space-y-2">
           {lines.map((l, i) => {
             const expected = vatOfLine(parseAmount(l.baseHT), parseAmount(l.rate));

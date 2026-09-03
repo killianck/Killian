@@ -86,4 +86,44 @@ describe("checkCoherence", () => {
     });
     expect(r.issues.some((i) => i.message.includes("standard"))).toBe(true);
   });
+
+  it("signale une TVA négative sur une facture (pas un avoir)", () => {
+    const r = checkCoherence({ totalHT: 1000, totalVAT: -940, totalTTC: 60, vatLines: [] });
+    expect(r.level).toBe("incoherent");
+  });
+
+  it("tolère les montants négatifs d'un avoir mais conseille le positif", () => {
+    const r = checkCoherence({
+      totalHT: -1000, totalVAT: -200, totalTTC: -1200, vatLines: [],
+      documentType: "avoir",
+    });
+    expect(r.issues.some((i) => /positive/i.test(i.message))).toBe(true);
+    expect(r.issues.some((i) => i.severity === "error")).toBe(false);
+  });
+
+  it("ne juge PAS cohérente une TVA grossièrement fausse (40 au lieu de 2000)", () => {
+    const r = checkCoherence({ totalHT: 10000, totalVAT: 40, totalTTC: 10040, vatLines: [] });
+    expect(r.level).not.toBe("coherent");
+  });
+
+  it("ne masque pas 60 € d'erreur de TVA sur une grosse ligne", () => {
+    const r = checkCoherence({
+      totalHT: 50000, totalVAT: 9940, totalTTC: 59940,
+      vatLines: [{ rate: 20, baseHT: 50000, vatAmount: 9940 }],
+    });
+    expect(r.issues.some((i) => i.severity === "warning")).toBe(true);
+  });
+
+  it("signale une échéance antérieure à la date de facture", () => {
+    const r = checkCoherence({
+      totalHT: 1000, totalVAT: 200, totalTTC: 1200, vatLines: [],
+      invoiceDate: "2026-06-15", dueDate: "2026-01-31",
+    });
+    expect(r.issues.some((i) => /échéance précède/i.test(i.message))).toBe(true);
+  });
+
+  it("signale une TVA qui dépasse le TTC", () => {
+    const r = checkCoherence({ totalHT: 1000, totalVAT: 2000, totalTTC: 1200, vatLines: [] });
+    expect(r.level).toBe("incoherent");
+  });
 });
