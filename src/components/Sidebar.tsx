@@ -1,12 +1,18 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { NAV_ITEMS, isActive } from "./nav";
 import { logout } from "@/lib/auth/actions";
 
 export function Sidebar({ user }: { user: { name: string; role: string } }) {
   const pathname = usePathname();
+  const [version, setVersion] = useState<string | null>(null);
+
+  useEffect(() => {
+    window.desktop?.version().then(setVersion).catch(() => {});
+  }, []);
 
   return (
     <aside className="w-60 shrink-0 border-r border-[var(--border)] bg-[var(--surface)] px-3 py-6 hidden md:flex md:flex-col">
@@ -42,6 +48,9 @@ export function Sidebar({ user }: { user: { name: string; role: string } }) {
         <p className="mt-4 text-[11px] leading-relaxed text-[var(--muted)]">
           Outil de suivi. Ne remplace pas un expert-comptable.
         </p>
+        {version && (
+          <p className="mt-2 text-[11px] text-[var(--muted)]">Version {version}</p>
+        )}
       </div>
     </aside>
   );

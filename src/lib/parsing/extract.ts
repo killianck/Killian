@@ -50,7 +50,8 @@ export function datesInLine(line: string): string[] {
 }
 
 export function extractDates(text: string): { invoiceDate?: string; dueDate?: string } {
-  const lines = text.split(/\r?\n/);
+  const stripped = stripBoilerplate(text);
+  const lines = stripped.split(/\r?\n/);
   let invoiceDate: string | undefined;
   let dueDate: string | undefined;
 
@@ -81,7 +82,7 @@ export function extractDates(text: string): { invoiceDate?: string; dueDate?: st
   }
 
   // Termes "à réception" / "comptant" => échéance = date de facture
-  if (!dueDate && /(a reception|comptant|paiement immediat|des reception)/.test(deburr(text)) && invoiceDate) {
+  if (!dueDate && /(a reception|comptant|paiement immediat|des reception)/.test(deburr(stripped)) && invoiceDate) {
     dueDate = invoiceDate;
   }
 
@@ -102,7 +103,29 @@ export function extractDocumentType(text: string): "facture" | "avoir" {
 
 const NUMBER_BLOCKLIST = /^(mail|https?|www|tel|fax|iban|bic|siret|siren|tva|rcs|ape|naf|du|le|de|la|the|client|date|page|ref|n[o°º]|vat|number|facture|invoice|avoir)$/i;
 
-export function extractInvoiceNumber(text: string): string | undefined {
+/**
+ * Lignes de « bas de page » juridiques (conditions générales, loi, pénalités…).
+ * On les écarte avant de chercher un numéro, une date ou un montant : elles
+ * contiennent souvent des nombres et des dates trompeurs (« loi n° 93.122 du
+ * 31/12/1992 », « indemnité de 40 € »…).
+ */
+const BOILERPLATE =
+  /(conditions?\s+generales|\bloi\s+n|\bdecret\b|ministeriel|\btribunal\b|competent|penalit|escompte|recouvrement|reserve de propriete|clause|litige|article\s+l?\s?\d|nos factures sont|c\.?g\.?v\.?|delai de paiement legal|indemnite forfaitaire)/;
+
+/** Retire les lignes de bas de page juridiques. */
+export function stripBoilerplate(text: string): string {
+  return text
+    .split(/\r?\n/)
+    .filter((line) => !BOILERPLATE.test(deburr(line)))
+    .join("\n");
+}
+
+const NUMBER_TOKEN = /^[A-Za-z]{0,5}\d[A-Za-z0-9/\-_.]{2,20}$/;
+/** Un « numéro » qui n'est en fait qu'un nombre décimal (montant, référence de loi…). */
+const LOOKS_NUMERIC = /^\d{1,3}([.,]\d{1,3})+$/;
+
+export function extractInvoiceNumber(input: string): string | undefined {
+  const text = stripBoilerplate(input);
   const patterns = [
     /\bn[o°º]\s*(?:de\s+)?facture\s*[:.]?\s*([A-Za-z0-9][A-Za-z0-9/\-_.]{3,20})/i,
     /\bfacture\s*n[o°º]\s*[:.]?\s*([A-Za-z0-9][A-Za-z0-9/\-_.]{3,20})/i,
@@ -111,10 +134,26 @@ export function extractInvoiceNumber(text: string): string | undefined {
     /\bref(?:erence)?\s*[:.]?\s*([A-Za-z0-9][A-Za-z0-9/\-_.]{3,20})/i,
   ];
   const isDate = /^\d{1,2}[/.\-]\d{1,2}[/.\-]\d{2,4}$/;
+  const ok = (v: string) =>
+    v && !NUMBER_BLOCKLIST.test(v) && /\d/.test(v) && !isDate.test(v) && !LOOKS_NUMERIC.test(v);
+
   for (const re of patterns) {
     for (const m of text.matchAll(new RegExp(re, "gi"))) {
       const v = m[1].replace(/[.,;:]+$/, "").trim();
-      if (v && !NUMBER_BLOCKLIST.test(v) && /\d/.test(v) && !isDate.test(v)) return v;
+      if (ok(v)) return v;
+    }
+  }
+
+  // Mise en page « en-tête de tableau » : le libellé (« Facture N° ») est sur une
+  // ligne et la valeur sur la ligne suivante (« FAT000546  08/06/2026 »).
+  const lines = text.split(/\r?\n/);
+  for (let i = 0; i < lines.length - 1; i++) {
+    const d = deburr(lines[i]);
+    if (!/\b(facture|avoir|invoice)\b/.test(d) || !/\bn[o°º]/.test(d)) continue;
+    if (findMoneyTokens(lines[i]).length) continue;
+    for (const tok of lines[i + 1].trim().split(/\s+/)) {
+      const v = tok.replace(/[.,;:]+$/, "");
+      if (NUMBER_TOKEN.test(v) && ok(v) && /[A-Za-z]/.test(v)) return v;
     }
   }
   return undefined;
@@ -199,6 +238,54 @@ function mostFrequent(values: number[]): number {
   return best;
 }
 
+const STANDARD_RATES = [20, 10, 5.5, 2.1, 8.5];
+
+/**
+ * Cherche, sur une même ligne, un triplet (HT, TVA, TTC) cohérent :
+ * HT + TVA ≈ TTC et TVA / HT ≈ un taux de TVA standard.
+ * Utile quand les totaux sont présentés dans un tableau (libellés et valeurs
+ * sur des lignes séparées). Renvoie le triplet dont le HT est le plus élevé.
+ */
+function bestCoherentTriple(
+  lines: string[],
+  isRateValue: (v: number) => boolean,
+): { ht: number; vat: number; ttc: number } | undefined {
+  const rateOf = (vat: number, ht: number) => {
+    if (ht <= 0) return undefined;
+    const r = (vat / ht) * 100;
+    return STANDARD_RATES.find((s) => Math.abs(s - r) <= 0.4);
+  };
+
+  type Cand = { ht: number; vat: number; ttc: number; score: number };
+  let best: Cand | undefined;
+
+  for (const raw of lines) {
+    const d = deburr(raw);
+    if (/intracommunautaire|n[o°]\s*tva|iban|siret/.test(d)) continue;
+    const tokens = [...new Set(findMoneyTokens(raw).filter((v) => v > 0 && !isRateValue(v)))];
+    if (tokens.length < 2) continue;
+
+    for (const ht of tokens) {
+      for (const vat of tokens) {
+        if (vat >= ht) continue;
+        const rate = rateOf(vat, ht);
+        if (!rate) continue;
+        const expectedTtc = round2(ht + vat);
+        const found = tokens.find((t) => Math.abs(t - expectedTtc) <= 0.05);
+        // On préfère : un TTC réellement présent sur la ligne, puis un taux
+        // « courant » (20 / 10 / 5,5), puis le HT le plus élevé.
+        const score =
+          (found !== undefined ? 100 : 0) + ([20, 10, 5.5].includes(rate) ? 10 : 0);
+        const cand: Cand = { ht, vat, ttc: found ?? expectedTtc, score };
+        if (!best || cand.score > best.score || (cand.score === best.score && cand.ht > best.ht)) {
+          best = cand;
+        }
+      }
+    }
+  }
+  return best ? { ht: best.ht, vat: best.vat, ttc: best.ttc } : undefined;
+}
+
 export type ExtractedAmounts = {
   totalHT?: number;
   totalVAT?: number;
@@ -208,7 +295,8 @@ export type ExtractedAmounts = {
   notes: string[];
 };
 
-export function extractAmounts(text: string): ExtractedAmounts {
+export function extractAmounts(input: string): ExtractedAmounts {
+  const text = stripBoilerplate(input);
   const lines = text.split(/\r?\n/);
   const notes: string[] = [];
 
@@ -244,6 +332,25 @@ export function extractAmounts(text: string): ExtractedAmounts {
   if (ttcCandidates.length) totalTTC = Math.max(...ttcCandidates);
   if (vatCandidates.length) totalVAT = Math.max(...vatCandidates);
   if (htCandidates.length) totalHT = mostFrequent(htCandidates);
+
+  // Mise en page « tableau de totaux » : les libellés (Base / Taux / Taxe /
+  // Total HT / Total TTC / NET A PAYER) sont sur une ligne, les valeurs sur la
+  // suivante — donc aucun mot-clé ne tombe sur la même ligne qu'un montant.
+  // On repère alors, sur une même ligne, un triplet (HT, TVA, TTC) cohérent :
+  //   HT + TVA ≈ TTC   et   TVA / HT ≈ un taux standard.
+  const coherent = bestCoherentTriple(lines, isRateValue);
+  if (coherent) {
+    const allKnownAndCoherent =
+      totalHT !== undefined &&
+      totalVAT !== undefined &&
+      totalTTC !== undefined &&
+      Math.abs(totalHT + totalVAT - totalTTC) <= 0.05;
+    if (!allKnownAndCoherent) {
+      totalHT = coherent.ht;
+      totalVAT = coherent.vat;
+      totalTTC = coherent.ttc;
+    }
+  }
 
   // Filet de sécurité : une ligne "Total ... montant" en bas de page
   if (totalTTC === undefined) {
@@ -347,6 +454,8 @@ export function buildParsedInvoice(text: string, engine: string): ParsedInvoice 
     };
   }
 
+  // extractDates / extractAmounts / extractInvoiceNumber ignorent déjà les
+  // mentions légales de bas de page (nombres et dates trompeurs).
   const { invoiceDate, dueDate } = extractDates(clean);
   const amounts = extractAmounts(clean);
   warnings.push(...amounts.notes);

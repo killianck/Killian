@@ -6,6 +6,7 @@ import { lastBackupAt } from "@/lib/backup";
 import { formatDate } from "@/lib/format";
 import { getCurrentUser } from "@/lib/auth";
 import { isDesktopApp, isEncryptionRequested } from "@/lib/encryption";
+import { AppUpdatePanel } from "@/components/AppUpdatePanel";
 import { backupNow, setEncryption } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -143,6 +144,8 @@ export default async function ParametresPage() {
             ))}
           </div>
         </Card>
+
+        <AppUpdatePanel />
       </div>
 
       <Card className="mt-4 p-4">

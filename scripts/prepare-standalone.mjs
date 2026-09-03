@@ -44,6 +44,14 @@ copy("node_modules/@prisma/client", "node_modules/@prisma/client");
 // Migrations, lues au démarrage de l'app
 copy("prisma/migrations", "prisma/migrations");
 
+// OCR des PDF scannés : moteurs (WASM + worker) et données de langue française.
+// Copiés en entier pour être sûrs que les fichiers .wasm et le script "worker"
+// soient présents dans l'application empaquetée (le "tracing" de Next peut les rater).
+copy("node_modules/mupdf", "node_modules/mupdf");
+copy("node_modules/tesseract.js", "node_modules/tesseract.js");
+copy("node_modules/tesseract.js-core", "node_modules/tesseract.js-core");
+copy("src/lib/parsing/tessdata", "tessdata");
+
 console.log("Génération de electron/migrate.cjs…");
 execFileSync(
   process.execPath,

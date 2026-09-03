@@ -5,12 +5,23 @@ const nextConfig: NextConfig = {
   // autonome, utilisé par l'application de bureau (Electron).
   output: "standalone",
 
-  // Force l'inclusion du client Prisma et de son moteur dans le build autonome.
+  // Ces paquets utilisent des fichiers natifs / WASM et des "workers" : Next ne
+  // doit pas les regrouper dans son bundle, mais les charger via require().
+  //   - mupdf        : rend les pages PDF en image (pour l'OCR des scans)
+  //   - tesseract.js : reconnaissance de texte (OCR), en français
+  serverExternalPackages: ["mupdf", "tesseract.js"],
+
+  // Force l'inclusion du client Prisma et de son moteur dans le build autonome,
+  // ainsi que des moteurs OCR et de leurs données de langue.
   outputFileTracingIncludes: {
     "*": [
       "./node_modules/.prisma/**/*",
       "./node_modules/@prisma/client/**/*",
       "./prisma/migrations/**/*",
+      "./node_modules/mupdf/**/*",
+      "./node_modules/tesseract.js/**/*",
+      "./node_modules/tesseract.js-core/**/*",
+      "./src/lib/parsing/tessdata/**/*",
     ],
   },
   // N'embarque JAMAIS les données utilisateur ni les gros binaires inutiles.

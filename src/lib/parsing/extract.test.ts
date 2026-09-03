@@ -149,6 +149,48 @@ N°FACTURE 2606F28445`;
   });
 });
 
+describe("facture scannée (OCR) : totaux en tableau, libellés séparés des valeurs", () => {
+  // Texte proche de ce que produit l'OCR sur une facture de transport scannée.
+  const OCR_TABLEAU = `Transports MILLO-TRUCY
+SIRET : 932 031 883 000 14
+N° TVA : FR 459 320 318 83
+
+Facture N° Date Référence
+FAT000546 08/06/2026
+
+LE 14/4/2026 RECEPTION FUTUROL 1,00 15,08 15,08 15,08
+ENTREPOSAGE EXTERIEUR AVRIL ET MAI 2,00 90,00 90,00 180,00
+Code Base Taux Taxe Total HT Total TTC Acompte | NET A PAYER
+c20 422,96 20% 84,59 422,96 507,55 0,00 507,55
+Total 422,96 84,59 IBAN FR76 3000 3035 4900 0200 7686 179
+Nos factures sont payables dès réception ; 2 % de pénalités par mois de retard
+et une indemnité forfaitaire de 40 € (décret N° 2012-1115 du 2/10/12)
+En cas de contestation le Tribunal d'Aix en Provence est seul compétent`;
+
+  it("reconstitue HT / TVA / TTC depuis la ligne de totaux", () => {
+    const a = extractAmounts(OCR_TABLEAU);
+    expect(a.totalHT).toBe(422.96);
+    expect(a.totalVAT).toBe(84.59);
+    expect(a.totalTTC).toBe(507.55);
+  });
+
+  it("lit le numéro sur la ligne suivant « Facture N° »", () => {
+    expect(extractInvoiceNumber(OCR_TABLEAU)).toBe("FAT000546");
+  });
+
+  it("ne prend pas une date ou un numéro de loi/décret du bas de page", () => {
+    const p = buildParsedInvoice(OCR_TABLEAU, "ocr");
+    expect(p.number).toBe("FAT000546");
+    expect(p.invoiceDate).toBe("2026-06-08");
+    expect(p.dueDate).toBeUndefined();
+    expect(p.totalHT).toBe(422.96);
+    expect(p.totalVAT).toBe(84.59);
+    expect(p.totalTTC).toBe(507.55);
+    expect(p.vatLines).toEqual([{ rate: 20, baseHT: 422.96, vatAmount: 84.59 }]);
+    expect(p.warnings.some((w) => w.includes("HT + TVA"))).toBe(false);
+  });
+});
+
 describe("buildParsedInvoice", () => {
   it("produit un résultat cohérent avec une bonne confiance", () => {
     const p = buildParsedInvoice(FACTURE_SIMPLE, "heuristic");

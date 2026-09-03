@@ -62,8 +62,12 @@ de votre dépôt GitHub.
 - Au lancement suivant, l'application détecte la nouvelle version, la télécharge
   en arrière-plan, puis affiche : **« La version X est prête. Redémarrer maintenant ? »**
 - S'ils cliquent « Redémarrer », l'application se met à jour et rouvre.
-- S'ils cliquent « Plus tard », la mise à jour s'installera au prochain
-  redémarrage.
+- S'ils cliquent « Plus tard », la mise à jour s'installera à la prochaine
+  fermeture de l'application.
+- **Vérifier soi-même** : la version installée est affichée en bas du menu de
+  gauche et dans **Paramètres → « Version de l'application »**, avec un bouton
+  **« Vérifier les mises à jour »** qui indique l'état (à jour / téléchargement /
+  prête).
 
 ---
 

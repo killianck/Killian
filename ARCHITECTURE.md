@@ -114,7 +114,35 @@ version.
 
 ---
 
-## 7. Sécurité
+## 7. Lecture automatique des PDF (`src/lib/parsing/`)
+
+Deux sources de texte, essayées dans cet ordre :
+
+1. **Texte intégré au PDF** (`pdfText.ts`, via `unpdf`) — rapide, fiable. Suffit
+   pour les factures générées par un logiciel.
+2. **OCR** (`ocr.ts`) si le PDF est un **scan** (image sans texte) ou si l'analyse
+   du texte est trop incomplète : `mupdf` transforme chaque page en image (il gère
+   la compression JBIG2 des scanners), puis `tesseract.js` reconnaît le texte en
+   français. Plus lent (~3 s/page), résultat à vérifier.
+
+`extract.ts` applique ensuite des règles (montants HT/TVA/TTC, dates, numéro,
+SIRET…) sur ce texte. Il sait notamment :
+- écarter les mentions légales de bas de page (`loi n°…`, pénalités, tribunal…) ;
+- reconstituer un triplet (HT, TVA, TTC) cohérent quand les totaux sont dans un
+  tableau (libellés et valeurs sur des lignes séparées) ;
+- lire un numéro de facture placé sur la ligne suivant « Facture N° ».
+
+Données de langue OCR : `src/lib/parsing/tessdata/fra.traineddata.gz` (embarqué,
+fonctionne hors ligne). Copié dans `standalone/tessdata` par
+`prepare-standalone.mjs`. `mupdf` / `tesseract.js` sont déclarés
+`serverExternalPackages` dans `next.config.ts` (fichiers WASM + worker).
+
+Le résultat de l'analyse **n'est jamais validé automatiquement** : la facture
+arrive au statut « à vérifier » et l'utilisateur confirme.
+
+---
+
+## 8. Sécurité
 
 - Aucune clé secrète dans le code : variables d'environnement (`.env`, non versionné).
 - Le dossier `data/` (base + PDF) n'est jamais envoyé sur Git.

@@ -13,7 +13,7 @@
 //  Aucune de ces étapes ne modifie le code : elles préparent seulement les
 //  données locales de l'utilisateur.
 
-const { app, BrowserWindow, shell, dialog, safeStorage } = require("electron");
+const { app, BrowserWindow, shell, dialog, safeStorage, ipcMain } = require("electron");
 const path = require("node:path");
 const http = require("node:http");
 const net = require("node:net");
@@ -153,7 +153,11 @@ function createWindow() {
     title: "Facturation & TVA",
     backgroundColor: "#f6f7f9",
     autoHideMenuBar: true,
-    webPreferences: { contextIsolation: true, nodeIntegration: false },
+    webPreferences: {
+      contextIsolation: true,
+      nodeIntegration: false,
+      preload: path.join(__dirname, "preload.js"),
+    },
   });
 
   mainWindow.loadURL(serverUrl);
@@ -190,6 +194,7 @@ async function bootstrap() {
   } else {
     await waitForServer(DEV_URL).catch(() => {});
   }
+  ipcMain.handle("app:version", () => app.getVersion());
   createWindow();
 
   if (!isDev) {
