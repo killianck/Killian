@@ -14,15 +14,16 @@ const NUM = new Intl.NumberFormat("fr-FR", {
   maximumFractionDigits: 2,
 });
 
-/** "1 250,00 €" (devise EUR par défaut). */
+/** "1 250,00 €" (devise EUR par défaut). Tolère une devise invalide en base. */
 export function formatMoney(value: number | null | undefined, currency = "EUR"): string {
   const n = typeof value === "number" && Number.isFinite(value) ? value : 0;
-  if (currency === "EUR") return EUR.format(n);
-  return new Intl.NumberFormat("fr-FR", {
-    style: "currency",
-    currency,
-    minimumFractionDigits: 2,
-  }).format(n);
+  if (currency === "EUR" || !currency) return EUR.format(n);
+  try {
+    return new Intl.NumberFormat("fr-FR", { style: "currency", currency, minimumFractionDigits: 2 }).format(n);
+  } catch {
+    // Code devise non reconnu (saisie utilisateur) : repli neutre "1 250,00 XYZ".
+    return `${NUM.format(n)} ${String(currency).slice(0, 8)}`;
+  }
 }
 
 /** "1 250,00" sans symbole. */

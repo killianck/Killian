@@ -31,9 +31,6 @@
     "app:dist": "npm run app:build && electron-builder",
     "app:release": "npm run app:build && electron-builder --publish always"
   },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
-  },
   "dependencies": {
     "@prisma/client": "^6.19.3",
     "electron-updater": "^6.8.9",

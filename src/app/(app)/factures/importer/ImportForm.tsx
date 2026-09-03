@@ -1,44 +1,87 @@
 "use client";
 
-import { useActionState, useRef, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { importInvoices, type ImportState } from "./actions";
+
+const ACCEPT = ".pdf,.jpg,.jpeg,.png,.webp,.tif,.tiff,.bmp,.heic,.heif";
+const ACCEPT_RE = /\.(pdf|jpe?g|png|webp|tiff?|bmp|heic|heif)$/i;
+const MAX_MB = 20;
 
 export function ImportForm() {
   const [state, formAction, pending] = useActionState<ImportState, FormData>(importInvoices, {});
   const inputRef = useRef<HTMLInputElement>(null);
-  const [names, setNames] = useState<string[]>([]);
+  const [files, setFiles] = useState<{ name: string; problem?: string }[]>([]);
   const [dragOver, setDragOver] = useState(false);
+
+  // Empêche de fermer la fenêtre pendant un import (OCR long) et perdre le travail.
+  useEffect(() => {
+    if (!pending) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [pending]);
 
   function addFiles(list: FileList | null) {
     if (!list || !inputRef.current) return;
     const dt = new DataTransfer();
     for (const f of Array.from(list)) dt.items.add(f);
     inputRef.current.files = dt.files;
-    setNames(Array.from(dt.files).map((f) => f.name));
+    setFiles(
+      Array.from(dt.files).map((f) => ({
+        name: f.name,
+        problem: !ACCEPT_RE.test(f.name)
+          ? "format non pris en charge"
+          : f.size > MAX_MB * 1024 * 1024
+            ? `trop volumineux (> ${MAX_MB} Mo)`
+            : f.size === 0
+              ? "fichier vide"
+              : undefined,
+      })),
+    );
   }
+
+  const blocking = files.some((f) => f.problem);
+  const count = files.length;
 
   return (
     <form action={formAction} className="space-y-4">
       <div
-        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+        role="button"
+        tabIndex={0}
+        aria-label="Choisir des fichiers PDF ou des photos"
+        onDragOver={(e) => { e.preventDefault(); if (!pending) setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
         onDrop={(e) => {
           e.preventDefault();
           setDragOver(false);
-          addFiles(e.dataTransfer.files);
+          if (!pending) addFiles(e.dataTransfer.files);
         }}
-        onClick={() => inputRef.current?.click()}
-        className={`cursor-pointer rounded-xl border-2 border-dashed p-10 text-center transition-colors ${
-          dragOver ? "border-[var(--primary)] bg-[#eff4ff]" : "border-[var(--border)] bg-[#fbfcfd]"
-        }`}
+        onClick={() => !pending && inputRef.current?.click()}
+        onKeyDown={(e) => {
+          if ((e.key === "Enter" || e.key === " ") && !pending) {
+            e.preventDefault();
+            inputRef.current?.click();
+          }
+        }}
+        className={`rounded-xl border-2 border-dashed p-10 text-center transition-colors ${
+          pending ? "cursor-not-allowed opacity-60" : "cursor-pointer"
+        } ${dragOver ? "border-[var(--primary)] bg-[#eff4ff]" : "border-[var(--border)] bg-[#fbfcfd]"}`}
       >
-        <p className="text-sm font-medium">Glissez-déposez un ou plusieurs PDF ici</p>
-        <p className="mt-1 text-xs text-[var(--muted)]">ou cliquez pour choisir des fichiers (20 Mo max chacun)</p>
-        {names.length > 0 && (
-          <ul className="mt-3 space-y-0.5 text-sm text-[var(--primary)]">
-            {names.map((n, i) => (
-              <li key={i}>{n}</li>
+        <p className="text-sm font-medium">Glissez-déposez vos factures ici</p>
+        <p className="mt-1 text-xs text-[var(--muted)]">
+          PDF ou photo (JPG, PNG…), {MAX_MB} Mo max par fichier — cliquez pour parcourir
+        </p>
+        {count > 0 && (
+          <ul className="mt-3 space-y-0.5 text-sm">
+            {files.map((f, i) => (
+              <li key={i} className={f.problem ? "text-[var(--danger)]" : "text-[var(--primary)]"}>
+                {f.name}
+                {f.problem ? ` — ${f.problem}` : ""}
+              </li>
             ))}
           </ul>
         )}
@@ -46,24 +89,25 @@ export function ImportForm() {
           ref={inputRef}
           type="file"
           name="file"
-          accept="application/pdf,.pdf"
+          accept={ACCEPT}
           multiple
-          className="hidden"
-          onChange={(e) => setNames(Array.from(e.target.files ?? []).map((f) => f.name))}
+          className="sr-only"
+          disabled={pending}
+          onChange={(e) => addFiles(e.target.files)}
         />
       </div>
 
       <div className="flex flex-wrap gap-3">
         <label className="text-sm">
           Sens
-          <select name="direction" className="ml-2 rounded-lg border border-[var(--border)] px-2 py-1.5 text-sm">
+          <select name="direction" disabled={pending} className="ml-2 rounded-lg border border-[var(--border)] px-2 py-1.5 text-sm">
             <option value="achat">Achat (facture fournisseur)</option>
             <option value="vente">Vente (facture client)</option>
           </select>
         </label>
         <label className="text-sm">
           Type
-          <select name="documentType" className="ml-2 rounded-lg border border-[var(--border)] px-2 py-1.5 text-sm">
+          <select name="documentType" disabled={pending} className="ml-2 rounded-lg border border-[var(--border)] px-2 py-1.5 text-sm">
             <option value="facture">Facture</option>
             <option value="avoir">Avoir</option>
           </select>
@@ -81,16 +125,20 @@ export function ImportForm() {
 
       <button
         type="submit"
-        disabled={pending}
+        disabled={pending || count === 0 || blocking}
         className="rounded-lg bg-[var(--primary)] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
       >
-        {pending ? "Import en cours…" : names.length > 1 ? `Importer ${names.length} factures` : "Importer la facture"}
+        {pending
+          ? "Analyse en cours… (la lecture d'un scan peut prendre ~10 s/page, ne fermez pas la fenêtre)"
+          : count > 1
+            ? `Importer ${count} documents`
+            : "Importer le document"}
       </button>
 
       {state.results && (
         <div className="rounded-lg border border-[var(--border)] p-3">
           <p className="mb-2 text-sm font-semibold">
-            Résultat : {state.results.filter((r) => r.status === "ok").length}/{state.results.length} importée(s)
+            Résultat : {state.results.filter((r) => r.status === "ok").length}/{state.results.length} importé(s)
           </p>
           <ul className="space-y-1 text-sm">
             {state.results.map((r, i) => (

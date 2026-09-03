@@ -35,6 +35,22 @@ export function backupDir(): string {
   return path.join(dataDir(), "sauvegardes");
 }
 
+/**
+ * Résout le chemin RÉEL d'un fichier de facture stocké.
+ * On enregistre désormais un nom de fichier relatif (`<uuid>.pdf`), mais
+ * d'anciennes factures ont un chemin absolu : on gère les deux, en gardant
+ * toujours le fichier à l'intérieur de `uploadDir()` (anti-traversée).
+ */
+export function resolveUploadPath(stored: string | null | undefined): string | null {
+  if (!stored) return null;
+  const dir = path.resolve(uploadDir());
+  const candidate = path.isAbsolute(stored)
+    ? path.resolve(stored)
+    : path.resolve(dir, path.basename(stored));
+  if (candidate !== dir && !candidate.startsWith(dir + path.sep)) return null;
+  return candidate;
+}
+
 /** Fichier SQLite de la base, déduit de DATABASE_URL (sinon valeur par défaut). */
 export function databaseFile(): string {
   const url = process.env.DATABASE_URL ?? "";

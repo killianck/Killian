@@ -11,6 +11,13 @@ const nextConfig: NextConfig = {
   //   - tesseract.js : reconnaissance de texte (OCR), en français
   serverExternalPackages: ["mupdf", "tesseract.js"],
 
+  experimental: {
+    // Import de factures via Server Action : le corps doit pouvoir contenir un
+    // scan lourd (la limite Next par défaut est de 1 Mo, incompatible avec
+    // MAX_SIZE = 20 Mo côté import).
+    serverActions: { bodySizeLimit: "25mb" },
+  },
+
   // Force l'inclusion du client Prisma et de son moteur dans le build autonome,
   // ainsi que des moteurs OCR et de leurs données de langue.
   outputFileTracingIncludes: {

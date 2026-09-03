@@ -2,7 +2,7 @@ import Link from "next/link";
 import { PageHeader, Card, Badge } from "@/components/ui";
 import { VAT_RATES, TVA_DISCLAIMER } from "@/lib/tva/rules";
 import { CATEGORIES, STATUSES } from "@/lib/domain/enums";
-import { lastBackupAt } from "@/lib/backup";
+import { lastBackupAt, lastBackupError } from "@/lib/backup";
 import { formatDate } from "@/lib/format";
 import { getCurrentUser } from "@/lib/auth";
 import { isDesktopApp, isEncryptionRequested } from "@/lib/encryption";
@@ -20,6 +20,7 @@ export default async function ParametresPage() {
   };
 
   const lastBackup = lastBackupAt();
+  const backupError = lastBackupError();
   const isAdmin = user?.role === "admin";
   const encryptionOn = isEncryptionRequested();
   const desktop = isDesktopApp();
@@ -85,9 +86,15 @@ export default async function ParametresPage() {
                 : "aucune"}
             </span>
           </p>
+          {backupError && (
+            <p className="mt-2 rounded-lg border border-[var(--danger-bg)] bg-[var(--danger-bg)] px-2.5 py-1.5 text-xs text-[var(--danger)]">
+              ⚠️ La dernière sauvegarde a échoué : {backupError}
+            </p>
+          )}
           <p className="mt-1 text-xs text-[var(--muted)]">
-            Une sauvegarde automatique est faite une fois par jour au lancement. Les 30 dernières
-            sont conservées dans <code>data/sauvegardes/</code>.
+            Une sauvegarde automatique est faite une fois par jour au lancement (image cohérente de
+            la base + copie des documents). Les 30 dernières sont conservées dans{" "}
+            <code>data/sauvegardes/</code>.
           </p>
           <form action={backupNow} className="mt-3">
             <button className="rounded-lg bg-[var(--primary)] px-3 py-2 text-sm font-medium text-white">

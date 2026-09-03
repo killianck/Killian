@@ -31,7 +31,9 @@ export default async function InvoiceDetailPage({
   searchParams: Promise<SP>;
 }) {
   const { id } = await params;
-  const analyse = (await searchParams).analyse;
+  const sp = await searchParams;
+  const analyse = sp.analyse;
+  const erreur = sp.erreur;
   const inv = await getInvoice(id);
   if (!inv) notFound();
 
@@ -113,7 +115,23 @@ export default async function InvoiceDetailPage({
       )}
       {analyse === "nofile" && (
         <p className="mb-4 rounded-lg border border-[var(--danger-bg)] bg-[var(--danger-bg)] px-3 py-2 text-xs text-[var(--danger)]">
-          Le PDF d&apos;origine est introuvable.
+          Le document d&apos;origine est introuvable.
+        </p>
+      )}
+      {analyse === "erreur" && (
+        <p className="mb-4 rounded-lg border border-[var(--danger-bg)] bg-[var(--danger-bg)] px-3 py-2 text-xs text-[var(--danger)]">
+          La ré-analyse a échoué. Les valeurs actuelles sont conservées.
+        </p>
+      )}
+      {erreur === "incoherence" && (
+        <p className="mb-4 rounded-lg border border-[var(--danger-bg)] bg-[var(--danger-bg)] px-3 py-2 text-xs text-[var(--danger)]">
+          Impossible de valider : les montants sont incohérents (HT + TVA ≠ TTC, ou valeur absurde).
+          Corrigez-les via « Modifier ».
+        </p>
+      )}
+      {(erreur === "enregistrement" || erreur === "suppression") && (
+        <p className="mb-4 rounded-lg border border-[var(--danger-bg)] bg-[var(--danger-bg)] px-3 py-2 text-xs text-[var(--danger)]">
+          L&apos;opération a échoué (la base était peut-être occupée). Réessayez.
         </p>
       )}
 
@@ -135,7 +153,11 @@ export default async function InvoiceDetailPage({
         <div className="ml-auto flex gap-2">
           {inv.status !== "validee" && (
             <form action={setInvoiceStatus.bind(null, inv.id, "validee")}>
-              <button className="rounded-lg bg-[var(--success)] px-3 py-1.5 text-xs font-medium text-white">
+              <button
+                disabled={report.level === "incoherent"}
+                title={report.level === "incoherent" ? "Corrigez les montants incohérents avant de valider" : undefined}
+                className="rounded-lg bg-[var(--success)] px-3 py-1.5 text-xs font-medium text-white disabled:cursor-not-allowed disabled:opacity-40"
+              >
                 ✓ Valider la facture
               </button>
             </form>
@@ -167,9 +189,29 @@ export default async function InvoiceDetailPage({
               </div>
             ))}
           </dl>
-          {inv.notes && (
-            <p className="mt-3 rounded-lg bg-[#f9fafb] p-3 text-sm text-[var(--muted)]">{inv.notes}</p>
-          )}
+          {inv.notes && (() => {
+            const items = inv.notes.split(/\n+/).map((s) => s.trim()).filter(Boolean);
+            const looksLikeChecklist =
+              inv.status !== "validee" &&
+              /non détect|à vérifier|à corriger|OCR|scanné|doublon|calculé|incertain|devinée?/i.test(inv.notes);
+            if (looksLikeChecklist) {
+              return (
+                <div className="mt-3 rounded-lg border border-[var(--warning-bg)] bg-[var(--warning-bg)] p-3 text-sm text-[var(--warning)]">
+                  <p className="font-semibold">Points à vérifier avant de valider</p>
+                  <ul className="mt-1 list-disc space-y-0.5 pl-5">
+                    {items.map((it, i) => (
+                      <li key={i}>{it}</li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            }
+            return (
+              <p className="mt-3 whitespace-pre-line rounded-lg bg-[#f9fafb] p-3 text-sm text-[var(--muted)]">
+                {inv.notes}
+              </p>
+            );
+          })()}
         </Card>
 
         <Card className="p-4">

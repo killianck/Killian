@@ -5,6 +5,7 @@
 import ExcelJS from "exceljs";
 import { CATEGORIES, DIRECTIONS, DOCUMENT_TYPES, labelOf } from "@/lib/domain/enums";
 import { MONTH_NAMES_FR } from "@/lib/format";
+import { sumInvoices, type AggregatableInvoice } from "@/lib/tva/aggregate";
 
 export type ExportableInvoice = {
   invoiceDate: Date;
@@ -47,6 +48,7 @@ export async function buildInvoicesWorkbook(invoices: ExportableInvoice[]): Prom
 
   for (const inv of invoices) {
     const d = new Date(inv.invoiceDate);
+    const sign = inv.documentType === "avoir" ? -1 : 1;
     ws.addRow({
       date: d,
       due: inv.dueDate ? new Date(inv.dueDate) : "",
@@ -55,20 +57,37 @@ export async function buildInvoicesWorkbook(invoices: ExportableInvoice[]): Prom
       type: DOCUMENT_TYPES[inv.documentType as keyof typeof DOCUMENT_TYPES] ?? inv.documentType,
       direction: DIRECTIONS[inv.direction as keyof typeof DIRECTIONS] ?? inv.direction,
       category: labelOf(CATEGORIES, inv.category),
-      ht: inv.totalHT,
-      tva: inv.totalVAT,
-      ttc: inv.totalTTC,
+      // Montants SIGNÉS (un avoir vient en déduction) : la colonne se somme juste.
+      ht: sign * inv.totalHT,
+      tva: sign * inv.totalVAT,
+      ttc: sign * inv.totalTTC,
       rates: [...new Set(inv.vatLines.map((l) => l.rate))].join(" / "),
       deductible: inv.direction === "achat" ? (inv.deductible ? "Oui" : "Non") : "",
-      month: MONTH_NAMES_FR[d.getMonth()],
-      year: d.getFullYear(),
+      month: MONTH_NAMES_FR[d.getUTCMonth()],
+      year: d.getUTCFullYear(),
     });
+  }
+
+  // Ligne de totaux (montants signés : un avoir vient en déduction).
+  if (invoices.length > 0) {
+    const agg = sumInvoices(invoices as unknown as AggregatableInvoice[]);
+    const sumSigned = (pick: (i: (typeof invoices)[number]) => number) =>
+      Math.round(
+        invoices.reduce((s, i) => s + (i.documentType === "avoir" ? -1 : 1) * pick(i), 0) * 100,
+      ) / 100;
+    const total = ws.addRow({
+      party: `TOTAL (${invoices.length} document${invoices.length > 1 ? "s" : ""})`,
+      ht: agg.totalHT,
+      tva: sumSigned((i) => i.totalVAT),
+      ttc: agg.totalTTC,
+    });
+    total.font = { bold: true };
   }
 
   ws.getColumn("date").numFmt = "dd/mm/yyyy";
   ws.getColumn("due").numFmt = "dd/mm/yyyy";
   for (const key of ["ht", "tva", "ttc"]) {
-    ws.getColumn(key).numFmt = '# ##0.00 "€"';
+    ws.getColumn(key).numFmt = '#,##0.00 "€"';
   }
 
   const arrayBuffer = await wb.xlsx.writeBuffer();

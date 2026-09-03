@@ -144,6 +144,19 @@ function totals(lines: SeedLine[]) {
 }
 
 async function main() {
+  // GARDE-FOU : ce script EFFACE toutes les données. Il refuse de s'exécuter en
+  // production ou sur une base qui contient déjà des factures, sauf FORCE_SEED=1.
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("db:seed est interdit en production.");
+  }
+  const existing = await prisma.invoice.count();
+  if (existing > 0 && process.env.FORCE_SEED !== "1") {
+    throw new Error(
+      `La base contient déjà ${existing} facture(s). db:seed les EFFACERAIT. ` +
+        "Utilisez une base de développement séparée, ou relancez avec FORCE_SEED=1 si vous êtes sûr.",
+    );
+  }
+
   console.log("Nettoyage des tables...");
   await prisma.invoiceRevision.deleteMany();
   await prisma.vatLine.deleteMany();

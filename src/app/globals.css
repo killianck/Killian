@@ -1,6 +1,11 @@
 @import "tailwindcss";
 
 :root {
+  /* L'application est conçue en thème clair : on force les contrôles natifs
+     (sélecteurs de date, listes, cases) à rester lisibles même si Windows est
+     en thème sombre. */
+  color-scheme: light;
+
   --background: #f6f7f9;
   --surface: #ffffff;
   --foreground: #1a1d21;

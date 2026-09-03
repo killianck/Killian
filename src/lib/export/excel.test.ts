@@ -50,11 +50,16 @@ describe("buildInvoicesWorkbook", () => {
       expect.arrayContaining(["Date", "Numéro", "HT", "TVA", "TTC", "TVA récupérable", "Mois", "Année"]),
     );
 
-    // 1 ligne d'en-tête + 2 factures
-    expect(ws.rowCount).toBe(3);
+    // 1 ligne d'en-tête + 2 factures + 1 ligne de totaux
+    expect(ws.rowCount).toBe(4);
 
     const row2 = ws.getRow(2).values as Record<string, unknown>;
     expect(Object.values(row2)).toContain("F2026-001");
+
+    // La ligne de totaux somme HT (1000 + 500).
+    const headerRow = ws.getRow(1).values as unknown[];
+    const htCol = headerRow.indexOf("HT");
+    expect(ws.getColumn(htCol).values[4]).toBe(1500);
   });
 
   it("marque « Non » pour un achat dont la TVA n'est pas récupérable", async () => {

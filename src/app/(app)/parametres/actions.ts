@@ -13,6 +13,7 @@ export async function backupNow(): Promise<void> {
   try {
     runBackup();
   } catch (e) {
+    // L'échec est persisté par runBackup ; la page Paramètres l'affiche en rouge.
     console.error("Sauvegarde manuelle impossible :", e);
   }
   revalidatePath("/parametres");
