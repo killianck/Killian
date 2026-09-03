@@ -49,6 +49,9 @@ model Invoice {
   status    String @default("a_analyser") // a_analyser | analyse_en_cours | a_verifier | validee | erreur
   coherence String @default("a_verifier") // coherent | a_verifier | incoherent
 
+  // Confiance de la dernière analyse automatique (0..1), null si saisie manuelle.
+  confidence Float?
+
   notes String?
 
   // --- Fichier PDF original (jamais supprimé automatiquement) ---

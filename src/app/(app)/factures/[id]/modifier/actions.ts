@@ -63,6 +63,7 @@ export async function updateInvoice(
           ...data,
           status: nextStatus,
           coherence,
+          confidence: null, // corrigée à la main : l'indice de confiance auto ne s'applique plus
           vatLines: { create: lines },
         },
       }),

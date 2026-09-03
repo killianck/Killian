@@ -215,6 +215,7 @@ export async function reanalyzeInvoice(id: string): Promise<void> {
           ...data,
           status: statusAfterEdit(inv.status),
           coherence,
+          confidence: parsed.confidence,
           notes: parsed.warnings.length ? parsed.warnings.join("\n") : inv.notes,
           vatLines: { create: lines },
         },

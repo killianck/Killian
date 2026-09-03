@@ -150,6 +150,20 @@ export default async function InvoiceDetailPage({
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <StatusBadge status={inv.status} />
         <CoherenceBadge level={report.level} />
+        {typeof inv.confidence === "number" && inv.status !== "validee" && (
+          <span
+            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+              inv.confidence >= 0.75
+                ? "bg-[var(--success-bg)] text-[var(--success)]"
+                : inv.confidence >= 0.5
+                  ? "bg-[#eff4ff] text-[var(--primary)]"
+                  : "bg-[var(--warning-bg)] text-[var(--warning)]"
+            }`}
+            title="Fiabilité estimée de l'extraction automatique — plus elle est basse, plus il faut relire les montants."
+          >
+            Extraction : {Math.round(inv.confidence * 100)} %
+          </span>
+        )}
         <div className="ml-auto flex gap-2">
           {inv.status !== "validee" && (
             <form action={setInvoiceStatus.bind(null, inv.id, "validee")}>

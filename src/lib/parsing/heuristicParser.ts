@@ -52,10 +52,10 @@ export class HeuristicParser implements InvoiceParser {
 
     let result = buildParsedInvoice(text, this.name);
 
-    const weak =
-      result.confidence < 0.35 ||
-      result.totalTTC === undefined ||
-      text.replace(/\s/g, "").length < 600;
+    // On tente l'OCR si l'analyse du texte natif est faible, OU si le PDF ne
+    // contient quasiment pas de texte (scan avec une fine couche OCR d'origine).
+    const thinText = text.replace(/\s/g, "").length < 400;
+    const weak = result.confidence < 0.45 || result.totalTTC === undefined || thinText;
 
     if (weak) {
       try {

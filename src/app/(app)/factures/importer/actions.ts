@@ -171,6 +171,7 @@ async function importOne(
         totalTTC,
         status: parsed.confidence > 0 ? "a_verifier" : "a_analyser",
         coherence,
+        confidence: parsed.confidence,
         notes: warnings.length ? warnings.join("\n") : null,
         originalFileName: name,
         originalFilePath: storedName, // chemin RELATIF (voir resolveUploadPath)

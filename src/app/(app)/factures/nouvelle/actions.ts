@@ -54,6 +54,7 @@ export async function createInvoice(
         vatNumber: party.vatNumber,
         status: "a_verifier",
         coherence,
+        confidence: null, // saisie manuelle
         vatLines: { create: lines },
         revisions: {
           create: { field: "Création", oldValue: "—", newValue: "Saisie manuelle", userName: me.name },
