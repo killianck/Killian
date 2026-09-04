@@ -1,6 +1,6 @@
 {
   "name": "facturation-tva",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "private": true,
   "description": "Suivi des factures et de la TVA pour petite entreprise",
   "author": "Killian",
