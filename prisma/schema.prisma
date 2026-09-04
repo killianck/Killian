@@ -19,6 +19,15 @@ model Invoice {
   direction    String @default("achat") // "achat" (fournisseur) | "vente" (client)
   category     String? // "materiel" | "sous_traitance" | "transport" | "fournitures" | "services" | "autre" | null
 
+  // --- Relevé de factures ---
+  // true = ce document LISTE plusieurs factures (récapitulatif fournisseur) et ne
+  // facture rien lui-même. Ses totaux (totalHT/VAT/TTC) portent la part NON encore
+  // couverte par des factures saisies séparément ; statementGross* = le cumul imprimé.
+  isStatement       Boolean @default(false)
+  statementGrossHT  Float?
+  statementGrossVAT Float?
+  statementGrossTTC Float?
+
   // --- Identification ---
   number      String?
   invoiceDate DateTime
@@ -64,11 +73,43 @@ model Invoice {
   vatLines  VatLine[]
   revisions InvoiceRevision[]
 
+  // Lignes du relevé (quand isStatement = true).
+  statementLines StatementLine[] @relation("StatementOf")
+  // Lignes de relevés qui pointent vers CETTE facture (rapprochement).
+  statementRefs  StatementLine[] @relation("MatchedInvoice")
+
   @@index([invoiceDate])
   @@index([dueDate])
   @@index([direction])
   @@index([status])
   @@index([partyId])
+  @@index([isStatement])
+}
+
+/// Une ligne du détail d'un relevé de factures : une facture listée, avec son
+/// montant, éventuellement rapprochée d'une facture réellement saisie.
+model StatementLine {
+  id          String  @id @default(cuid())
+  statementId String
+  statement   Invoice @relation("StatementOf", fields: [statementId], references: [id], onDelete: Cascade)
+
+  reference String // numéro de la facture, tel qu'imprimé sur le relevé
+  label     String?
+  lineDate  DateTime?
+  dueDate   DateTime?
+  amountHT  Float?
+  amountVAT Float?
+  amountTTC Float?
+
+  // Facture saisie séparément qui correspond à cette ligne (null tant qu'absente).
+  matchedInvoiceId String?
+  matchedInvoice   Invoice? @relation("MatchedInvoice", fields: [matchedInvoiceId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@index([statementId])
+  @@index([matchedInvoiceId])
+  @@index([reference])
 }
 
 /// Fiche d'un tiers (fournisseur et/ou client), réutilisable d'une facture à l'autre.

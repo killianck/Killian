@@ -28,6 +28,23 @@ export type ParsedInvoice = {
   totalTTC?: number;
   vatLines?: ParsedVatLine[];
 
+  /**
+   * true si le document est un RELEVÉ / récapitulatif de plusieurs factures
+   * (et non une facture qui facture quelque chose). Dans ce cas `totalHT/VAT/TTC`
+   * portent le CUMUL imprimé sur le relevé et `statementLines` en donne le détail.
+   */
+  isStatement?: boolean;
+  /** Détail des factures listées par le relevé (référence + montants). */
+  statementLines?: {
+    reference: string;
+    label?: string;
+    date?: string;
+    dueDate?: string;
+    amountHT?: number;
+    amountVAT?: number;
+    amountTTC?: number;
+  }[];
+
   /** Indice de confiance global de 0 à 1 (0 = rien trouvé). */
   confidence: number;
   /**

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { parseInvoiceForm, type InvoiceFormState } from "@/lib/invoices/form";
 import { resolveParty } from "@/lib/invoices/party";
+import { reconcileStatements } from "@/lib/invoices/statements";
 import { requireUser } from "@/lib/auth";
 
 /** Crée une facture saisie manuellement (sans PDF). */
@@ -65,6 +66,13 @@ export async function createInvoice(
   } catch (e) {
     console.error("Création de la facture échouée :", e);
     return { error: "La création a échoué. Vérifiez les valeurs saisies et réessayez." };
+  }
+
+  // Cette facture figure peut-être sur un relevé déjà enregistré.
+  try {
+    await reconcileStatements(prisma);
+  } catch (e) {
+    console.error("Rapprochement des relevés impossible après création :", e);
   }
 
   redirect(`/factures/${id}`);

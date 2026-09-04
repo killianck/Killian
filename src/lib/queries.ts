@@ -16,7 +16,20 @@ export async function getInvoices() {
 export async function getInvoice(id: string) {
   return prisma.invoice.findUnique({
     where: { id },
-    include: { vatLines: true, party: true, revisions: { orderBy: { changedAt: "desc" } } },
+    include: {
+      vatLines: true,
+      party: true,
+      revisions: { orderBy: { changedAt: "desc" } },
+      // Détail du relevé (si c'en est un) + facture rapprochée de chaque ligne.
+      statementLines: {
+        orderBy: { lineDate: "asc" },
+        include: { matchedInvoice: { select: { id: true, number: true, totalTTC: true, status: true } } },
+      },
+      // Relevé(s) sur lesquels CETTE facture figure.
+      statementRefs: {
+        include: { statement: { select: { id: true, number: true, partyName: true, invoiceDate: true } } },
+      },
+    },
   });
 }
 

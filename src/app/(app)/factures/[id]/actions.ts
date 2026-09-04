@@ -9,6 +9,7 @@ import { dataDir, resolveUploadPath } from "@/lib/paths";
 import { STATUSES, type Status } from "@/lib/domain/enums";
 import { checkCoherence } from "@/lib/tva/coherence";
 import { enqueueAnalysis } from "@/lib/invoices/analysisQueue";
+import { reconcileStatements } from "@/lib/invoices/statements";
 import { requireAdmin, requireUser } from "@/lib/auth";
 
 const has = (obj: object, key: string) => Object.prototype.hasOwnProperty.call(obj, key);
@@ -102,8 +103,87 @@ export async function deleteInvoice(id: string): Promise<void> {
     }
   }
 
+  // La facture supprimée figurait peut-être sur un relevé : celui-ci doit
+  // « regrossir » de la part correspondante.
+  try {
+    await reconcileStatements(prisma);
+  } catch (e) {
+    console.error("Rapprochement des relevés impossible après suppression :", e);
+  }
+
   revalidatePath("/factures");
   redirect("/factures");
+}
+
+/**
+ * Force (ou retire) le classement « relevé de factures » d'un document, quand la
+ * détection automatique s'est trompée. Relance le rapprochement.
+ */
+export async function setStatementFlag(id: string, isStatement: boolean): Promise<void> {
+  const me = await requireUser();
+  const inv = await prisma.invoice.findUnique({
+    where: { id },
+    select: {
+      isStatement: true, status: true, totalHT: true, totalVAT: true, totalTTC: true,
+      statementGrossHT: true, statementGrossVAT: true, statementGrossTTC: true,
+    },
+  });
+  if (!inv || inv.isStatement === isStatement) return;
+  // Un document validé ne doit plus changer de nature en un clic (voir setInvoiceStatus).
+  if (inv.status === "validee") {
+    redirect(`/factures/${id}?erreur=enregistrement`);
+  }
+
+  try {
+    await prisma.$transaction([
+      prisma.invoice.update({
+        where: { id },
+        data: isStatement
+          ? {
+              isStatement: true,
+              // On mémorise les totaux actuels comme cumul du relevé si on n'en a pas.
+              statementGrossHT: inv.statementGrossTTC == null ? inv.totalHT : undefined,
+              statementGrossVAT: inv.statementGrossTTC == null ? inv.totalVAT : undefined,
+              statementGrossTTC: inv.statementGrossTTC == null ? inv.totalTTC : undefined,
+              coherence: "a_verifier",
+            }
+          : {
+              isStatement: false,
+              // On restaure le VRAI total du document (le cumul imprimé), pas le
+              // reste-à-couvrir compensé qui a pu être ramené à 0 entre-temps :
+              // sinon un relevé entièrement rapproché redeviendrait une facture à 0 €.
+              totalHT: inv.statementGrossHT ?? inv.totalHT,
+              totalVAT: inv.statementGrossVAT ?? inv.totalVAT,
+              totalTTC: inv.statementGrossTTC ?? inv.totalTTC,
+              statementGrossHT: null,
+              statementGrossVAT: null,
+              statementGrossTTC: null,
+              coherence: "a_verifier",
+              // Les notes de rapprochement (« Relevé rapproché à… ») n'ont plus lieu
+              // d'être une fois reclassé en facture simple.
+              notes: null,
+            },
+      }),
+      ...(isStatement ? [] : [prisma.statementLine.deleteMany({ where: { statementId: id } })]),
+      prisma.invoiceRevision.create({
+        data: {
+          invoiceId: id,
+          field: "Type de document",
+          oldValue: inv.isStatement ? "Relevé de factures" : "Facture",
+          newValue: isStatement ? "Relevé de factures" : "Facture",
+          userName: me.name,
+        },
+      }),
+    ]);
+    await reconcileStatements(prisma);
+  } catch (e) {
+    unstable_rethrow(e);
+    console.error("Changement de type (relevé) impossible :", e);
+    redirect(`/factures/${id}?erreur=enregistrement`);
+  }
+
+  revalidatePath(`/factures/${id}`);
+  revalidatePath("/factures");
 }
 
 /**

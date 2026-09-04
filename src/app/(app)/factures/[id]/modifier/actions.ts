@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { parseInvoiceForm, type InvoiceFormState } from "@/lib/invoices/form";
 import { resolveParty } from "@/lib/invoices/party";
+import { reconcileStatements } from "@/lib/invoices/statements";
 import { diffInvoice } from "@/lib/domain/revisions";
 import { requireUser } from "@/lib/auth";
 
@@ -54,6 +55,16 @@ export async function updateInvoice(
       ? "a_verifier"
       : existing.status;
 
+  // Pour un relevé, les montants saisis à la main sont le CUMUL imprimé : on les
+  // enregistre comme tels, puis le rapprochement recalcule la part « compensée ».
+  const statementGross = existing.isStatement
+    ? {
+        statementGrossHT: data.totalHT,
+        statementGrossVAT: data.totalVAT,
+        statementGrossTTC: data.totalTTC,
+      }
+    : {};
+
   try {
     await prisma.$transaction([
       prisma.vatLine.deleteMany({ where: { invoiceId: id } }),
@@ -61,6 +72,7 @@ export async function updateInvoice(
         where: { id },
         data: {
           ...data,
+          ...statementGross,
           status: nextStatus,
           coherence,
           confidence: null, // corrigée à la main : l'indice de confiance auto ne s'applique plus
@@ -73,6 +85,7 @@ export async function updateInvoice(
         }),
       ),
     ]);
+    await reconcileStatements(prisma);
   } catch (e) {
     console.error("Échec de l'enregistrement de la facture :", e);
     return { error: "L'enregistrement a échoué. Vérifiez les valeurs saisies et réessayez." };

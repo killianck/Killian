@@ -129,6 +129,11 @@ export default async function FacturesPage({ searchParams }: { searchParams: Pro
                         <Badge tone="info">avoir</Badge>
                       </span>
                     )}
+                    {inv.isStatement && (
+                      <span className="ml-1.5 align-middle">
+                        <Badge tone="info">relevé</Badge>
+                      </span>
+                    )}
                     {dupIds.has(inv.id) && (
                       <span className="ml-1.5 align-middle">
                         <Badge tone="warning">doublon&nbsp;?</Badge>

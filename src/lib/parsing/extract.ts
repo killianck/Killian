@@ -10,11 +10,12 @@
 
 import type { ParsedInvoice, ParsedVatLine } from "./types";
 import { findMoneyTokens, parseFrAmount } from "./frenchNumbers";
+import { detectStatement } from "./statement";
 import { round2, EXTRACTION_VAT_RATES, isPlausibleVatRate } from "@/lib/tva/rules";
 
 /** Enlève les accents pour comparer les mots-clés sans se soucier de la casse. */
 const COMBINING_MARKS = /[̀-ͯ]/g;
-const deburr = (s: string) => s.normalize("NFD").replace(COMBINING_MARKS, "").toLowerCase();
+export const deburr = (s: string) => s.normalize("NFD").replace(COMBINING_MARKS, "").toLowerCase();
 
 const MONTHS_FR: Record<string, number> = {
   janvier: 1, fevrier: 2, mars: 3, avril: 4, mai: 5, juin: 6,
@@ -331,7 +332,9 @@ export function extractSupplier(text: string): string | undefined {
   for (let i = 0; i < Math.min(lines.length, 40); i++) {
     if (inClientBlock(i) || CLIENT_BLOCK.test(deburr(lines[i]))) continue;
     const m = lines[i].match(new RegExp(`([A-Za-zÀ-ÿ0-9][\\w &'.\\-À-ÿ]{1,55}?${ORG_SUFFIX.source})\\b`, "i"));
-    if (m && !/factur|livre a|client|capital/i.test(deburr(m[1]))) return m[1].trim().replace(/\s+/g, " ");
+    if (m && !/factur|livre a|client|capital|www\.|https?:|@|\.(fr|com|net|eu)\b/i.test(deburr(m[1]))) {
+      return m[1].trim().replace(/\s+/g, " ");
+    }
   }
 
   // 2) Première ligne « significative » de l'en-tête (hors bloc client, hors adresse).
@@ -721,7 +724,9 @@ export function buildParsedInvoice(text: string, engine: string): ParsedInvoice 
   }
 
   const documentType = extractDocumentType(clean);
-  const { invoiceDate, dueDate, notes: dateNotes } = extractDates(clean);
+  const dates = extractDates(clean);
+  let { invoiceDate, dueDate } = dates;
+  const dateNotes = dates.notes;
   const amounts = extractAmounts(clean);
   warnings.push(...amounts.notes, ...dateNotes);
 
@@ -734,6 +739,42 @@ export function buildParsedInvoice(text: string, engine: string): ParsedInvoice 
   // Un AVOIR se stocke en valeurs POSITIVES (le signe est porté par l'agrégation).
   let { totalHT, totalVAT, totalTTC } = amounts;
   let vatLines = amounts.vatLines;
+
+  // --- Relevé de factures ? -------------------------------------------------
+  // Un relevé LISTE des factures déjà émises. Ses totaux (cumul) sont conservés
+  // tels quels ; le rapprochement avec les factures déjà saisies et la
+  // « compensation » se font ensuite (src/lib/invoices/statements.ts).
+  const statement = documentType === "facture" ? detectStatement(clean) : null;
+  let statementLines: ParsedInvoice["statementLines"];
+  if (statement) {
+    statementLines = statement.lines;
+    if (statement.grossTTC !== undefined) totalTTC = statement.grossTTC;
+    if (statement.grossHT !== undefined) totalHT = statement.grossHT;
+    if (statement.grossVAT !== undefined) totalVAT = statement.grossVAT;
+    else if (totalHT !== undefined && totalTTC !== undefined) totalVAT = round2(totalTTC - totalHT);
+    if (totalHT !== undefined && totalVAT !== undefined) {
+      const rate = impliedStandardRate(totalVAT, totalHT);
+      vatLines = rate !== undefined ? [{ rate, baseHT: totalHT, vatAmount: totalVAT }] : vatLines;
+    }
+    if (statement.dueDate) dueDate = statement.dueDate;
+    // Date du relevé : la dernière facture listée (plus représentatif que la 1re
+    // date croisée). On remplace l'avertissement générique « date non libellée ».
+    const lineDates = statement.lines.map((l) => l.date).filter((d): d is string => Boolean(d)).sort();
+    if (lineDates.length) {
+      invoiceDate = lineDates[lineDates.length - 1];
+      const i = warnings.findIndex((n) => /date de facture non libell/i.test(n));
+      if (i >= 0) warnings[i] = "Date du relevé estimée (dernière facture listée) — ajustez-la si besoin.";
+      else warnings.push("Date du relevé estimée (dernière facture listée) — ajustez-la si besoin.");
+    }
+    warnings.unshift(
+      `Document détecté comme un RELEVÉ de ${statement.lines.length} facture(s) (cumul ${
+        totalTTC?.toFixed(2) ?? "?"
+      } €). Les factures déjà présentes dans le logiciel seront rapprochées et ne seront pas comptées deux fois. ` +
+        (statement.sumMatchesTotal
+          ? "Vérifiez malgré tout le classement avant de valider."
+          : "⚠️ La somme des lignes ne correspond pas exactement au total imprimé — à vérifier."),
+    );
+  }
   if (documentType === "avoir") {
     const abs = (n: number | undefined) => (n === undefined ? undefined : Math.abs(n));
     if ([totalHT, totalVAT, totalTTC].some((n) => n !== undefined && n < 0)) {
@@ -780,6 +821,9 @@ export function buildParsedInvoice(text: string, engine: string): ParsedInvoice 
     (coherent && allObserved ? 0.05 : 0);
   let confidence = Math.min(1, round2(score));
   if (amounts.uncertain) confidence = Math.min(confidence, 0.5);
+  // Un relevé doit toujours passer par une vérification (rapprochement des
+  // factures) : on ne le présente jamais comme « sûr ».
+  if (statement) confidence = Math.min(confidence, 0.7);
 
   return {
     documentType,
@@ -794,6 +838,8 @@ export function buildParsedInvoice(text: string, engine: string): ParsedInvoice 
     totalVAT,
     totalTTC,
     vatLines: vatLines.length ? vatLines : undefined,
+    isStatement: statement ? true : undefined,
+    statementLines,
     confidence,
     amountsUncertain: amounts.uncertain || totalHT === undefined || totalVAT === undefined || totalTTC === undefined || !coherent,
     warnings,

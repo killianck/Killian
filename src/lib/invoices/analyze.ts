@@ -11,6 +11,7 @@ import { getInvoiceParser } from "@/lib/parsing";
 import { checkCoherence } from "@/lib/tva/coherence";
 import { resolveParty } from "@/lib/invoices/party";
 import { duplicateKey } from "@/lib/invoices/duplicates";
+import { reconcileStatements } from "@/lib/invoices/statements";
 import { diffInvoice } from "@/lib/domain/revisions";
 import type { ParsedInvoice } from "@/lib/parsing/types";
 
@@ -72,6 +73,15 @@ export async function applyAnalysis(id: string, mode: AnalyzeMode, userName?: st
   }
 
   const keepExisting = mode === "reanalyze";
+
+  // Un relevé de factures : le parseur le repère ; en ré-analyse on ne retire
+  // jamais le drapeau tout seul (l'utilisateur le corrige via la fiche).
+  const isStatement = parsed.isStatement === true || (keepExisting && inv.isStatement);
+  const newStatementLines =
+    parsed.isStatement && parsed.statementLines?.length
+      ? parsed.statementLines
+      : null;
+
   const totalHT = parsed.totalHT ?? (keepExisting ? inv.totalHT : 0);
   const totalVAT = parsed.totalVAT ?? (keepExisting ? inv.totalVAT : 0);
   const totalTTC = parsed.totalTTC ?? (keepExisting ? inv.totalTTC : 0);
@@ -136,6 +146,11 @@ export async function applyAnalysis(id: string, mode: AnalyzeMode, userName?: st
     totalHT,
     totalVAT,
     totalTTC,
+    isStatement,
+    // Cumul imprimé sur le relevé (avant compensation) — sert de base au recalcul.
+    statementGrossHT: isStatement ? (parsed.totalHT ?? inv.statementGrossHT ?? null) : null,
+    statementGrossVAT: isStatement ? (parsed.totalVAT ?? inv.statementGrossVAT ?? null) : null,
+    statementGrossTTC: isStatement ? (parsed.totalTTC ?? inv.statementGrossTTC ?? null) : null,
     status: parsed.confidence > 0 ? "a_verifier" : "a_analyser",
     coherence,
     confidence: parsed.confidence,
@@ -151,12 +166,30 @@ export async function applyAnalysis(id: string, mode: AnalyzeMode, userName?: st
 
   await prisma.$transaction([
     prisma.vatLine.deleteMany({ where: { invoiceId: id } }),
+    // Lignes du relevé : remplacées si le parseur en a extrait ; sinon on garde
+    // celles déjà en base (ré-analyse) ou on nettoie (ce n'est plus un relevé).
+    ...(newStatementLines || !isStatement
+      ? [prisma.statementLine.deleteMany({ where: { statementId: id } })]
+      : []),
     prisma.invoice.update({
       where: { id },
       data: {
         ...data,
         notes: warnings.length ? warnings.join("\n") : keepExisting ? inv.notes : null,
         vatLines: vatLines.length ? { create: vatLines } : undefined,
+        statementLines: newStatementLines
+          ? {
+              create: newStatementLines.map((l) => ({
+                reference: l.reference,
+                label: l.label ?? null,
+                lineDate: l.date ? new Date(l.date) : null,
+                dueDate: l.dueDate ? new Date(l.dueDate) : null,
+                amountHT: l.amountHT ?? null,
+                amountVAT: l.amountVAT ?? null,
+                amountTTC: l.amountTTC ?? null,
+              })),
+            }
+          : undefined,
       },
     }),
     ...(mode === "reanalyze"
@@ -178,4 +211,13 @@ export async function applyAnalysis(id: string, mode: AnalyzeMode, userName?: st
         ]
       : []),
   ]);
+
+  // Rapproche les relevés : soit CETTE facture est un relevé (calcul de sa
+  // compensation), soit c'est une facture qui figure peut-être sur un relevé
+  // existant (qui doit alors rétrécir). Ne lève jamais.
+  try {
+    await reconcileStatements(prisma);
+  } catch (e) {
+    console.error(`Rapprochement des relevés impossible après analyse de ${id} :`, e);
+  }
 }

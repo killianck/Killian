@@ -3,6 +3,8 @@ import { Sidebar } from "@/components/Sidebar";
 import { MobileNav } from "@/components/MobileNav";
 import { getCurrentUser } from "@/lib/auth";
 import { resumeStuckAnalyses } from "@/lib/invoices/analysisQueue";
+import { reconcileStatementsThrottled } from "@/lib/invoices/statements";
+import { prisma } from "@/lib/db";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
@@ -11,6 +13,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // Reprend une analyse restée en plan (ex. app fermée en cours d'OCR). Peu coûteux
   // (au plus une fois toutes les 30 s, requête indexée).
   void resumeStuckAnalyses();
+  // Rapproche les relevés de factures (idem : throttle 30 s).
+  void reconcileStatementsThrottled(prisma);
 
   return (
     <div className="flex min-h-screen flex-col md:flex-row">

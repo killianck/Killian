@@ -18,7 +18,7 @@ import {
 import { checkCoherence } from "@/lib/tva/coherence";
 import { DeleteInvoiceButton } from "@/components/DeleteInvoiceButton";
 import { AutoRefresh } from "@/components/AutoRefresh";
-import { deleteInvoice, reanalyzeInvoice, setInvoiceStatus } from "./actions";
+import { deleteInvoice, reanalyzeInvoice, setInvoiceStatus, setStatementFlag } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -50,9 +50,11 @@ export default async function InvoiceDetailPage({
   });
 
   const kind = invoiceKind(inv.documentType as DocumentType, inv.direction as Direction);
+  const grossTTC = inv.statementGrossTTC ?? inv.totalTTC;
+  const coveredTTC = Math.max(0, (inv.statementGrossTTC ?? inv.totalTTC) - inv.totalTTC);
 
   const rows: [string, ReactNode][] = [
-    ["Type de document", DOCUMENT_TYPES[inv.documentType as keyof typeof DOCUMENT_TYPES]],
+    ["Type de document", inv.isStatement ? "Relevé de factures" : DOCUMENT_TYPES[inv.documentType as keyof typeof DOCUMENT_TYPES]],
     ["Classement", INVOICE_KINDS[kind]],
     ["Sens", DIRECTIONS[inv.direction as Direction]],
     ["Catégorie", labelOf(CATEGORIES, inv.category)],
@@ -82,7 +84,7 @@ export default async function InvoiceDetailPage({
     <>
       <AutoRefresh active={analysing} />
       <PageHeader
-        title={`Facture ${inv.number ?? ""}`.trim()}
+        title={`${inv.isStatement ? "Relevé" : "Facture"} ${inv.number ?? ""}`.trim()}
         subtitle={inv.partyName ?? undefined}
         action={
           <div className="flex items-center gap-3">
@@ -161,9 +163,30 @@ export default async function InvoiceDetailPage({
         </div>
       )}
 
+      {inv.statementRefs.length > 0 && (
+        <div className="mb-4 rounded-lg border border-[#dbe7ff] bg-[#eff4ff] px-3 py-2 text-xs text-[var(--primary)]">
+          Cette facture figure sur&nbsp;
+          {inv.statementRefs.map((ref, i) => (
+            <span key={ref.id}>
+              {i > 0 && ", "}
+              <Link href={`/factures/${ref.statement.id}`} className="font-medium underline">
+                le relevé {ref.statement.number ?? "sans numéro"}
+              </Link>
+              {ref.statement.partyName ? ` (${ref.statement.partyName})` : ""}
+            </span>
+          ))}
+          . Elle est comptée une seule fois : le relevé a été réduit d&apos;autant.
+        </div>
+      )}
+
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <StatusBadge status={inv.status} />
-        {!analysing && <CoherenceBadge level={report.level} />}
+        {inv.isStatement && (
+          <span className="inline-flex items-center rounded-full bg-[#eef2ff] px-2 py-0.5 text-xs font-medium text-[#4338ca]">
+            Relevé de factures
+          </span>
+        )}
+        {!analysing && !inv.isStatement && <CoherenceBadge level={report.level} />}
         {!analysing && typeof inv.confidence === "number" && inv.status !== "validee" && (
           <span
             className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
@@ -179,14 +202,24 @@ export default async function InvoiceDetailPage({
           </span>
         )}
         <div className="ml-auto flex gap-2">
+          {!inv.isStatement && !analysing && inv.status !== "validee" && (
+            <form action={setStatementFlag.bind(null, inv.id, true)}>
+              <button
+                className="rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs font-medium"
+                title="Ce document liste plusieurs factures (récapitulatif fournisseur)"
+              >
+                C&apos;est un relevé
+              </button>
+            </form>
+          )}
           {inv.status !== "validee" && !analysing && (
             <form action={setInvoiceStatus.bind(null, inv.id, "validee")}>
               <button
-                disabled={report.level === "incoherent"}
+                disabled={inv.isStatement ? inv.coherence === "incoherent" : report.level === "incoherent"}
                 title={report.level === "incoherent" ? "Corrigez les montants incohérents avant de valider" : undefined}
                 className="rounded-lg bg-[var(--success)] px-3 py-1.5 text-xs font-medium text-white disabled:cursor-not-allowed disabled:opacity-40"
               >
-                ✓ Valider la facture
+                {inv.isStatement ? "✓ Valider le relevé" : "✓ Valider la facture"}
               </button>
             </form>
           )}
@@ -200,10 +233,91 @@ export default async function InvoiceDetailPage({
         </div>
       </div>
 
-      {report.level === "incoherent" && inv.status !== "validee" && !analysing && (
+      {report.level === "incoherent" && inv.status !== "validee" && !analysing && !inv.isStatement && (
         <p className="mb-4 rounded-lg border border-[var(--danger-bg)] bg-[var(--danger-bg)] px-3 py-2 text-xs text-[var(--danger)]">
           Les montants semblent incohérents. Vérifiez-les via « Modifier » avant de valider.
         </p>
+      )}
+
+      {inv.isStatement && !analysing && (
+        <Card className="mb-4 p-4">
+          <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="text-sm font-semibold">Détail du relevé</h2>
+              <p className="text-xs text-[var(--muted)]">
+                Un relevé regroupe plusieurs factures. Seules les factures encore absentes du
+                logiciel sont comptées <em>via</em> ce relevé ; celles déjà déposées sont
+                rapprochées et ne comptent qu&apos;une fois.
+              </p>
+            </div>
+            {inv.status !== "validee" && (
+              <form action={setStatementFlag.bind(null, inv.id, false)}>
+                <button className="whitespace-nowrap rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs font-medium">
+                  Ce n&apos;est pas un relevé
+                </button>
+              </form>
+            )}
+          </div>
+
+          <div className="mb-3 grid grid-cols-3 gap-2 text-sm">
+            <div className="rounded-lg bg-[#f9fafb] p-2">
+              <div className="text-xs text-[var(--muted)]">Cumul du relevé</div>
+              <Money value={grossTTC} currency={inv.currency} />
+            </div>
+            <div className="rounded-lg bg-[#f9fafb] p-2">
+              <div className="text-xs text-[var(--muted)]">Déjà dans le logiciel</div>
+              <Money value={coveredTTC} currency={inv.currency} />
+            </div>
+            <div className="rounded-lg bg-[#eff4ff] p-2">
+              <div className="text-xs text-[var(--primary)]">Compté via ce relevé</div>
+              <strong><Money value={inv.totalTTC} currency={inv.currency} /></strong>
+            </div>
+          </div>
+
+          {inv.statementLines.length === 0 ? (
+            <p className="text-sm text-[var(--muted)]">
+              Aucune ligne n&apos;a pu être lue. Déposez les factures listées une par une.
+            </p>
+          ) : (
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Facture</th>
+                  <th>Date</th>
+                  <th className="num">Montant TTC</th>
+                  <th>Statut</th>
+                </tr>
+              </thead>
+              <tbody>
+                {inv.statementLines.map((l) => (
+                  <tr key={l.id}>
+                    <td>
+                      {l.matchedInvoice ? (
+                        <Link href={`/factures/${l.matchedInvoice.id}`} className="text-[var(--primary)] hover:underline">
+                          {l.reference}
+                        </Link>
+                      ) : (
+                        l.reference
+                      )}
+                      {l.label ? <span className="block text-xs text-[var(--muted)]">{l.label}</span> : null}
+                    </td>
+                    <td>{l.lineDate ? formatDate(l.lineDate) : "—"}</td>
+                    <td className="num">
+                      {l.amountTTC != null ? <Money value={l.amountTTC} currency={inv.currency} /> : "—"}
+                    </td>
+                    <td>
+                      {l.matchedInvoice ? (
+                        <span className="text-[var(--success)]">✓ rapprochée</span>
+                      ) : (
+                        <span className="text-[var(--warning)]">à déposer</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </Card>
       )}
 
       <div className="grid gap-4 lg:grid-cols-3">
@@ -272,6 +386,7 @@ export default async function InvoiceDetailPage({
         </Card>
       </div>
 
+      {!inv.isStatement && (
       <Card className="mt-4 p-4">
         <h2 className="mb-2 text-sm font-semibold">Contrôle automatique des montants</h2>
         {report.issues.length === 0 ? (
@@ -289,6 +404,7 @@ export default async function InvoiceDetailPage({
           </ul>
         )}
       </Card>
+      )}
 
       <Card className="mt-4 p-4">
         <h2 className="mb-2 text-sm font-semibold">Document original</h2>
