@@ -77,18 +77,28 @@ export function extractDates(text: string): ExtractedDates {
   let invoiceDate: string | undefined;
   let dueDate: string | undefined;
 
-  const DUE = /(echeance|date limite|a regler (avant|le)|payable (le|avant)|reglement (avant|au|le)|a payer (avant|le)|date de (reglement|paiement)|paiement (au|le))/;
+  const DUE = /(echeance|\bech\b|date limite|a regler (avant|le)|payable (le|avant)|reglement (avant|au|le)|a payer (avant|le)|date de (reglement|paiement)|paiement (au|le))/;
   const INVOICE = /(date de facture|date facture|date d.?emission|date d.?edition|emise? le|edite le|fait le|facture du|^date\b|date\s*:)/;
-  const OTHER = /(livraison|commande|prestation|periode|reception|expedi|creee? le|inscription|immatricul)/;
+  const OTHER = /(livraison|commande|prestation|periode|reception|expedi|creee? le|inscription|immatricul|\bbl\b|bon de|contrat|signe)/;
+
+  // Motif « N° <num> du JJ/MM/AAAA » (ou « Facture … du … ») = date de facture,
+  // sauf s'il s'agit d'une livraison / commande / BL.
+  const NUM_DU_DATE = /(facture|\bn[o°º]\s*[a-z]*\d)[^\n]{0,30}\bdu\s+\d{1,2}[/.]\d{1,2}[/.]\d{2,4}/;
 
   for (let i = 0; i < lines.length; i++) {
     const d = deburr(lines[i]);
+    const prevD = deburr(lines[i - 1] ?? "");
     const dates = datesInLine(lines[i]);
     const nextDates = dates.length ? dates : datesInLine(lines[i + 1] ?? "");
 
     if (DUE.test(d) && !dueDate && nextDates.length && isPlausibleInvoiceDate(nextDates[0])) {
       dueDate = nextDates[0];
-    } else if (INVOICE.test(d) && !OTHER.test(d) && !invoiceDate && dates.length) {
+    } else if (
+      !invoiceDate && dates.length &&
+      ((INVOICE.test(d) && !OTHER.test(d)) ||
+        (NUM_DU_DATE.test(d) && !OTHER.test(d)) ||
+        (/^facture$/.test(prevD.trim()) && /\bdu\s+\d/.test(d)))
+    ) {
       invoiceDate = dates[0];
     }
   }
@@ -219,23 +229,71 @@ export function extractInvoiceNumber(input: string): string | undefined {
   return tryPatterns(weak, true);
 }
 
+// Marqueur d'un bloc « client / destinataire » : un SIRET / n° TVA qui apparaît
+// dans les lignes qui suivent est celui du CLIENT, pas du fournisseur.
+const CLIENT_MARKER = /(^|\s)(client\b|adresse (de )?facturation|facturation\s*[:.]|facture(r|z)? a\b|adressee? a\b|livre a\b|livraison\s*[:.]|destinataire|expedier a\b|bill to|ship to|sold to)/;
+/**
+ * Marqueur « mentions légales du fournisseur » : ces mots figurent dans le pied
+ * de page obligatoire de l'émetteur, jamais dans un bloc « facturé à … ». Un
+ * SIRET / n° TVA sur une telle ligne est celui du FOURNISSEUR.
+ */
+const SUPPLIER_MARKER = /(au capital de|capital de|\biban\b|\bbic\b|\brcs\b|\bsiren\b|intracommunautaire|siege social|\bape\b|\bnaf\b|r\.?c\.?s\.?\s)/;
+
+/**
+ * Choisit, parmi plusieurs correspondances (SIRET, n° TVA…), celle du FOURNISSEUR.
+ * `perLine` renvoie `{ value, labelled }` — `labelled` = la valeur était précédée
+ * de son libellé (« SIRET : … »), signe fort. Priorité :
+ *   1. ligne portant une mention légale d'émetteur (capital / RCS / IBAN /
+ *      « TVA intracommunautaire »…) ;
+ *   2. à défaut, valeur libellée hors d'un bloc « client / livré à … » ;
+ *   3. à défaut, la première rencontrée.
+ */
+function pickSupplierMatch(
+  text: string,
+  perLine: (line: string) => { value: string; labelled: boolean } | null,
+): string | undefined {
+  const lines = text.split(/\r?\n/);
+  let sinceClient = 99; // nb de lignes depuis le dernier marqueur « client »
+  let best: { value: string; rank: number } | undefined;
+  for (let i = 0; i < lines.length; i++) {
+    const d = deburr(lines[i]);
+    const legal = SUPPLIER_MARKER.test(d);
+    if (CLIENT_MARKER.test(d)) sinceClient = 0;
+    else if (legal) sinceClient = 99;
+    else sinceClient++;
+
+    const hit = perLine(lines[i]);
+    if (!hit) continue;
+    const inClient = !legal && sinceClient <= 8;
+    // rang : mention légale (6/7) > libellé neutre (4/5) > bloc client (0/1),
+    //        +1 quand la valeur est libellée.
+    const rank = (legal ? 6 : inClient ? 0 : 4) + (hit.labelled ? 1 : 0);
+    if (!best || rank > best.rank) best = { value: hit.value, rank };
+  }
+  return best?.value;
+}
+
 export function extractSiret(text: string): string | undefined {
-  const m = deburr(text).match(/siret\s*[:.]?\s*((?:\d[\s.]?){14})/);
-  if (m) {
-    const digits = m[1].replace(/\D/g, "");
-    if (digits.length === 14) return digits;
-  }
-  const loose = text.match(/\b(\d{3}\s?\d{3}\s?\d{3}\s?\d{5})\b/);
-  if (loose) {
-    const digits = loose[1].replace(/\D/g, "");
-    if (digits.length === 14) return digits;
-  }
-  return undefined;
+  return pickSupplierMatch(text, (line) => {
+    const labelled = deburr(line).match(/siret\s*[:.]?\s*((?:\d[\s.]?){14})/);
+    if (labelled) {
+      const d = labelled[1].replace(/\D/g, "");
+      if (d.length === 14) return { value: d, labelled: true };
+    }
+    const bare = line.match(/\b\d{3}\s?\d{3}\s?\d{3}\s?\d{5}\b/);
+    const d = bare?.[0].replace(/\D/g, "");
+    return d && d.length === 14 ? { value: d, labelled: false } : null;
+  });
 }
 
 export function extractVatNumber(text: string): string | undefined {
-  const m = text.match(/\bFR\s?[0-9A-Z]{2}\s?\d{3}\s?\d{3}\s?\d{3}\b/i);
-  return m ? m[0].replace(/\s/g, "").toUpperCase() : undefined;
+  return pickSupplierMatch(text, (line) => {
+    const m = line.match(/\bFR\s?[0-9A-Z]{2}\s?\d{3}\s?\d{3}\s?\d{3}\b/i);
+    const v = m?.[0].replace(/\s/g, "").toUpperCase();
+    if (!v || !/^FR[0-9A-Z]{2}\d{9}$/.test(v)) return null;
+    const labelled = /(t\.?v\.?a\.?|tva|vat)/i.test(line.slice(0, Math.max(0, (m?.index ?? 0))));
+    return { value: v, labelled };
+  });
 }
 
 export function extractCurrency(text: string): { currency: string; ambiguous: boolean } {
@@ -254,19 +312,53 @@ export function extractCurrency(text: string): { currency: string; ambiguous: bo
 }
 
 const ORG_SUFFIX = /\b(SARL|SASU|SAS|EURL|SCI|SA|EI|SNC|SCOP|Sàrl|S\.A\.S\.?|S\.A\.R\.L\.?)\b/i;
+/** Fournisseurs d'e-mail / hébergeurs génériques : pas un nom d'entreprise. */
+const GENERIC_DOMAIN = /^(gmail|outlook|hotmail|yahoo|orange|wanadoo|free|sfr|laposte|icloud|live|msn|proton)$/i;
+/** Un « nom » qui n'est en fait qu'un fragment de numéro de facture. */
+const NAME_STUB = /^[A-Za-z]{2,5}\d/;
+
+const CLIENT_BLOCK = /\b(client|facturation|facture(r|z)? a|adresse (de )?facturation|livre a|livraison|destinataire|adresse de livraison|expedier a|bill to|ship to)\b/;
+/** Ligne qui appartient visiblement à une ADRESSE (pas un nom d'entreprise). */
+const ADDRESS_LINE =
+  /^\d{1,4}\s|^\d{4,5}\s+[a-zà-ÿ]|\bcedex\b|^(france|belgique|luxembourg|suisse|allemagne|espagne|italie|portugal|pays-bas|royaume-uni|monaco)$/;
 
 export function extractSupplier(text: string): string | undefined {
-  for (const line of text.split(/\r?\n/).slice(0, 12)) {
-    const m = line.match(new RegExp(`([A-Za-zÀ-ÿ0-9][\\w &'.\\-À-ÿ]{1,55}?${ORG_SUFFIX.source})\\b`, "i"));
-    if (m && !/factur|livre a|adresse? a|client/i.test(deburr(m[1]))) return m[1].trim();
+  const lines = text.split(/\r?\n/);
+  const inClientBlock = (i: number) =>
+    [1, 2, 3, 4, 5, 6].some((k) => CLIENT_BLOCK.test(deburr(lines[i - k] ?? "")));
+
+  // 1) Ligne « … SARL / SAS / … » hors bloc client.
+  for (let i = 0; i < Math.min(lines.length, 40); i++) {
+    if (inClientBlock(i) || CLIENT_BLOCK.test(deburr(lines[i]))) continue;
+    const m = lines[i].match(new RegExp(`([A-Za-zÀ-ÿ0-9][\\w &'.\\-À-ÿ]{1,55}?${ORG_SUFFIX.source})\\b`, "i"));
+    if (m && !/factur|livre a|client|capital/i.test(deburr(m[1]))) return m[1].trim().replace(/\s+/g, " ");
   }
-  for (const raw of text.split(/\r?\n/).slice(0, 6)) {
-    const line = raw.trim();
-    if (line.length < 3) continue;
-    if (/^(facture|devis|avoir|invoice|bon de|page\b)/i.test(line)) continue;
+
+  // 2) Première ligne « significative » de l'en-tête (hors bloc client, hors adresse).
+  for (let i = 0; i < Math.min(lines.length, 8); i++) {
+    const line = lines[i].trim();
+    if (line.length < 4 || inClientBlock(i)) continue;
+    const dl = deburr(line);
+    if (/^(facture|devis|avoir|invoice|bon de|page\b|client|facturation|livraison|repere|date\b|contact|mail|tel|siret|id\.?tva|incoterm)/.test(dl)) continue;
+    if (ADDRESS_LINE.test(dl)) continue;
     if (!/[A-Za-zÀ-ÿ]{3}/.test(line)) continue;
-    const name = line.split(/\s[-–—]\s|\s{2,}|,| tel| tél|\d{2,}/i)[0].trim();
-    if (name.length >= 3 && name.length <= 60) return name;
+    const name = line.split(/\s[-–—]\s|\s{2,}|,| tel| tél/i)[0].trim();
+    if (name.length >= 4 && name.length <= 60 && !NAME_STUB.test(name) && !/\d{2,}/.test(name)) {
+      return name;
+    }
+  }
+
+  // 3) À défaut : domaine d'un e-mail / site web (souvent le seul endroit où
+  //    figure le fournisseur quand son en-tête est un logo).
+  const domains = [
+    ...text.matchAll(/[\w.+-]+@([a-z0-9-]+)\.[a-z.]{2,}/gi),
+    ...text.matchAll(/\bwww\.([a-z0-9-]+)\.[a-z.]{2,}/gi),
+  ]
+    .map((m) => m[1].toLowerCase())
+    .filter((d) => d.length >= 3 && !GENERIC_DOMAIN.test(d));
+  if (domains.length) {
+    const d = domains.sort((a, b) => domains.filter((x) => x === b).length - domains.filter((x) => x === a).length)[0];
+    return d.charAt(0).toUpperCase() + d.slice(1);
   }
   return undefined;
 }
@@ -324,10 +416,16 @@ function bestCoherentTriple(
   type Cand = { ht: number; vat: number; ttc: number; observedTtc: boolean; score: number };
   let best: Cand | undefined;
 
-  for (const raw of lines) {
+  for (let i = 0; i < lines.length; i++) {
+    const raw = lines[i];
     const d = deburr(raw);
     if (/intracommunautaire|n[o°]\s*tva|iban|siret|\brib\b/.test(d)) continue;
     const hasTotalKw = KW.ht.test(d) || KW.tva.test(d) || KW.ttc.test(d);
+    // Ligne de VALEURS juste sous une ligne de LIBELLÉS de totaux ?
+    const prev = deburr(lines[i - 1] ?? "");
+    const underLabelRow =
+      findMoneyTokens(lines[i - 1] ?? "").length === 0 &&
+      (prev.match(/\b(total|montant|ht|ttc|tva|taxe|net|base|remise|escompte)\b/g)?.length ?? 0) >= 2;
     const tokens = [...new Set(findMoneyTokens(raw).filter((v) => v > 0 && !isRateValue(v)))];
     if (tokens.length < 2) continue;
 
@@ -340,14 +438,20 @@ function bestCoherentTriple(
         const found = tokens.find((t) => Math.abs(t - expectedTtc) <= 0.02);
         const observedTtc = found !== undefined;
         // On n'accepte un triplet QUE si le TTC est observé, ou si la ligne
-        // porte un mot-clé de total (tableau récapitulatif).
-        if (!observedTtc && !hasTotalKw) continue;
+        // (ou celle des libellés juste au-dessus) porte un mot-clé de total.
+        if (!observedTtc && !hasTotalKw && !underLabelRow) continue;
         const score =
           (observedTtc ? 100 : 0) +
-          (hasTotalKw ? 20 : 0) +
-          ([20, 10, 5.5].includes(rate) ? 10 : 0);
+          (hasTotalKw || underLabelRow ? 25 : 0) +
+          ([20, 10, 5.5].includes(rate) ? 10 : 0) +
+          Math.round((i / Math.max(1, lines.length)) * 8); // les totaux sont plutôt en bas
         const cand: Cand = { ht, vat, ttc: found ?? expectedTtc, observedTtc, score };
-        if (!best || cand.score > best.score || (cand.score === best.score && cand.ht > best.ht)) {
+        // À score égal : on préfère le plus GROS TTC (un total, pas une ligne).
+        if (
+          !best ||
+          cand.score > best.score ||
+          (cand.score === best.score && cand.ttc > best.ttc)
+        ) {
           best = cand;
         }
       }
@@ -438,34 +542,54 @@ export function extractAmounts(input: string): ExtractedAmounts {
   // Tableau de totaux (libellés séparés des valeurs).
   const triple = bestCoherentTriple(lines, isRateValue);
   if (triple) {
-    const haveAll = totalHT !== undefined && totalVAT !== undefined && totalTTC !== undefined;
-    const coherentAll = haveAll && Math.abs(totalHT! + totalVAT! - totalTTC!) <= 0.05;
-    const conflictsTtc = totalTTC !== undefined && Math.abs(totalTTC - triple.ttc) > 0.05;
+    const currentCoherent =
+      totalHT !== undefined && totalVAT !== undefined && totalTTC !== undefined &&
+      Math.abs(totalHT + totalVAT - totalTTC) <= 0.05;
+    const ttcAgrees = totalTTC === undefined || Math.abs(totalTTC - triple.ttc) <= 0.05;
 
-    if (haveAll && !coherentAll) {
-      // Les 3 totaux « mots-clés » se contredisent : on fait confiance au
-      // triplet, lui, arithmétiquement cohérent — mais on le signale.
+    if (currentCoherent) {
+      // Les 3 totaux mots-clés sont déjà cohérents entre eux : on n'y touche pas.
+    } else if (triple.observedTtc && ttcAgrees) {
+      // Le triplet est un VRAI bloc de totaux : ses 3 valeurs sont sur une même
+      // ligne, HT + TVA = TTC, taux standard, et son TTC concorde avec le
+      // « net à payer » lu. Il fait AUTORITÉ (un « Montant HT » lu ailleurs est
+      // souvent un sous-total de section / de livraison).
+      const htChanged = totalHT !== undefined && Math.abs(totalHT - triple.ht) > 0.05;
       totalHT = triple.ht;
       totalVAT = triple.vat;
       totalTTC = triple.ttc;
-      provenance.ht = "table";
-      provenance.vat = "table";
-      provenance.ttc = triple.observedTtc ? "table" : "computed";
-      notes.push("Les totaux lus se contredisaient : recalculés depuis le tableau — à vérifier.");
-    } else if (!haveAll && conflictsTtc) {
-      // Le triplet contredit un TTC pourtant lu : on garde le TTC lu, on ne
-      // fabrique rien, on avertit fortement.
+      provenance.ht = provenance.vat = provenance.ttc = "table";
+      if (htChanged) {
+        notes.push(
+          "Le Total HT retenu vient du bloc de totaux (une valeur intermédiaire figurait ailleurs) — à vérifier.",
+        );
+      }
+    } else if (triple.observedTtc && totalTTC !== undefined && !ttcAgrees) {
+      // Deux blocs de totaux possibles qui se contredisent : on ne choisit pas
+      // en silence.
       notes.push(
-        "Plusieurs totaux possibles ont été détectés (bloc de totaux vs. lignes du tableau) — vérifiez chaque montant.",
+        "Plusieurs totaux possibles ont été détectés — vérifiez chaque montant (HT, TVA, TTC).",
       );
-      provenance.ttc = "guessed";
-    } else if (!haveAll) {
-      // On comble uniquement les trous.
-      if (totalHT === undefined) { totalHT = triple.ht; provenance.ht = "table"; }
-      if (totalVAT === undefined) { totalVAT = triple.vat; provenance.vat = "table"; }
-      if (totalTTC === undefined) {
+      if (totalHT === undefined) { totalHT = triple.ht; provenance.ht = "guessed"; }
+      if (totalVAT === undefined) { totalVAT = triple.vat; provenance.vat = "guessed"; }
+    } else {
+      // Triplet sans TTC observé, ou incomplet : on complète les trous, et si les
+      // 3 valeurs existantes se contredisent on adopte le triplet cohérent.
+      const haveAll = totalHT !== undefined && totalVAT !== undefined && totalTTC !== undefined;
+      if (haveAll) {
+        totalHT = triple.ht;
+        totalVAT = triple.vat;
         totalTTC = triple.ttc;
+        provenance.ht = provenance.vat = "table";
         provenance.ttc = triple.observedTtc ? "table" : "computed";
+        notes.push("Les totaux lus se contredisaient : recalculés depuis le tableau — à vérifier.");
+      } else {
+        if (totalHT === undefined) { totalHT = triple.ht; provenance.ht = "table"; }
+        if (totalVAT === undefined) { totalVAT = triple.vat; provenance.vat = "table"; }
+        if (totalTTC === undefined) {
+          totalTTC = triple.ttc;
+          provenance.ttc = triple.observedTtc ? "table" : "computed";
+        }
       }
     }
   }

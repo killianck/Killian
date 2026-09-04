@@ -258,6 +258,111 @@ describe("fiabilité des montants (garde-fous)", () => {
   });
 });
 
+describe("facture multi-livraisons (texte natif) : sous-totaux + bloc de totaux libellé/valeurs", () => {
+  // Reproduit la structure d'une facture fournisseur FUTUROL : deux blocs
+  // « CLIENT: » / « FACTURATION: » en tête (avec le SIRET + n° TVA du CLIENT),
+  // un sous-total « Montant HT » par livraison au fil du document, puis le VRAI
+  // bloc de totaux (ligne de libellés, ligne de valeurs) et le pied de page légal.
+  const FUTUROL = `Facture
+FAC0049472 du 07/07/2026
+CLIENT: C000364
+MENUISERIES DES PENNES
+MDP
+105 CHEMIN DE LA CHENAIE
+13080 AIX EN PROVENCE
+FRANCE
+SIRET: 48037730800022
+Id.TVA: FR 26480377308
+FACTURATION: C000364
+MENUISERIES DES PENNES
+MDP
+105 CHEMIN DE LA CHENAIE
+13080 AIX EN PROVENCE
+FRANCE
+SIRET: 48037730800022
+Id.TVA: FR 26480377308
+Contact Commercial: TAULELLE, CHRISTOPHE
+Mail: christophe.taulelle@futurol.com
+Incoterm: Devises: EUR
+Repère Article Description Article Largeur Hauteur Qté UM PU HT MT HT
+Livraison N°114732 du 07/07/26 pour la commande CDF0123287
+A1 Renorol Lame 43ST 1780 2 250 1,00 427,21 427,21
+B1 Renorol Lame 43ST 1390 2 200 1,00 356,86 356,86
+Montant HT 2 772,12
+Livraison N°114765 du 07/07/26 pour la commande CDF0126181
+A1 PieceDetachee Emetteur Mural 0 950 10,00 33,55 335,50
+B1 PieceDetachee Recepteur Deporte 0 950 10,00 21,02 210,20
+Montant HT 545,70
+Total lignes (HT) Total Remise Frais gestion/port Escompte Total HT TVA: 20,00 % Montant TTC
+3 317,82 € 0,00 € 0,00 € 0,00 € 3 317,82 € 663,56 € 3 981,38 €
+Référence à rappeler avec votre règlement: Date éch facture:
+FAC0049472 - C000364 31/08/2026
+Cond paiement: 30 J FDM DATE DE FACTURE Type de paiement: LCR Directe
+Acompte 0,00 €
+Net à payer 3 981,38 €
+FUTUROL - Tél 05 63 05 05 90 - 15 Grande rue - 28170 THIMERT-GATELLES
+S.A.S. au capital de 1 500 000 € - Siret 814 904 975 00012 – N° TVA Intracommunautaire FR 75 814 904 975 – BPALC IBAN : FR76 1470 7501 9031 5219 3101 953
+Email contact@futurol.com - www.futurol.com`;
+
+  it("retient le Total HT du bloc de totaux, pas un sous-total « Montant HT » de livraison", () => {
+    const a = extractAmounts(FUTUROL);
+    expect(a.totalHT).toBe(3317.82);
+    expect(a.totalVAT).toBe(663.56);
+    expect(a.totalTTC).toBe(3981.38);
+    expect(a.vatLines).toEqual([{ rate: 20, baseHT: 3317.82, vatAmount: 663.56 }]);
+  });
+
+  it("lit la date depuis « N° … du JJ/MM/AAAA » et l'échéance « Date éch facture: »", () => {
+    const d = extractDates(FUTUROL);
+    expect(d.invoiceDate).toBe("2026-07-07");
+    expect(d.dueDate).toBe("2026-08-31");
+    expect(d.notes).toEqual([]);
+  });
+
+  it("retient le SIRET et le n° TVA du FOURNISSEUR (pied de page légal), pas ceux du client", () => {
+    expect(extractSiret(FUTUROL)).toBe("81490497500012");
+    expect(extractVatNumber(FUTUROL)).toBe("FR75814904975");
+  });
+
+  it("assemble une facture cohérente et non marquée incertaine", () => {
+    const p = buildParsedInvoice(FUTUROL, "heuristic");
+    expect(p.number).toBe("FAC0049472");
+    expect(p.partyName).toBe("Futurol");
+    expect(p.siret).toBe("81490497500012");
+    expect(p.totalHT).toBe(3317.82);
+    expect(p.totalTTC).toBe(3981.38);
+    expect(p.amountsUncertain).toBe(false);
+    expect(p.warnings.some((w) => w.includes("HT + TVA"))).toBe(false);
+  });
+});
+
+describe("SIRET / n° TVA : fournisseur vs client (même destinataire sur deux factures)", () => {
+  it("écarte le SIRET d'un bloc « CLIENT: … »", () => {
+    const t = `ACME SERVICES
+CLIENT:
+Boulangerie Martin
+5 avenue de la Gare
+69003 Lyon
+SIRET: 12345678900011
+Prestations diverses
+S.A.R.L. au capital de 10 000 € - SIRET 987 654 321 00099 - RCS Lyon`;
+    expect(extractSiret(t)).toBe("98765432100099");
+  });
+
+  it("prend le SIRET du haut de page quand le client n'a pas de mentions légales", () => {
+    const t = `Transports MILLO-TRUCY
+SIRET : 932 031 883 000 14
+N° TVA : FR 459 320 318 83
+S.A.R.L. au Capital de 50 000 Euros
+MENUISERIES DES PENNES
+105 CHEMIN DES CHENAIS
+13080 LUYNES
+N° SIRET : 48037730800022
+Facture N° FAT000546`;
+    expect(extractSiret(t)).toBe("93203188300014");
+  });
+});
+
 describe("buildParsedInvoice", () => {
   it("produit un résultat cohérent avec une bonne confiance", () => {
     const p = buildParsedInvoice(FACTURE_SIMPLE, "heuristic");
