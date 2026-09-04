@@ -5,22 +5,25 @@
 //      JBIG2 des scanners, contrairement à pdf.js) ;
 //   2. tesseract.js lit l'image et en extrait le texte, en français.
 //
-// C'est plus lent (quelques secondes par page) et moins fiable qu'un vrai texte :
-// le résultat DOIT toujours être vérifié par l'utilisateur. On remonte l'indice
-// de confiance de Tesseract pour pouvoir déclasser une lecture douteuse.
+// Rapidité : les workers Tesseract sont PERSISTANTS (src/lib/parsing/ocrWorker.ts),
+// on ne demande que le texte (pas de hOCR / TSV), et on rend les pages à une
+// résolution juste suffisante pour du texte imprimé.
+// Le résultat DOIT toujours être vérifié par l'utilisateur : on remonte l'indice
+// de confiance de Tesseract pour déclasser une lecture douteuse.
 
-import path from "node:path";
-import { existsSync } from "node:fs";
+import { withOcrWorker } from "./ocrWorker";
 
 /** Pages OCRisées au maximum. Au-delà, on lit aussi les 2 dernières (totaux). */
 const MAX_PAGES = 8;
-/** Cible ~2400 px sur le grand côté (≈ 300 dpi pour une page A4). */
-const TARGET_LONG_SIDE_PX = 2400;
-const MIN_SCALE = 2;
-const MAX_SCALE = 4.5;
-/** Délais de sécurité : un PDF pathologique ne doit jamais bloquer l'import. */
-const PER_PAGE_TIMEOUT_MS = 45_000;
-const GLOBAL_TIMEOUT_MS = 180_000;
+/** ~2200 px sur le grand côté ≈ 275 dpi pour une page A4 : net pour du texte imprimé. */
+const TARGET_LONG_SIDE_PX = 2200;
+const MIN_SCALE = 1.8;
+const MAX_SCALE = 4;
+/** Délais de sécurité : un document pathologique ne doit jamais bloquer l'analyse. */
+const PER_PAGE_TIMEOUT_MS = 40_000;
+const GLOBAL_TIMEOUT_MS = 150_000;
+/** Ne garder que le texte : construire hOCR / TSV / blocs coûte 15–30 % de temps. */
+const OUTPUT = { text: true, blocks: false, hocr: false, tsv: false, box: false, unlv: false, osd: false } as const;
 
 export type OcrResult = {
   text: string;
@@ -29,24 +32,11 @@ export type OcrResult = {
   warnings: string[];
 };
 
-/** Dossier contenant `fra.traineddata.gz` (données de langue de Tesseract). */
-function bundledTessdataDir(): string | undefined {
-  const candidates = [
-    process.env.TESSDATA_DIR,
-    path.join(process.cwd(), "tessdata"),
-    path.join(process.cwd(), "src", "lib", "parsing", "tessdata"),
-    path.join(__dirname, "tessdata"),
-    path.join(__dirname, "..", "..", "..", "src", "lib", "parsing", "tessdata"),
-  ].filter((d): d is string => Boolean(d));
-  return candidates.find((dir) => existsSync(path.join(dir, "fra.traineddata.gz")));
-}
+type RenderedPage = { png: Buffer; dpi: number };
 
-function withTimeout<T>(p: Promise<T>, ms: number, onTimeout: () => void): Promise<T> {
+function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
   return new Promise<T>((resolve, reject) => {
-    const t = setTimeout(() => {
-      onTimeout();
-      reject(new Error("délai dépassé"));
-    }, ms);
+    const t = setTimeout(() => reject(new Error("délai OCR dépassé")), ms);
     p.then(
       (v) => { clearTimeout(t); resolve(v); },
       (e) => { clearTimeout(t); reject(e); },
@@ -63,20 +53,20 @@ function pageIndices(count: number): { indices: number[]; truncated: boolean } {
 }
 
 /** Transforme les pages utiles du PDF en images PNG (niveaux de gris). */
-async function renderPdfPages(buffer: Buffer): Promise<{ images: Uint8Array[]; warnings: string[] }> {
+async function renderPdfPages(buffer: Buffer): Promise<{ pages: RenderedPage[]; warnings: string[] }> {
   const mupdf = await import("mupdf");
   const warnings: string[] = [];
   let doc: import("mupdf").Document;
   try {
     doc = mupdf.Document.openDocument(new Uint8Array(buffer), "application/pdf");
   } catch {
-    return { images: [], warnings: ["Le PDF n'a pas pu être ouvert (fichier corrompu ou protégé)."] };
+    return { pages: [], warnings: ["Le PDF n'a pas pu être ouvert (fichier corrompu ou protégé)."] };
   }
   try {
     const total = doc.countPages();
     if (total > 30) {
       return {
-        images: [],
+        pages: [],
         warnings: [
           `Ce document fait ${total} pages : c'est trop long pour être une facture. ` +
             "L'analyse automatique a été ignorée — saisissez les informations à la main si besoin.",
@@ -90,17 +80,17 @@ async function renderPdfPages(buffer: Buffer): Promise<{ images: Uint8Array[]; w
           `automatiquement — vérifiez que les totaux lus correspondent bien à la dernière page.`,
       );
     }
-    const images: Uint8Array[] = [];
+    const pages: RenderedPage[] = [];
     for (const i of indices) {
       let page: import("mupdf").PDFPage | import("mupdf").Page | undefined;
       let pixmap: import("mupdf").Pixmap | undefined;
       try {
         page = doc.loadPage(i);
         const [x0, y0, x1, y1] = page.getBounds();
-        const longSide = Math.max(x1 - x0, y1 - y0) || 595;
-        const scale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, TARGET_LONG_SIDE_PX / longSide));
+        const longSidePts = Math.max(x1 - x0, y1 - y0) || 595;
+        const scale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, TARGET_LONG_SIDE_PX / longSidePts));
         pixmap = page.toPixmap(mupdf.Matrix.scale(scale, scale), mupdf.ColorSpace.DeviceGray, false, true);
-        images.push(pixmap.asPNG());
+        pages.push({ png: Buffer.from(pixmap.asPNG()), dpi: Math.round(scale * 72) });
       } catch {
         warnings.push(`La page ${i + 1} n'a pas pu être convertie en image et a été ignorée.`);
       } finally {
@@ -108,54 +98,46 @@ async function renderPdfPages(buffer: Buffer): Promise<{ images: Uint8Array[]; w
         try { page?.destroy(); } catch { /* ignore */ }
       }
     }
-    return { images, warnings };
+    return { pages, warnings };
   } finally {
     try { doc.destroy(); } catch { /* ignore */ }
   }
 }
 
-async function recognizeImages(images: Uint8Array[]): Promise<OcrResult> {
-  if (!images.length) return { text: "", warnings: [] };
+async function recognizePages(pages: RenderedPage[]): Promise<OcrResult> {
+  if (!pages.length) return { text: "", warnings: [] };
 
-  const { createWorker } = await import("tesseract.js");
-  const langPath = bundledTessdataDir();
-  if (!langPath) {
-    return {
-      text: "",
-      warnings: [
-        "Reconnaissance de texte indisponible : les données de langue ne sont pas installées. " +
-          "Saisissez les informations manuellement.",
-      ],
-    };
-  }
-
-  const worker = await createWorker("fra", 1, { langPath, cacheMethod: "none", gzip: true });
   const warnings: string[] = [];
-  const pages: string[] = [];
+  const texts: string[] = [];
   const confidences: number[] = [];
   const started = Date.now();
 
-  try {
-    for (const image of images) {
+  const out = await withOcrWorker(async (w) => {
+    for (const page of pages) {
       if (Date.now() - started > GLOBAL_TIMEOUT_MS) {
         warnings.push("Analyse automatique interrompue (document trop lourd) — vérifiez ou saisissez à la main.");
         break;
       }
       try {
-        const { data } = await withTimeout(
-          worker.recognize(Buffer.from(image)),
-          PER_PAGE_TIMEOUT_MS,
-          () => { void worker.terminate().catch(() => {}); },
-        );
-        if (data.text?.trim()) pages.push(data.text);
+        await w.setParameters({ user_defined_dpi: String(page.dpi) });
+        const { data } = await withTimeout(w.recognize(page.png, {}, OUTPUT), PER_PAGE_TIMEOUT_MS);
+        if (data.text?.trim()) texts.push(data.text);
         if (typeof data.confidence === "number" && data.confidence > 0) confidences.push(data.confidence);
       } catch {
-        warnings.push("Une page n'a pas pu être lue par la reconnaissance de texte.");
-        break; // le worker peut avoir été terminé par le timeout
+        warnings.push("Une page n'a pas pu être lue par la reconnaissance de texte (délai dépassé ?).");
+        throw new Error("page-failed"); // fait recycler le worker
       }
     }
-  } finally {
-    try { await worker.terminate(); } catch { /* déjà terminé */ }
+    return true;
+  }).catch(() => false);
+
+  if (out === null) {
+    return {
+      text: "",
+      warnings: [
+        "Reconnaissance de texte indisponible : données de langue non installées. Saisissez les informations manuellement.",
+      ],
+    };
   }
 
   const meanConfidence = confidences.length
@@ -167,17 +149,17 @@ async function recognizeImages(images: Uint8Array[]): Promise<OcrResult> {
         `ou ressaisissez-les.`,
     );
   }
-  return { text: pages.join("\n\n"), meanConfidence, warnings };
+  return { text: texts.join("\n\n"), meanConfidence, warnings };
 }
 
 /** OCR d'un PDF scanné. */
 export async function ocrPdf(buffer: Buffer): Promise<OcrResult> {
-  const { images, warnings } = await renderPdfPages(buffer);
-  const res = await recognizeImages(images);
+  const { pages, warnings } = await renderPdfPages(buffer);
+  const res = await recognizePages(pages);
   return { ...res, warnings: [...warnings, ...res.warnings] };
 }
 
 /** OCR d'une image (photo de facture, capture d'écran…). */
 export async function ocrImage(buffer: Buffer): Promise<OcrResult> {
-  return recognizeImages([new Uint8Array(buffer)]);
+  return recognizePages([{ png: Buffer.from(buffer), dpi: 150 }]);
 }
