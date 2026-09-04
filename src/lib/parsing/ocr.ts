@@ -74,6 +74,15 @@ async function renderPdfPages(buffer: Buffer): Promise<{ images: Uint8Array[]; w
   }
   try {
     const total = doc.countPages();
+    if (total > 30) {
+      return {
+        images: [],
+        warnings: [
+          `Ce document fait ${total} pages : c'est trop long pour être une facture. ` +
+            "L'analyse automatique a été ignorée — saisissez les informations à la main si besoin.",
+        ],
+      };
+    }
     const { indices, truncated } = pageIndices(total);
     if (truncated) {
       warnings.push(

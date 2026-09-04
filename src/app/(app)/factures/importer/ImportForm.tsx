@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 import Link from "next/link";
 import { importInvoices, type ImportState } from "./actions";
 
@@ -14,16 +14,6 @@ export function ImportForm() {
   const [files, setFiles] = useState<{ name: string; problem?: string }[]>([]);
   const [dragOver, setDragOver] = useState(false);
 
-  // Empêche de fermer la fenêtre pendant un import (OCR long) et perdre le travail.
-  useEffect(() => {
-    if (!pending) return;
-    const handler = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      e.returnValue = "";
-    };
-    window.addEventListener("beforeunload", handler);
-    return () => window.removeEventListener("beforeunload", handler);
-  }, [pending]);
 
   function addFiles(list: FileList | null) {
     if (!list || !inputRef.current) return;
@@ -128,40 +118,36 @@ export function ImportForm() {
         disabled={pending || count === 0 || blocking}
         className="rounded-lg bg-[var(--primary)] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
       >
-        {pending
-          ? "Analyse en cours… (la lecture d'un scan peut prendre ~10 s/page, ne fermez pas la fenêtre)"
-          : count > 1
-            ? `Importer ${count} documents`
-            : "Importer le document"}
+        {pending ? "Enregistrement…" : count > 1 ? `Importer ${count} documents` : "Importer le document"}
       </button>
 
       {state.results && (
         <div className="rounded-lg border border-[var(--border)] p-3">
-          <p className="mb-2 text-sm font-semibold">
-            Résultat : {state.results.filter((r) => r.status === "ok").length}/{state.results.length} importé(s)
-          </p>
+          {state.results.some((r) => r.status === "ok") && (
+            <p className="mb-2 rounded-lg bg-[#eff4ff] px-3 py-2 text-sm text-[var(--primary)]">
+              {state.results.filter((r) => r.status === "ok").length} document(s) importé(s).
+              <strong> L&apos;analyse (lecture / OCR) se fait maintenant en arrière-plan</strong> —
+              comptez ~10 à 40 s par document. Vous pouvez continuer à travailler ; les factures
+              apparaîtront au fur et à mesure dans la liste.
+            </p>
+          )}
           <ul className="space-y-1 text-sm">
             {state.results.map((r, i) => (
               <li key={i} className="flex items-center gap-2">
-                <span>{r.status === "ok" ? "✅" : "❌"}</span>
+                <span>{r.status === "ok" ? "⏳" : "❌"}</span>
                 <span className="truncate">{r.fileName}</span>
                 <span className="text-xs text-[var(--muted)]">— {r.message}</span>
-                {r.invoiceId && (
-                  <Link href={`/factures/${r.invoiceId}`} className="text-xs font-medium text-[var(--primary)]">
-                    ouvrir
-                  </Link>
-                )}
               </li>
             ))}
           </ul>
-          <Link href="/factures" className="mt-2 inline-block text-xs font-medium text-[var(--primary)]">
-            Voir toutes les factures →
+          <Link href="/factures?statut=a_traiter" className="mt-2 inline-block text-sm font-medium text-[var(--primary)]">
+            Suivre l&apos;analyse dans la liste des factures →
           </Link>
         </div>
       )}
 
       <p className="text-xs text-[var(--muted)]">
-        Après l&apos;import, vérifiez / complétez les informations de chaque facture (« Modifier »).
+        Chaque facture arrive au statut « à vérifier » : relisez les montants et la date avant de valider.
       </p>
     </form>
   );

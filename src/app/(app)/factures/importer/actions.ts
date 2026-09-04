@@ -6,10 +6,7 @@ import { randomUUID } from "node:crypto";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { uploadDir } from "@/lib/paths";
-import { getInvoiceParser } from "@/lib/parsing";
-import { checkCoherence } from "@/lib/tva/coherence";
-import { resolveParty } from "@/lib/invoices/party";
-import { duplicateKey } from "@/lib/invoices/duplicates";
+import { enqueueAnalysis } from "@/lib/invoices/analysisQueue";
 import { requireUser } from "@/lib/auth";
 
 const MAX_SIZE = 20 * 1024 * 1024; // 20 Mo
@@ -44,7 +41,12 @@ function contentLooksRight(buffer: Buffer, isImage: boolean): boolean {
   );
 }
 
-async function importOne(
+/**
+ * Enregistre UN fichier et crée la facture au statut « analyse en cours ».
+ * L'analyse (lecture / OCR) est faite ENSUITE, en arrière-plan : le dépôt de
+ * fichiers reste instantané même pour un lot de scans.
+ */
+async function saveOne(
   file: File,
   direction: "achat" | "vente",
   documentType: "facture" | "avoir",
@@ -54,11 +56,7 @@ async function importOne(
     return { fileName: name, status: "error", message: "Fichier vide (0 octet) — non importé." };
   }
   if (!ACCEPTED.test(name)) {
-    return {
-      fileName: name,
-      status: "error",
-      message: "Format non pris en charge : déposez un PDF ou une photo (JPG, PNG…).",
-    };
+    return { fileName: name, status: "error", message: "Format non pris en charge : déposez un PDF ou une photo (JPG, PNG…)." };
   }
   if (file.size > MAX_SIZE) {
     return { fileName: name, status: "error", message: "Fichier trop volumineux (max 20 Mo)." };
@@ -84,110 +82,22 @@ async function importOne(
     storedPath = path.join(dir, storedName);
     await writeFile(storedPath, buffer);
 
-    let parsed;
-    try {
-      parsed = await getInvoiceParser().parse({ fileBuffer: buffer, fileName: name, mimeType: file.type || undefined });
-    } catch (e) {
-      console.error("Analyse de la facture échouée :", e);
-      parsed = {
-        confidence: 0,
-        engine: "stub",
-        amountsUncertain: true,
-        warnings: ["Impossible de lire automatiquement ce document. Veuillez saisir les informations manuellement."],
-      };
-    }
-
-    const totalHT = parsed.totalHT ?? 0;
-    const totalVAT = parsed.totalVAT ?? 0;
-    const totalTTC = parsed.totalTTC ?? 0;
-    const vatLines = parsed.vatLines ?? [];
-    const finalDocType = parsed.documentType ?? documentType;
-    const invoiceDate = parsed.invoiceDate ? new Date(parsed.invoiceDate) : new Date();
-
-    // La cohérence n'est JAMAIS « coherent » si l'analyse est incertaine.
-    let coherence: "coherent" | "a_verifier" | "incoherent";
-    if (parsed.amountsUncertain || !(totalHT || totalTTC)) {
-      coherence = "a_verifier";
-    } else {
-      coherence = checkCoherence({
-        totalHT, totalVAT, totalTTC, vatLines,
-        documentType: finalDocType,
-        invoiceDate: parsed.invoiceDate,
-        dueDate: parsed.dueDate,
-      }).level;
-    }
-
-    const party = await resolveParty(prisma, {
-      name: parsed.partyName ?? null,
-      address: parsed.partyAddress ?? null,
-      siret: parsed.siret ?? null,
-      vatNumber: parsed.vatNumber ?? null,
-      direction,
-    });
-
-    const warnings = [...parsed.warnings];
-    if (!parsed.invoiceDate) {
-      warnings.unshift("⚠️ Date de facture NON détectée : la date du jour a été mise par défaut, corrigez-la avant de valider.");
-    }
-
-    // Détection de doublon alignée sur src/lib/invoices/duplicates.ts (numéro
-    // normalisé, ou tiers + date + TTC quand le numéro manque).
-    const key = duplicateKey({
-      id: "new",
-      number: parsed.number ?? null,
-      partyName: party.partyName,
-      invoiceDate,
-      totalTTC,
-    });
-    if (key) {
-      const others = await prisma.invoice.findMany({
-        select: { id: true, number: true, partyName: true, invoiceDate: true, totalTTC: true },
-      });
-      const dup = others.find(
-        (o) => duplicateKey({ ...o, id: o.id }) === key,
-      );
-      if (dup) {
-        warnings.unshift(
-          "⚠️ Une facture très semblable existe déjà (même numéro/tiers ou même tiers, date et montant). Vérifiez qu'il ne s'agit pas d'un doublon.",
-        );
-      }
-    }
-
     const created = await prisma.invoice.create({
       data: {
-        documentType: finalDocType,
+        documentType,
         direction,
-        number: parsed.number ?? null,
-        invoiceDate,
-        dueDate: parsed.dueDate ? new Date(parsed.dueDate) : null,
-        partyId: party.partyId,
-        partyName: party.partyName,
-        partyAddress: party.partyAddress,
-        siret: party.siret,
-        vatNumber: party.vatNumber,
-        currency: parsed.currency ?? "EUR",
-        totalHT,
-        totalVAT,
-        totalTTC,
-        status: parsed.confidence > 0 ? "a_verifier" : "a_analyser",
-        coherence,
-        confidence: parsed.confidence,
-        notes: warnings.length ? warnings.join("\n") : null,
+        invoiceDate: new Date(), // provisoire — corrigé par l'analyse
+        currency: "EUR",
+        status: "analyse_en_cours",
+        coherence: "a_verifier",
+        notes: "Analyse automatique en cours…",
         originalFileName: name,
-        originalFilePath: storedName, // chemin RELATIF (voir resolveUploadPath)
-        vatLines: vatLines.length
-          ? { create: vatLines.map((l) => ({ rate: l.rate, baseHT: l.baseHT, vatAmount: l.vatAmount })) }
-          : undefined,
+        originalFilePath: storedName, // relatif (voir resolveUploadPath)
       },
     });
 
-    const confPct = Math.round(parsed.confidence * 100);
-    return {
-      fileName: name,
-      status: "ok",
-      invoiceId: created.id,
-      message: confPct > 0 ? `Analysée (confiance ${confPct} %) — à vérifier` : "Enregistrée — à compléter à la main",
-    };
+    enqueueAnalysis(created.id, "import");
+    return { fileName: name, status: "ok", invoiceId: created.id, message: "Importé — analyse en cours" };
   } catch (e) {
     console.error("Import de la facture échoué :", e);
     if (storedPath) await unlink(storedPath).catch(() => {});
@@ -207,7 +117,7 @@ export async function importInvoices(_prev: ImportState, formData: FormData): Pr
 
   const results: ImportResult[] = [];
   for (const file of files) {
-    results.push(await importOne(file, direction, documentType));
+    results.push(await saveOne(file, direction, documentType));
   }
 
   const ok = results.filter((r) => r.status === "ok");

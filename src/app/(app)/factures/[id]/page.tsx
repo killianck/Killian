@@ -17,6 +17,7 @@ import {
 } from "@/lib/domain/enums";
 import { checkCoherence } from "@/lib/tva/coherence";
 import { DeleteInvoiceButton } from "@/components/DeleteInvoiceButton";
+import { AutoRefresh } from "@/components/AutoRefresh";
 import { deleteInvoice, reanalyzeInvoice, setInvoiceStatus } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -37,7 +38,8 @@ export default async function InvoiceDetailPage({
   const inv = await getInvoice(id);
   if (!inv) notFound();
 
-  const duplicates = await getDuplicatesOf(inv);
+  const analysing = inv.status === "analyse_en_cours";
+  const duplicates = analysing ? [] : await getDuplicatesOf(inv);
   const user = await getCurrentUser();
 
   const report = checkCoherence({
@@ -78,14 +80,15 @@ export default async function InvoiceDetailPage({
 
   return (
     <>
+      <AutoRefresh active={analysing} />
       <PageHeader
         title={`Facture ${inv.number ?? ""}`.trim()}
         subtitle={inv.partyName ?? undefined}
         action={
           <div className="flex items-center gap-3">
-            {inv.originalFilePath && (
+            {inv.originalFilePath && !analysing && (
               <form action={reanalyzeInvoice.bind(null, inv.id)}>
-                <button className="rounded-lg border border-[var(--border)] px-3 py-2 text-sm font-medium" title="Relancer l'analyse automatique du PDF (remplace les valeurs actuelles)">
+                <button className="rounded-lg border border-[var(--border)] px-3 py-2 text-sm font-medium" title="Relancer l'analyse automatique du document">
                   Ré-analyser
                 </button>
               </form>
@@ -103,6 +106,17 @@ export default async function InvoiceDetailPage({
         }
       />
 
+      {analysing && (
+        <p className="mb-4 flex items-center gap-2 rounded-lg border border-[#dbe7ff] bg-[#eff4ff] px-3 py-2 text-sm text-[var(--primary)]">
+          <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-[var(--primary)] border-t-transparent" />
+          Analyse automatique en cours (lecture / OCR du document)… La page se met à jour toute seule.
+        </p>
+      )}
+      {analyse === "lancee" && !analysing && (
+        <p className="mb-4 rounded-lg border border-[var(--success-bg)] bg-[var(--success-bg)] px-3 py-2 text-xs text-[var(--success)]">
+          Ré-analyse lancée.
+        </p>
+      )}
       {analyse === "ok" && (
         <p className="mb-4 rounded-lg border border-[var(--success-bg)] bg-[var(--success-bg)] px-3 py-2 text-xs text-[var(--success)]">
           Analyse relancée. Vérifiez les valeurs ci-dessous (les changements sont dans l&apos;historique).
@@ -149,8 +163,8 @@ export default async function InvoiceDetailPage({
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <StatusBadge status={inv.status} />
-        <CoherenceBadge level={report.level} />
-        {typeof inv.confidence === "number" && inv.status !== "validee" && (
+        {!analysing && <CoherenceBadge level={report.level} />}
+        {!analysing && typeof inv.confidence === "number" && inv.status !== "validee" && (
           <span
             className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
               inv.confidence >= 0.75
@@ -165,7 +179,7 @@ export default async function InvoiceDetailPage({
           </span>
         )}
         <div className="ml-auto flex gap-2">
-          {inv.status !== "validee" && (
+          {inv.status !== "validee" && !analysing && (
             <form action={setInvoiceStatus.bind(null, inv.id, "validee")}>
               <button
                 disabled={report.level === "incoherent"}
@@ -186,7 +200,7 @@ export default async function InvoiceDetailPage({
         </div>
       </div>
 
-      {report.level === "incoherent" && inv.status !== "validee" && (
+      {report.level === "incoherent" && inv.status !== "validee" && !analysing && (
         <p className="mb-4 rounded-lg border border-[var(--danger-bg)] bg-[var(--danger-bg)] px-3 py-2 text-xs text-[var(--danger)]">
           Les montants semblent incohérents. Vérifiez-les via « Modifier » avant de valider.
         </p>

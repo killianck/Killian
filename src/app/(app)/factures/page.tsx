@@ -9,6 +9,7 @@ import { getAvailableYears } from "@/lib/queries";
 import { getCurrentUser } from "@/lib/auth";
 import { duplicateIds } from "@/lib/invoices/duplicates";
 import { buildInvoiceWhere, invoiceOrderBy } from "@/lib/invoices/filter";
+import { AutoRefresh } from "@/components/AutoRefresh";
 
 export const dynamic = "force-dynamic";
 
@@ -51,8 +52,11 @@ export default async function FacturesPage({ searchParams }: { searchParams: Pro
     invoices = invoices.filter((inv) => dupIds.has(inv.id));
   }
 
+  const analysing = invoices.filter((inv) => inv.status === "analyse_en_cours").length;
+
   return (
     <>
+      <AutoRefresh active={analysing > 0} />
       <PageHeader
         title="Factures"
         subtitle={`${invoices.length} facture${invoices.length > 1 ? "s" : ""}`}
@@ -73,6 +77,13 @@ export default async function FacturesPage({ searchParams }: { searchParams: Pro
           </div>
         }
       />
+
+      {analysing > 0 && (
+        <p className="mb-4 flex items-center gap-2 rounded-lg border border-[#dbe7ff] bg-[#eff4ff] px-3 py-2 text-xs text-[var(--primary)]">
+          <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-[var(--primary)] border-t-transparent" />
+          {analysing} facture{analysing > 1 ? "s" : ""} en cours d&apos;analyse — la page se met à jour toute seule.
+        </p>
+      )}
 
       {dupIds.size > 0 && f.onlyDuplicates !== "1" && (
         <Link
