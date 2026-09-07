@@ -43,6 +43,7 @@ export function toAggregatable(
     totalVAT: number;
     totalTTC: number;
     deductible?: boolean;
+    currency?: string | null;
   }[],
 ): AggregatableInvoice[] {
   return invoices.map((i) => ({
@@ -53,6 +54,7 @@ export function toAggregatable(
     totalVAT: i.totalVAT,
     totalTTC: i.totalTTC,
     deductible: i.deductible,
+    currency: i.currency,
   }));
 }
 
@@ -68,9 +70,12 @@ export async function getDuplicatesOf(inv: DuplicateCandidate) {
 
 /** Années présentes en base (pour les sélecteurs), ordre décroissant. */
 export async function getAvailableYears(): Promise<number[]> {
+  // UTC, comme filter.ts et aggregate.ts : les dates sont stockées à minuit UTC.
+  // Avec getFullYear() (heure locale), une facture du 1er janvier disparaîtrait
+  // du sélecteur pour un utilisateur situé à l'ouest de Greenwich.
   const rows = await prisma.invoice.findMany({ select: { invoiceDate: true } });
-  const years = new Set<number>(rows.map((r) => r.invoiceDate.getFullYear()));
-  years.add(new Date().getFullYear());
+  const years = new Set<number>(rows.map((r) => r.invoiceDate.getUTCFullYear()));
+  years.add(new Date().getUTCFullYear());
   return [...years].sort((a, b) => b - a);
 }
 

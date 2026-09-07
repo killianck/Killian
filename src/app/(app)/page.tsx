@@ -58,6 +58,14 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           <span className="shrink-0 font-medium underline">Les traiter →</span>
         </Link>
       )}
+      {y.foreignCurrencyCount > 0 && (
+        <p className="mb-4 rounded-lg border border-[var(--warning-bg)] bg-[var(--warning-bg)] px-3 py-2 text-xs text-[var(--warning)]">
+          {y.foreignCurrencyCount} facture{y.foreignCurrencyCount > 1 ? "s" : ""} en devise étrangère
+          ({y.foreignCurrencies.join(", ")}) exclue{y.foreignCurrencyCount > 1 ? "s" : ""} des totaux :
+          convertissez-la{y.foreignCurrencyCount > 1 ? "s" : ""} en euros pour qu&apos;elle
+          {y.foreignCurrencyCount > 1 ? "s soient comptées" : " soit comptée"}.
+        </p>
+      )}
       {/* GARDE-FOU : des montants incomplets (HT à 0 alors qu'un TTC a été lu)
           faussent les cumuls ci-dessous — ne jamais les afficher sans le dire. */}
       {(y.incoherentCount > 0 || Math.abs(y.gap) > 0.05) && (

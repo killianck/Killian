@@ -46,6 +46,9 @@ export function formatDate(value: Date | string | null | undefined): string {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
+    // Les dates de facture sont stockées à minuit UTC : on les AFFICHE en UTC,
+    // sinon la date lue à l'écran différerait de celle utilisée pour la TVA.
+    timeZone: "UTC",
   }).format(d);
 }
 
@@ -72,8 +75,11 @@ export function toDateInputValue(value: Date | string | null | undefined): strin
   if (!value) return "";
   const d = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(d.getTime())) return "";
+  // UTC : les dates sont stockées à minuit UTC. En heure locale, un utilisateur
+  // à l'ouest de Greenwich verrait la veille dans le formulaire — et l'y
+  // ré-enregistrerait, décalant la facture d'un jour à chaque modification.
   const p = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  return `${d.getUTCFullYear()}-${p(d.getUTCMonth() + 1)}-${p(d.getUTCDate())}`;
 }
 
 /**
