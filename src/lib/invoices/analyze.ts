@@ -37,6 +37,24 @@ const STUB: ParsedInvoice = {
 export type AnalyzeMode = "import" | "reanalyze";
 
 /**
+ * Délai maximum ABSOLU pour l'analyse d'un document. Dernier filet de sécurité :
+ * quoi qu'il arrive en dessous (OCR figé, worker mort, PDF pathologique), une
+ * analyse se termine — sinon elle occuperait une place de la file d'attente pour
+ * toujours et plus aucun document ne serait traité.
+ */
+const ANALYSIS_TIMEOUT_MS = 4 * 60_000;
+
+function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error("délai d'analyse dépassé")), ms);
+    p.then(
+      (v) => { clearTimeout(t); resolve(v); },
+      (e) => { clearTimeout(t); reject(e); },
+    );
+  });
+}
+
+/**
  * (Ré)analyse la facture `id` et met à jour sa ligne. Ne lève jamais : en cas
  * d'échec la facture passe au statut « erreur » avec une note explicative.
  * @param mode  "import" = 1re analyse (écrase tout) ; "reanalyze" = journalise les
@@ -52,20 +70,27 @@ export async function applyAnalysis(id: string, mode: AnalyzeMode, userName?: st
   try {
     if (!src) throw new Error("document introuvable");
     const buffer = await readFile(src);
-    parsed = await getInvoiceParser().parse({
-      fileBuffer: buffer,
-      fileName: inv.originalFileName ?? "document",
-      mimeType: mimeFor(inv.originalFileName),
-    });
+    parsed = await withTimeout(
+      getInvoiceParser().parse({
+        fileBuffer: buffer,
+        fileName: inv.originalFileName ?? "document",
+        mimeType: mimeFor(inv.originalFileName),
+      }),
+      ANALYSIS_TIMEOUT_MS,
+    );
   } catch (e) {
     console.error(`Analyse de la facture ${id} impossible :`, e);
+    const timedOut = e instanceof Error && /délai/i.test(e.message);
     await prisma.invoice
       .update({
         where: { id },
         data: {
           status: "erreur",
           coherence: "a_verifier",
-          notes: "L'analyse automatique a échoué. Saisissez les informations via « Modifier ».",
+          notes: timedOut
+            ? "L'analyse automatique a pris trop de temps et a été interrompue. " +
+              "Le document est bien enregistré : saisissez les montants via « Modifier », ou relancez l'analyse."
+            : "L'analyse automatique a échoué. Saisissez les informations via « Modifier ».",
         },
       })
       .catch(() => {});

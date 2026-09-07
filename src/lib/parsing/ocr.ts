@@ -11,10 +11,12 @@
 // Le résultat DOIT toujours être vérifié par l'utilisateur : on remonte l'indice
 // de confiance de Tesseract pour déclasser une lecture douteuse.
 
-import { withOcrWorker } from "./ocrWorker";
+import { withOcrWorker, ocrUnavailable } from "./ocrWorker";
 
 /** Pages OCRisées au maximum. Au-delà, on lit aussi les 2 dernières (totaux). */
 const MAX_PAGES = 8;
+/** Rendu des pages par mupdf : borné lui aussi (un PDF corrompu peut bloquer). */
+const RENDER_TIMEOUT_MS = 60_000;
 /** ~2200 px sur le grand côté ≈ 275 dpi pour une page A4 : net pour du texte imprimé. */
 const TARGET_LONG_SIDE_PX = 2200;
 const MIN_SCALE = 1.8;
@@ -104,8 +106,15 @@ async function renderPdfPages(buffer: Buffer): Promise<{ pages: RenderedPage[]; 
   }
 }
 
+const OCR_DOWN_MESSAGE =
+  "Reconnaissance de texte indisponible sur ce poste : le document est enregistré, " +
+  "mais les montants doivent être saisis à la main (« Modifier »).";
+
 async function recognizePages(pages: RenderedPage[]): Promise<OcrResult> {
   if (!pages.length) return { text: "", warnings: [] };
+  // Échec IMMÉDIAT si l'OCR est hors service : inutile de faire patienter
+  // l'utilisateur pendant des dizaines de secondes pour chaque document.
+  if (ocrUnavailable()) return { text: "", warnings: [OCR_DOWN_MESSAGE] };
 
   const warnings: string[] = [];
   const texts: string[] = [];
@@ -132,12 +141,7 @@ async function recognizePages(pages: RenderedPage[]): Promise<OcrResult> {
   }).catch(() => false);
 
   if (out === null) {
-    return {
-      text: "",
-      warnings: [
-        "Reconnaissance de texte indisponible : données de langue non installées. Saisissez les informations manuellement.",
-      ],
-    };
+    return { text: "", warnings: [OCR_DOWN_MESSAGE] };
   }
 
   const meanConfidence = confidences.length
@@ -154,9 +158,16 @@ async function recognizePages(pages: RenderedPage[]): Promise<OcrResult> {
 
 /** OCR d'un PDF scanné. */
 export async function ocrPdf(buffer: Buffer): Promise<OcrResult> {
-  const { pages, warnings } = await renderPdfPages(buffer);
-  const res = await recognizePages(pages);
-  return { ...res, warnings: [...warnings, ...res.warnings] };
+  if (ocrUnavailable()) return { text: "", warnings: [OCR_DOWN_MESSAGE] };
+  let rendered: { pages: RenderedPage[]; warnings: string[] };
+  try {
+    rendered = await withTimeout(renderPdfPages(buffer), RENDER_TIMEOUT_MS);
+  } catch (e) {
+    console.error("Rendu des pages du PDF impossible :", e);
+    return { text: "", warnings: ["Ce PDF n'a pas pu être converti en images (fichier trop lourd ou abîmé)."] };
+  }
+  const res = await recognizePages(rendered.pages);
+  return { ...res, warnings: [...rendered.warnings, ...res.warnings] };
 }
 
 /** OCR d'une image (photo de facture, capture d'écran…). */
