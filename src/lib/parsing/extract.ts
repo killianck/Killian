@@ -78,13 +78,25 @@ export function extractDates(text: string): ExtractedDates {
   let invoiceDate: string | undefined;
   let dueDate: string | undefined;
 
-  const DUE = /(echeance|\bech\b|date limite|a regler (avant|le)|payable (le|avant)|reglement (avant|au|le)|a payer (avant|le)|date de (reglement|paiement)|paiement (au|le))/;
-  const INVOICE = /(date de facture|date facture|date d.?emission|date d.?edition|emise? le|edite le|fait le|facture du|^date\b|date\s*:)/;
+  // « prélèvement » = date à laquelle l'argent part : c'est une ÉCHÉANCE, jamais
+  // la date de la facture. Constaté sur une vraie facture d'électricité : la
+  // facture du 08/07 était datée du 25/08 → mauvais mois de TVA, en silence.
+  const DUE = /(echeance|\bech\b|date limite|a regler (avant|le)|payable (le|avant)|reglement (avant|au|le)|a payer (avant|le)|date de (reglement|paiement|prelevement)|paiement (au|le)|prelevement)/;
+  // Libellé EXPLICITE de date de facture : fait autorité sur tout le document.
+  const INVOICE_STRONG = /(date de facture|date facture|date d.?emission|date d.?edition|emise? le|edite le|fait le|facture du)/;
+  // Libellé FAIBLE (« Date : ») : retenu seulement à défaut de libellé explicite.
+  const INVOICE_WEAK = /(^date\b|date\s*:)/;
   const OTHER = /(livraison|commande|prestation|periode|reception|expedi|creee? le|inscription|immatricul|\bbl\b|bon de|contrat|signe)/;
 
   // Motif « N° <num> du JJ/MM/AAAA » (ou « Facture … du … ») = date de facture,
   // sauf s'il s'agit d'une livraison / commande / BL.
   const NUM_DU_DATE = /(facture|\bn[o°º]\s*[a-z]*\d)[^\n]{0,30}\bdu\s+\d{1,2}[/.]\d{1,2}[/.]\d{2,4}/;
+
+  // Deux niveaux de priorité : un libellé EXPLICITE l'emporte toujours sur un
+  // libellé faible, où qu'il soit dans le document (une « Date : » en haut de page
+  // ne doit pas battre une « Date de facture : » en bas).
+  let strongDate: string | undefined;
+  let weakDate: string | undefined;
 
   for (let i = 0; i < lines.length; i++) {
     const d = deburr(lines[i]);
@@ -92,17 +104,23 @@ export function extractDates(text: string): ExtractedDates {
     const dates = datesInLine(lines[i]);
     const nextDates = dates.length ? dates : datesInLine(lines[i + 1] ?? "");
 
-    if (DUE.test(d) && !dueDate && nextDates.length && isPlausibleInvoiceDate(nextDates[0])) {
-      dueDate = nextDates[0];
+    // Une ligne d'échéance / de prélèvement n'est JAMAIS une date de facture.
+    if (DUE.test(d)) {
+      if (!dueDate && nextDates.length && isPlausibleInvoiceDate(nextDates[0])) dueDate = nextDates[0];
+      continue;
+    }
+    if (!dates.length || OTHER.test(d)) continue;
+
+    if (!strongDate && INVOICE_STRONG.test(d)) {
+      strongDate = dates[0];
     } else if (
-      !invoiceDate && dates.length &&
-      ((INVOICE.test(d) && !OTHER.test(d)) ||
-        (NUM_DU_DATE.test(d) && !OTHER.test(d)) ||
-        (/^facture$/.test(prevD.trim()) && /\bdu\s+\d/.test(d)))
+      !weakDate &&
+      (INVOICE_WEAK.test(d) || NUM_DU_DATE.test(d) || (/^facture$/.test(prevD.trim()) && /\bdu\s+\d/.test(d)))
     ) {
-      invoiceDate = dates[0];
+      weakDate = dates[0];
     }
   }
+  invoiceDate = strongDate ?? weakDate;
 
   // À défaut : première date "plausible" du document = date de facture, MAIS on
   // le signale (c'est une supposition, pas une lecture fiable).
@@ -404,6 +422,10 @@ function impliedStandardRate(vat: number, ht: number): number | undefined {
   return EXTRACTION_VAT_RATES.find((s) => Math.abs(s - r) <= 0.15);
 }
 
+/** En-tête de colonnes d'un tableau d'articles (≠ ligne de libellés de totaux). */
+const COLUMN_HEADER =
+  /(designation|designations|qte|quantite|p.?s?u.?|prix|reference|references|article|articles|libelle|code|unite|repere)/;
+
 /**
  * Cherche, sur une même ligne, un triplet (HT, TVA, TTC) cohérent :
  *   HT + TVA ≈ TTC   et   TVA / HT ≈ un taux de TVA standard,
@@ -425,8 +447,13 @@ function bestCoherentTriple(
     if (/intracommunautaire|n[o°]\s*tva|iban|siret|\brib\b/.test(d)) continue;
     const hasTotalKw = KW.ht.test(d) || KW.tva.test(d) || KW.ttc.test(d);
     // Ligne de VALEURS juste sous une ligne de LIBELLÉS de totaux ?
+    // ⚠️ Un EN-TÊTE DE COLONNES (« Désignation Qté P.U. HT Total HT ») contient lui
+    //    aussi « total » et « ht » : sans cette exclusion, CHAQUE ligne d'article
+    //    du tableau passerait pour une ligne de totaux. Constaté sur une vraie
+    //    facture : TVA lue 2 089,78 € au lieu de 1 171,74 €.
     const prev = deburr(lines[i - 1] ?? "");
     const underLabelRow =
+      !COLUMN_HEADER.test(prev) &&
       findMoneyTokens(lines[i - 1] ?? "").length === 0 &&
       (prev.match(/\b(total|montant|ht|ttc|tva|taxe|net|base|remise|escompte)\b/g)?.length ?? 0) >= 2;
     const tokens = [...new Set(findMoneyTokens(raw).filter((v) => v > 0 && !isRateValue(v)))];
@@ -440,9 +467,12 @@ function bestCoherentTriple(
         const expectedTtc = round2(ht + vat);
         const found = tokens.find((t) => Math.abs(t - expectedTtc) <= 0.02);
         const observedTtc = found !== undefined;
-        // On n'accepte un triplet QUE si le TTC est observé, ou si la ligne
-        // (ou celle des libellés juste au-dessus) porte un mot-clé de total.
-        if (!observedTtc && !hasTotalKw && !underLabelRow) continue;
+        // On n'accepte un triplet QUE si le TTC est RÉELLEMENT présent sur la
+        // ligne, ou si la ligne porte elle-même un mot-clé de total.
+        // « underLabelRow » ne suffit PAS à ACCEPTER : il ne sert qu'à départager
+        // (score). Sinon une simple ligne d'article sous un en-tête de tableau
+        // deviendrait un « bloc de totaux » et fabriquerait une TVA fausse.
+        if (!observedTtc && !hasTotalKw) continue;
         const score =
           (observedTtc ? 100 : 0) +
           (hasTotalKw || underLabelRow ? 25 : 0) +

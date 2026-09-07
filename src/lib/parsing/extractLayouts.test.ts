@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildParsedInvoice } from "./extract";
+import { buildParsedInvoice, extractAmounts, extractDates } from "./extract";
 
 // Batterie de mises en page variées — garde-fou anti-régression après la
 // correction des factures multi-livraisons (Total HT d'un bloc de totaux vs
@@ -122,5 +122,56 @@ Bon pour accord`;
     const p = buildParsedInvoice(t, "heuristic");
     expect(p.totalVAT).toBeUndefined();
     expect(p.totalTTC).toBeUndefined();
+  });
+});
+
+describe("régressions constatées sur de VRAIES factures (audit 2026-09-07)", () => {
+  it("un en-tête de colonnes n'est pas un bloc de totaux : pas de TVA inventée depuis une ligne d'article", () => {
+    // Facture NORALIS réelle : la ligne d'article « 21 044,89 € / 2 089,78 € »
+    // affichait un ratio de 9,93 % — assimilé à 10 % — et l'en-tête
+    // « Désignation … Total HT » la faisait passer pour une ligne de totaux.
+    // Résultat : TVA lue 2 089,78 € au lieu de 1 171,74 € (+918 € de TVA déductible).
+    const t = `P Désignation PUHT Qté Total HT
+1 Coulissant 2 rails 2 vantaux 001 21 044,89 € 2 089,78 €
+Net à payer : 7 030,42 €
+TVA (20 %) :
+Total TTC :
+1 171,74 €
+7 030,42 €
+Total HT : 5 858,68 €`;
+    const a = extractAmounts(t);
+    expect(a.totalHT).toBe(5858.68);
+    expect(a.totalVAT).toBe(1171.74);
+    expect(a.totalTTC).toBe(7030.42);
+    expect(a.totalHT! + a.totalVAT!).toBeCloseTo(a.totalTTC!, 2);
+  });
+
+  it("« Date de prélèvement » est une échéance, jamais la date de facture", () => {
+    // Facture d'électricité réelle : datée du 08/07, prélevée le 25/08.
+    // L'ancienne version la classait en août -> mauvais mois de TVA.
+    const t = `FACTURE D'ELECTRICITE du 08 juillet 2026
+Montant TTC 458,16 €
+Date de prélèvement de cette facture le 25/08/2026
+N° de facture : 105006519306
+Date de facture : 08/07/26`;
+    const d = extractDates(t);
+    expect(d.invoiceDate).toBe("2026-07-08");
+    expect(d.dueDate).toBe("2026-08-25");
+  });
+
+  it("un libellé explicite « Date de facture » l'emporte sur une « Date : » plus haut", () => {
+    const t = `Date : 25/07/2026
+Prestation
+Date de facture : 15/07/2026`;
+    expect(extractDates(t).invoiceDate).toBe("2026-07-15");
+  });
+
+  it("à défaut de libellé explicite, l'échéance n'est pas prise pour la date de facture", () => {
+    const t = `Prestation du mois
+15/07/2026
+Date de prélèvement : 25/07/2026`;
+    const d = extractDates(t);
+    expect(d.invoiceDate).toBe("2026-07-15");
+    expect(d.dueDate).toBe("2026-07-25");
   });
 });

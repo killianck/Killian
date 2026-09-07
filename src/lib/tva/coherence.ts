@@ -32,6 +32,24 @@ export type CoherenceReport = {
   issues: CoherenceIssue[];
 };
 
+/**
+ * Niveau de cohérence à STOCKER pour une facture analysée automatiquement.
+ *
+ * ⚠️ Une incohérence ARITHMÉTIQUE (HT + TVA ≠ TTC) l'emporte TOUJOURS sur
+ * l'incertitude de lecture. Sinon une facture dont seul le TTC a été lu
+ * (HT = 0, TVA = 0, TTC = X) serait classée « à vérifier » et échapperait au
+ * filtre « Montants incohérents » — c'est-à-dire précisément à l'écran qui sert
+ * à la retrouver et à la corriger avant une déclaration de TVA.
+ */
+export function storedCoherence(
+  report: CoherenceReport,
+  opts: { amountsUncertain: boolean; hasAmounts: boolean },
+): CoherenceLevel {
+  if (report.level === "incoherent") return "incoherent";
+  if (opts.amountsUncertain || !opts.hasAmounts) return "a_verifier";
+  return report.level;
+}
+
 // Tolérance d'arrondi de base : 2 centimes.
 const TOL = 0.02;
 /** Tolérance en euros proportionnelle au montant : ~0,1 % (arrondis multi-lignes). */

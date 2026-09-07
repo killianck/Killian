@@ -8,7 +8,7 @@ import { readFile } from "node:fs/promises";
 import { prisma } from "@/lib/db";
 import { resolveUploadPath } from "@/lib/paths";
 import { getInvoiceParser } from "@/lib/parsing";
-import { checkCoherence } from "@/lib/tva/coherence";
+import { checkCoherence, storedCoherence } from "@/lib/tva/coherence";
 import { resolveParty } from "@/lib/invoices/party";
 import { duplicateKey } from "@/lib/invoices/duplicates";
 import { reconcileStatements } from "@/lib/invoices/statements";
@@ -120,15 +120,15 @@ export async function applyAnalysis(id: string, mode: AnalyzeMode, userName?: st
   const invoiceDate = parsed.invoiceDate ? new Date(parsed.invoiceDate) : keepExisting ? inv.invoiceDate : new Date();
   const dueDate = parsed.dueDate ? new Date(parsed.dueDate) : keepExisting ? inv.dueDate : null;
 
-  const coherence =
-    parsed.amountsUncertain || !(totalHT || totalTTC)
-      ? "a_verifier"
-      : checkCoherence({
-          totalHT, totalVAT, totalTTC, vatLines,
-          documentType,
-          invoiceDate: parsed.invoiceDate ?? undefined,
-          dueDate: dueDate ? dueDate.toISOString().slice(0, 10) : undefined,
-        }).level;
+  const coherence = storedCoherence(
+    checkCoherence({
+      totalHT, totalVAT, totalTTC, vatLines,
+      documentType,
+      invoiceDate: parsed.invoiceDate ?? undefined,
+      dueDate: dueDate ? dueDate.toISOString().slice(0, 10) : undefined,
+    }),
+    { amountsUncertain: parsed.amountsUncertain === true, hasAmounts: Boolean(totalHT || totalTTC) },
+  );
 
   const party = await resolveParty(prisma, {
     name: parsed.partyName ?? inv.partyName,
