@@ -102,3 +102,46 @@ describe("monthlyBreakdown", () => {
     expect(Math.round(sumNet * 100) / 100).toBe(totalsForYear(sample, 2026).netVat);
   });
 });
+
+describe("détection des totaux incohérents (garde-fou déclaration TVA)", () => {
+  const inv = (ht: number, vat: number, ttc: number) => ({
+    invoiceDate: "2026-03-10",
+    direction: "achat" as const,
+    documentType: "facture" as const,
+    totalHT: ht,
+    totalVAT: vat,
+    totalTTC: ttc,
+  });
+
+  it("ne signale rien quand tout est cohérent", () => {
+    const t = sumInvoices([inv(100, 20, 120), inv(50, 10, 60)]);
+    expect(t.incoherentCount).toBe(0);
+    expect(t.gap).toBe(0);
+    expect(t.totalVAT).toBe(30);
+  });
+
+  it("repère une facture dont seul le TTC a été lu (HT resté à 0)", () => {
+    // Cas réel : l'extraction ne retrouve que « Net à payer » -> HT et TVA à 0.
+    const t = sumInvoices([inv(100, 20, 120), inv(0, 0, 500)]);
+    expect(t.incoherentCount).toBe(1);
+    expect(t.gap).toBe(500); // 620 TTC - 100 HT - 20 TVA
+    expect(t.totalTTC).toBe(620);
+  });
+
+  it("l'écart global correspond à la somme des montants orphelins", () => {
+    const t = sumInvoices([inv(0, 0, 1000), inv(0, 0, 500), inv(200, 40, 240)]);
+    expect(t.incoherentCount).toBe(2);
+    expect(t.gap).toBe(1500);
+  });
+
+  it("ignore une facture entièrement vide (pas encore analysée)", () => {
+    const t = sumInvoices([inv(0, 0, 0), inv(100, 20, 120)]);
+    expect(t.incoherentCount).toBe(0);
+    expect(t.gap).toBe(0);
+  });
+
+  it("tolère les arrondis au centime", () => {
+    const t = sumInvoices([inv(100, 20.004, 120.01)]);
+    expect(t.incoherentCount).toBe(0);
+  });
+});

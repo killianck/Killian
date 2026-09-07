@@ -58,6 +58,27 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           <span className="shrink-0 font-medium underline">Les traiter →</span>
         </Link>
       )}
+      {/* GARDE-FOU : des montants incomplets (HT à 0 alors qu'un TTC a été lu)
+          faussent les cumuls ci-dessous — ne jamais les afficher sans le dire. */}
+      {(y.incoherentCount > 0 || Math.abs(y.gap) > 0.05) && (
+        <Link
+          href="/factures?statut=incoherent"
+          className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-[var(--danger-bg)] bg-[var(--danger-bg)] px-4 py-3 text-sm text-[var(--danger)]"
+        >
+          <span>
+            <strong>Totaux faussés :</strong>{" "}
+            {y.incoherentCount > 0 && (
+              <>
+                {y.incoherentCount} facture{y.incoherentCount > 1 ? "s" : ""} de {year} {y.incoherentCount > 1 ? "ont" : "a"}{" "}
+                des montants incomplets (HT + TVA ≠ TTC).{" "}
+              </>
+            )}
+            {Math.abs(y.gap) > 0.05 && <>Écart de {formatMoney(y.gap)} sur le Total TTC. </>}
+            À corriger avant toute déclaration.
+          </span>
+          <span className="shrink-0 font-medium underline">Corriger →</span>
+        </Link>
+      )}
       {(m.excludedCount > 0 || y.excludedCount > 0) && (
         <p className="mb-4 rounded-lg border border-[var(--danger-bg)] bg-[var(--danger-bg)] px-3 py-2 text-xs text-[var(--danger)]">
           ⚠️ {Math.max(m.excludedCount, y.excludedCount)} facture(s) exclue(s) des totaux faute de date

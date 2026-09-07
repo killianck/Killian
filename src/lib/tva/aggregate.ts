@@ -22,9 +22,19 @@ export type VatTotals = {
   deductibleVat: number; // TVA déductible
   netVat: number; // TVA nette estimée
   totalHT: number;
+  /** Somme signée des TVA (sert au contrôle HT + TVA = TTC). */
+  totalVAT: number;
   totalTTC: number;
   /** Factures ignorées faute de date/valeur exploitable (jamais silencieux). */
   excludedCount: number;
+  /**
+   * Factures dont HT + TVA ≠ TTC (typiquement : montant partiellement lu, HT
+   * resté à 0 alors qu'un TTC a été trouvé). Elles faussent les totaux affichés :
+   * on ne doit JAMAIS présenter le cumul comme fiable sans le signaler.
+   */
+  incoherentCount: number;
+  /** Écart global TTC − (HT + TVA), arrondi. 0 = totaux cohérents. */
+  gap: number;
 };
 
 const EMPTY: VatTotals = {
@@ -33,8 +43,11 @@ const EMPTY: VatTotals = {
   deductibleVat: 0,
   netVat: 0,
   totalHT: 0,
+  totalVAT: 0,
   totalTTC: 0,
   excludedCount: 0,
+  incoherentCount: 0,
+  gap: 0,
 };
 
 function asDate(d: Date | string): Date {
@@ -79,14 +92,24 @@ export function sumInvoices(invoices: AggregatableInvoice[]): VatTotals {
     t.collectedVat += contrib.collected;
     t.deductibleVat += contrib.deductible;
     t.totalHT += sign * inv.totalHT;
+    t.totalVAT += sign * inv.totalVAT;
     t.totalTTC += sign * inv.totalTTC;
+
+    // Contrôle facture par facture : un document dont HT + TVA ≠ TTC fausse
+    // le cumul (cas typique : seul le TTC a pu être lu, HT resté à 0).
+    const ht = inv.totalHT ?? 0;
+    const vat = inv.totalVAT ?? 0;
+    const ttc = inv.totalTTC ?? 0;
+    if ((ht || vat || ttc) && Math.abs(ht + vat - ttc) > 0.02) t.incoherentCount += 1;
   }
 
   t.collectedVat = round2(t.collectedVat);
   t.deductibleVat = round2(t.deductibleVat);
   t.totalHT = round2(t.totalHT);
+  t.totalVAT = round2(t.totalVAT);
   t.totalTTC = round2(t.totalTTC);
   t.netVat = netVat(t.collectedVat, t.deductibleVat);
+  t.gap = round2(t.totalTTC - t.totalHT - t.totalVAT);
 
   return t;
 }

@@ -43,9 +43,42 @@ export default async function TvaPage({ searchParams }: { searchParams: Promise<
 
   const selectCls = "rounded-lg border border-[var(--border)] bg-white px-2.5 py-1.5 text-sm";
 
+  // GARDE-FOU : ne jamais présenter un cumul de TVA comme fiable quand certaines
+  // factures ont HT + TVA ≠ TTC (montant partiellement lu, HT resté à 0…).
+  const suspect = yearTotals.incoherentCount > 0 || Math.abs(yearTotals.gap) > 0.05;
+
   return (
     <>
       <PageHeader title="TVA" subtitle="Vue mensuelle et annuelle. Résultats indicatifs." />
+
+      {suspect && (
+        <div className="mb-4 rounded-lg border border-[var(--danger-bg)] bg-[var(--danger-bg)] px-3 py-2.5 text-sm text-[var(--danger)]">
+          <p className="font-semibold">⚠️ Ces totaux ne sont pas fiables en l&apos;état.</p>
+          <p className="mt-1 text-xs">
+            {yearTotals.incoherentCount > 0 && (
+              <>
+                <strong>{yearTotals.incoherentCount}</strong> facture
+                {yearTotals.incoherentCount > 1 ? "s" : ""} de {year} {yearTotals.incoherentCount > 1 ? "ont" : "a"} des
+                montants incomplets ou incohérents (HT + TVA ≠ TTC — le plus souvent un HT resté à 0 alors
+                qu&apos;un TTC a été lu).{" "}
+              </>
+            )}
+            {Math.abs(yearTotals.gap) > 0.05 && (
+              <>
+                Écart global : <strong>{formatMoney(yearTotals.gap)}</strong> entre le Total TTC et
+                (Total HT + TVA).{" "}
+              </>
+            )}
+            Corrigez ces factures avant toute déclaration.
+          </p>
+          <Link
+            href="/factures?statut=incoherent"
+            className="mt-2 inline-block rounded-lg border border-[var(--danger)] px-2.5 py-1 text-xs font-medium"
+          >
+            Voir les factures à corriger →
+          </Link>
+        </div>
+      )}
 
       <form method="get" className="mb-4 flex flex-wrap items-end gap-2">
         <label className="text-xs text-[var(--muted)]">
