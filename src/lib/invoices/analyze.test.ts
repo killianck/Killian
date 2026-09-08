@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
 import { analysisMayWrite, analysisModeFlags, type AnalyzeMode } from "./analyze";
 import { STATUSES } from "@/lib/domain/enums";
 
@@ -43,5 +44,33 @@ describe("analysisModeFlags", () => {
     for (const mode of ["import", "resume"] as AnalyzeMode[]) {
       expect(analysisModeFlags(mode).journal).toBe(false);
     }
+  });
+});
+
+// applyAnalysis a DEUX chemins qui écrivent en base : le succès et l'échec.
+// Le garde-fou n'avait été posé que sur le premier. Conséquence : quand l'OCR
+// échouait ou dépassait le délai (jusqu'à 4 min) APRÈS que l'utilisateur ait
+// tout saisi à la main — le bouton « Modifier » reste actif pendant l'analyse —
+// sa facture repassait en « erreur » et SA note était remplacée par « L'analyse
+// automatique a échoué », sans aucune trace au journal.
+// Ce test ne peut pas exécuter applyAnalysis (aucun mock Prisma dans ce projet) :
+// il vérifie l'invariant à la source, là où l'oubli s'est produit.
+
+describe("applyAnalysis — les deux chemins d'écriture sont protégés", () => {
+  const source = readFileSync(new URL("./analyze.ts", import.meta.url), "utf8");
+
+  it("le chemin d'ÉCHEC consulte le garde-fou avant d'écrire « erreur »", () => {
+    // « !analysisMayWrite( » est un APPEL. La DÉFINITION, elle, s'écrit
+    // « export function analysisMayWrite( » et apparaît forcément plus haut dans
+    // le fichier : la chercher ferait passer ce test même sans garde-fou.
+    const garde = source.indexOf("!analysisMayWrite(");
+    const ecriture = source.indexOf('status: "erreur"');
+    expect(garde).toBeGreaterThan(-1);
+    expect(ecriture).toBeGreaterThan(-1);
+    expect(garde).toBeLessThan(ecriture);
+  });
+
+  it("le chemin de SUCCÈS consulte lui aussi le garde-fou", () => {
+    expect(source.match(/!analysisMayWrite\(/g)?.length ?? 0).toBe(2);
   });
 });

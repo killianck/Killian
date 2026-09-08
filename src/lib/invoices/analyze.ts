@@ -117,6 +117,28 @@ export async function applyAnalysis(id: string, mode: AnalyzeMode, userName?: st
   } catch (e) {
     console.error(`Analyse de la facture ${id} impossible :`, e);
     const timedOut = e instanceof Error && /délai/i.test(e.message);
+    // Même garde-fou que le chemin de succès (voir plus bas) : l'ÉCHEC d'une
+    // analyse ne doit pas davantage écraser une saisie de l'utilisateur. Il peut
+    // avoir tout saisi à la main pendant les minutes qu'a duré l'OCR — le bouton
+    // « Modifier » reste actif pendant l'analyse. Sans ce test, sa facture
+    // repassait en « erreur » et SA note était remplacée par « L'analyse
+    // automatique a échoué », sans la moindre trace.
+    const now = await prisma.invoice.findUnique({ where: { id }, select: { status: true } });
+    if (!now) return; // supprimée entre-temps
+    if (!analysisMayWrite(now.status)) {
+      console.warn(`Échec d'analyse de ${id} ignoré : la facture a été modifiée entre-temps.`);
+      await prisma.invoiceRevision
+        .create({
+          data: {
+            invoiceId: id,
+            field: "Analyse automatique",
+            oldValue: "échec ignoré",
+            newValue: "l'analyse a échoué mais la facture avait déjà été modifiée : vos saisies sont conservées",
+          },
+        })
+        .catch(() => {});
+      return;
+    }
     await prisma.invoice
       .update({
         where: { id },
