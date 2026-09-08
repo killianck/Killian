@@ -4,38 +4,12 @@ import { PageHeader, Card, Money, EmptyState, Badge } from "@/components/ui";
 import { formatDate } from "@/lib/format";
 import { DIRECTIONS, type Direction } from "@/lib/domain/enums";
 import { getAvailableYears } from "@/lib/queries";
+import { buildDueRange } from "@/lib/invoices/dueFilter";
 
 export const dynamic = "force-dynamic";
 
 type SP = Record<string, string | string[] | undefined>;
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
-
-function range(period: string, year: string, from: string, to: string) {
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = now.getMonth();
-  switch (period) {
-    case "mois":
-      return { gte: new Date(y, m, 1), lt: new Date(y, m + 1, 1) };
-    case "mois_suivant":
-      return { gte: new Date(y, m + 1, 1), lt: new Date(y, m + 2, 1) };
-    case "annee": {
-      const yy = year ? Number(year) : y;
-      return { gte: new Date(yy, 0, 1), lt: new Date(yy + 1, 0, 1) };
-    }
-    case "perso": {
-      const g = from ? new Date(from) : new Date(y, m, 1);
-      const l = to ? new Date(to) : new Date(y, m + 1, 1);
-      return { gte: g, lt: l };
-    }
-    default: {
-      // "à venir" : à partir d'aujourd'hui
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      return { gte: today };
-    }
-  }
-}
 
 export default async function EcheancesPage({ searchParams }: { searchParams: Promise<SP> }) {
   const sp = await searchParams;
@@ -45,7 +19,7 @@ export default async function EcheancesPage({ searchParams }: { searchParams: Pr
   const to = one(sp.to);
 
   const years = await getAvailableYears();
-  const dueDate = range(period, year, from, to);
+  const dueDate = buildDueRange({ period, year, from, to });
 
   const invoices = await prisma.invoice.findMany({
     where: { dueDate: { not: null, ...dueDate } },

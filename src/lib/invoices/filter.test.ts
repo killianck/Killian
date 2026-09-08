@@ -62,3 +62,33 @@ describe("invoiceOrderBy", () => {
     expect(invoiceOrderBy("inconnu")).toEqual({ invoiceDate: "desc" });
   });
 });
+
+describe("buildInvoiceWhere — paramètres d'URL inexploitables", () => {
+  // Ces valeurs produisaient NaN/Infinity, refusés par Prisma : la liste des
+  // factures tombait entièrement en erreur au lieu d'ignorer un filtre.
+  it("taux non numérique -> filtre ignoré", () => {
+    expect(buildInvoiceWhere({ ...empty, rate: "abc" }, [2026])).toEqual({});
+  });
+
+  it("taux démesuré -> filtre ignoré", () => {
+    expect(buildInvoiceWhere({ ...empty, rate: "1e999" }, [2026])).toEqual({});
+  });
+
+  it("taux valide -> filtre appliqué", () => {
+    const w = buildInvoiceWhere({ ...empty, rate: "5.5" }, [2026]) as { AND: unknown[] };
+    expect(w.AND).toContainEqual({ vatLines: { some: { rate: 5.5 } } });
+  });
+
+  it("année démesurée -> filtre ignoré (aucune date invalide)", () => {
+    expect(buildInvoiceWhere({ ...empty, year: "1e999" }, [2026])).toEqual({});
+  });
+
+  it("mois hors plage -> filtre ignoré", () => {
+    expect(buildInvoiceWhere({ ...empty, month: "99" }, [2026])).toEqual({});
+    expect(buildInvoiceWhere({ ...empty, month: "0" }, [2026])).toEqual({});
+  });
+
+  it("année non numérique -> filtre ignoré", () => {
+    expect(buildInvoiceWhere({ ...empty, year: "abc" }, [2026])).toEqual({});
+  });
+});
