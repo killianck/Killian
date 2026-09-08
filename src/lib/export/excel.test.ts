@@ -83,3 +83,39 @@ describe("buildInvoicesWorkbook", () => {
     expect(wb.getWorksheet("Factures")!.rowCount).toBe(1);
   });
 });
+
+describe("export Excel — devises et cohérence de la ligne TOTAL", () => {
+  const base = {
+    dueDate: null, number: "F1", partyName: "X", category: null,
+    currency: "EUR", deductible: true, vatLines: [{ rate: 20 }],
+  };
+
+  it("la ligne TOTAL est cohérente (HT + TVA = TTC) et exclut les devises étrangères", async () => {
+    const invoices = [
+      { ...base, invoiceDate: new Date("2026-01-10"), documentType: "facture", direction: "achat",
+        totalHT: 1000, totalVAT: 200, totalTTC: 1200 },
+      { ...base, number: "F2", invoiceDate: new Date("2026-02-10"), documentType: "facture",
+        direction: "achat", currency: "USD", totalHT: 5000, totalVAT: 1000, totalTTC: 6000 },
+    ];
+    const buf = await buildInvoicesWorkbook(invoices as never);
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(buf as never);
+    const ws = wb.getWorksheet("Factures")!;
+    const rows: unknown[][] = [];
+    ws.eachRow((r) => rows.push((r.values as unknown[]).slice(1)));
+
+    const header = rows[0] as string[];
+    const iHT = header.indexOf("HT");
+    const iTVA = header.indexOf("TVA");
+    const iTTC = header.indexOf("TTC");
+    const iCur = header.indexOf("Devise");
+    expect(iCur).toBeGreaterThan(-1); // la devise doit être visible
+
+    const total = rows[rows.length - 1];
+    expect(total[iHT]).toBe(1000);
+    expect(total[iTVA]).toBe(200); // et surtout PAS 1200 (USD inclus)
+    expect(total[iTTC]).toBe(1200);
+    expect(Number(total[iHT]) + Number(total[iTVA])).toBeCloseTo(Number(total[iTTC]), 2);
+    expect(String(total[header.indexOf("Fournisseur / Client")])).toMatch(/USD.*exclue/);
+  });
+});

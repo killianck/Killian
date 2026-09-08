@@ -87,11 +87,28 @@ function encryptFile(plainPath, key) {
 }
 
 function decryptFile(encPath, key) {
+  const target = encPath.replace(/\.enc$/, "");
+
+  // ⚠️ NE JAMAIS écraser un fichier en clair déjà présent : il peut contenir des
+  // données PLUS RÉCENTES. Cas réel : après une désactivation du chiffrement mal
+  // gérée, l'utilisateur ressaisit des factures ; en ré-activant le chiffrement,
+  // le déchiffrement de l'ancienne archive écrasait tout ce qu'il venait de
+  // saisir. On met l'archive de côté et on laisse le fichier en clair intact.
+  if (fs.existsSync(target)) {
+    const conflit = `${target}.conflit-${Date.now()}.enc`;
+    fs.renameSync(encPath, conflit);
+    console.error(
+      `Fichier en clair déjà présent : ${target}. L'archive chiffrée a été conservée sous ` +
+        `${conflit} au lieu d'écraser vos données.`,
+    );
+    return;
+  }
+
   const buf = fs.readFileSync(encPath);
   const decipher = crypto.createDecipheriv("aes-256-gcm", key, buf.subarray(0, 12));
   decipher.setAuthTag(buf.subarray(12, 28));
   const plain = Buffer.concat([decipher.update(buf.subarray(28)), decipher.final()]);
-  fs.writeFileSync(encPath.replace(/\.enc$/, ""), plain);
+  fs.writeFileSync(target, plain);
   fs.rmSync(encPath);
 }
 

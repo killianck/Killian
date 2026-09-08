@@ -7,11 +7,22 @@ import { importInvoices, type ImportState } from "./actions";
 const ACCEPT = ".pdf,.jpg,.jpeg,.png,.webp,.tif,.tiff,.bmp,.heic,.heif";
 const ACCEPT_RE = /\.(pdf|jpe?g|png|webp|tiff?|bmp|heic|heif)$/i;
 const MAX_MB = 20;
+/**
+ * Limite de l'ENVOI COMPLET, pas d'un seul fichier : Next refuse un corps de
+ * Server Action au-delà de `serverActions.bodySizeLimit` (25 Mo, cf.
+ * next.config.ts). Sans ce contrôle, trois PDF de 10 Mo passaient la validation
+ * par fichier puis l'envoi échouait AVANT d'atteindre le serveur — donc sans
+ * message exploitable pour l'utilisateur. On garde une marge pour l'encodage.
+ */
+const TOTAL_MAX_MB = 22;
+
+const mo = (octets: number) => (octets / 1024 / 1024).toFixed(1).replace(".", ",");
 
 export function ImportForm() {
   const [state, formAction, pending] = useActionState<ImportState, FormData>(importInvoices, {});
   const inputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<{ name: string; problem?: string }[]>([]);
+  const [totalSize, setTotalSize] = useState(0);
   const [dragOver, setDragOver] = useState(false);
 
 
@@ -20,8 +31,10 @@ export function ImportForm() {
     const dt = new DataTransfer();
     for (const f of Array.from(list)) dt.items.add(f);
     inputRef.current.files = dt.files;
+    const chosen = Array.from(dt.files);
+    setTotalSize(chosen.reduce((s, f) => s + f.size, 0));
     setFiles(
-      Array.from(dt.files).map((f) => ({
+      chosen.map((f) => ({
         name: f.name,
         problem: !ACCEPT_RE.test(f.name)
           ? "format non pris en charge"
@@ -34,7 +47,8 @@ export function ImportForm() {
     );
   }
 
-  const blocking = files.some((f) => f.problem);
+  const tooHeavy = totalSize > TOTAL_MAX_MB * 1024 * 1024;
+  const blocking = files.some((f) => f.problem) || tooHeavy;
   const count = files.length;
 
   return (
@@ -66,14 +80,20 @@ export function ImportForm() {
           PDF ou photo (JPG, PNG…), {MAX_MB} Mo max par fichier — cliquez pour parcourir
         </p>
         {count > 0 && (
-          <ul className="mt-3 space-y-0.5 text-sm">
-            {files.map((f, i) => (
-              <li key={i} className={f.problem ? "text-[var(--danger)]" : "text-[var(--primary)]"}>
-                {f.name}
-                {f.problem ? ` — ${f.problem}` : ""}
-              </li>
-            ))}
-          </ul>
+          <>
+            <ul className="mt-3 space-y-0.5 text-sm">
+              {files.map((f, i) => (
+                <li key={i} className={f.problem ? "text-[var(--danger)]" : "text-[var(--primary)]"}>
+                  {f.name}
+                  {f.problem ? ` — ${f.problem}` : ""}
+                </li>
+              ))}
+            </ul>
+            <p className={`mt-2 text-xs ${tooHeavy ? "font-medium text-[var(--danger)]" : "text-[var(--muted)]"}`}>
+              Total : {mo(totalSize)} Mo
+              {tooHeavy && ` — au-delà de ${TOTAL_MAX_MB} Mo par envoi. Importez ces documents en plusieurs fois.`}
+            </p>
+          </>
         )}
         <input
           ref={inputRef}

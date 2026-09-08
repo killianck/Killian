@@ -39,6 +39,7 @@ export async function buildInvoicesWorkbook(invoices: ExportableInvoice[]): Prom
     { header: "HT", key: "ht", width: 12 },
     { header: "TVA", key: "tva", width: 12 },
     { header: "TTC", key: "ttc", width: 12 },
+    { header: "Devise", key: "currency", width: 8 },
     { header: "Taux TVA", key: "rates", width: 14 },
     { header: "TVA récupérable", key: "deductible", width: 15 },
     { header: "Mois", key: "month", width: 12 },
@@ -61,6 +62,7 @@ export async function buildInvoicesWorkbook(invoices: ExportableInvoice[]): Prom
       ht: sign * inv.totalHT,
       tva: sign * inv.totalVAT,
       ttc: sign * inv.totalTTC,
+      currency: inv.currency || "EUR",
       rates: [...new Set(inv.vatLines.map((l) => l.rate))].join(" / "),
       deductible: inv.direction === "achat" ? (inv.deductible ? "Oui" : "Non") : "",
       month: MONTH_NAMES_FR[d.getUTCMonth()],
@@ -70,16 +72,19 @@ export async function buildInvoicesWorkbook(invoices: ExportableInvoice[]): Prom
 
   // Ligne de totaux (montants signés : un avoir vient en déduction).
   if (invoices.length > 0) {
+    // Les trois totaux viennent de la MÊME source : additionner la TVA à part
+    // donnerait une ligne TOTAL incohérente avec ses propres colonnes HT et TTC
+    // (les devises étrangères sont exclues des cumuls, cf. aggregate.ts).
     const agg = sumInvoices(invoices as unknown as AggregatableInvoice[]);
-    const sumSigned = (pick: (i: (typeof invoices)[number]) => number) =>
-      Math.round(
-        invoices.reduce((s, i) => s + (i.documentType === "avoir" ? -1 : 1) * pick(i), 0) * 100,
-      ) / 100;
+    const exclues = agg.foreignCurrencyCount
+      ? ` — ${agg.foreignCurrencyCount} en ${agg.foreignCurrencies.join("/")} exclue${agg.foreignCurrencyCount > 1 ? "s" : ""} du total`
+      : "";
     const total = ws.addRow({
-      party: `TOTAL (${invoices.length} document${invoices.length > 1 ? "s" : ""})`,
+      party: `TOTAL (${agg.count} document${agg.count > 1 ? "s" : ""} en EUR${exclues})`,
       ht: agg.totalHT,
-      tva: sumSigned((i) => i.totalVAT),
+      tva: agg.totalVAT,
       ttc: agg.totalTTC,
+      currency: "EUR",
     });
     total.font = { bold: true };
   }

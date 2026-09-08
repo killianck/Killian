@@ -68,7 +68,9 @@ export default async function ParametresPage() {
                 {encryptionOn ? "Désactiver le chiffrement" : "Activer le chiffrement"}
               </button>
               <span className="ml-2 text-xs text-[var(--muted)]">
-                (prend effet au prochain démarrage de l&apos;application)
+                {encryptionOn
+                  ? "(vos données seront déchiffrées au prochain démarrage — rien n'est perdu)"
+                  : "(prend effet au prochain démarrage de l'application)"}
               </span>
             </form>
           ) : (

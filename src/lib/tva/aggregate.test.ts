@@ -145,3 +145,37 @@ describe("détection des totaux incohérents (garde-fou déclaration TVA)", () =
     expect(t.incoherentCount).toBe(0);
   });
 });
+
+describe("devises étrangères — jamais additionnées aux euros", () => {
+  const inv = (ttc: number, currency?: string) => ({
+    invoiceDate: "2026-03-10",
+    direction: "achat" as const,
+    documentType: "facture" as const,
+    totalHT: ttc / 1.2,
+    totalVAT: ttc - ttc / 1.2,
+    totalTTC: ttc,
+    currency,
+  });
+
+  it("exclut une facture en USD des totaux et la signale", () => {
+    const t = sumInvoices([inv(120, "EUR"), inv(1000, "USD")]);
+    expect(t.count).toBe(1);
+    expect(t.totalTTC).toBe(120); // et surtout PAS 1120
+    expect(t.foreignCurrencyCount).toBe(1);
+    expect(t.foreignCurrencies).toEqual(["USD"]);
+  });
+
+  it("traite une devise absente ou vide comme des euros (cas normal)", () => {
+    const t = sumInvoices([inv(120), inv(240, ""), inv(60, "eur")]);
+    expect(t.count).toBe(3);
+    expect(t.totalTTC).toBe(420);
+    expect(t.foreignCurrencyCount).toBe(0);
+  });
+
+  it("liste chaque devise étrangère une seule fois", () => {
+    const t = sumInvoices([inv(10, "USD"), inv(20, "USD"), inv(30, "CHF")]);
+    expect(t.foreignCurrencyCount).toBe(3);
+    expect(t.foreignCurrencies.sort()).toEqual(["CHF", "USD"]);
+    expect(t.totalTTC).toBe(0);
+  });
+});

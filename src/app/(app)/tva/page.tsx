@@ -27,8 +27,10 @@ export default async function TvaPage({ searchParams }: { searchParams: Promise<
 
   const monthInvoices = invoices
     .filter((i) => {
+      // UTC, comme totalsForMonth : sinon la liste affichée pourrait ne pas
+      // correspondre aux totaux calculés juste au-dessus.
       const d = new Date(i.invoiceDate);
-      return d.getFullYear() === year && d.getMonth() + 1 === month;
+      return d.getUTCFullYear() === year && d.getUTCMonth() + 1 === month;
     })
     .sort((a, b) => +new Date(a.invoiceDate) - +new Date(b.invoiceDate));
 
@@ -46,10 +48,26 @@ export default async function TvaPage({ searchParams }: { searchParams: Promise<
   // GARDE-FOU : ne jamais présenter un cumul de TVA comme fiable quand certaines
   // factures ont HT + TVA ≠ TTC (montant partiellement lu, HT resté à 0…).
   const suspect = yearTotals.incoherentCount > 0 || Math.abs(yearTotals.gap) > 0.05;
+  const devises = yearTotals.foreignCurrencyCount > 0;
 
   return (
     <>
       <PageHeader title="TVA" subtitle="Vue mensuelle et annuelle. Résultats indicatifs." />
+
+      {devises && (
+        <div className="mb-4 rounded-lg border border-[var(--warning-bg)] bg-[var(--warning-bg)] px-3 py-2.5 text-sm text-[var(--warning)]">
+          <p className="font-semibold">
+            {yearTotals.foreignCurrencyCount} facture{yearTotals.foreignCurrencyCount > 1 ? "s" : ""} en devise
+            étrangère ({yearTotals.foreignCurrencies.join(", ")}) — exclue
+            {yearTotals.foreignCurrencyCount > 1 ? "s" : ""} des totaux ci-dessous.
+          </p>
+          <p className="mt-1 text-xs">
+            Additionner des devises différentes donnerait un cumul faux, et convertir à votre place
+            reviendrait à inventer un taux de change. Convertissez ces factures en euros (via
+            « Modifier ») pour qu&apos;elles soient prises en compte.
+          </p>
+        </div>
+      )}
 
       {suspect && (
         <div className="mb-4 rounded-lg border border-[var(--danger-bg)] bg-[var(--danger-bg)] px-3 py-2.5 text-sm text-[var(--danger)]">

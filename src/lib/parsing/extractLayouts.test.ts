@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildParsedInvoice } from "./extract";
+import { buildParsedInvoice, extractAmounts, extractDates, extractInvoiceNumber, extractSupplier } from "./extract";
 
 // Batterie de mises en page variées — garde-fou anti-régression après la
 // correction des factures multi-livraisons (Total HT d'un bloc de totaux vs
@@ -122,5 +122,143 @@ Bon pour accord`;
     const p = buildParsedInvoice(t, "heuristic");
     expect(p.totalVAT).toBeUndefined();
     expect(p.totalTTC).toBeUndefined();
+  });
+});
+
+describe("régressions constatées sur de VRAIES factures (audit 2026-09-07)", () => {
+  it("un en-tête de colonnes n'est pas un bloc de totaux : pas de TVA inventée depuis une ligne d'article", () => {
+    // Facture NORALIS réelle : la ligne d'article « 21 044,89 € / 2 089,78 € »
+    // affichait un ratio de 9,93 % — assimilé à 10 % — et l'en-tête
+    // « Désignation … Total HT » la faisait passer pour une ligne de totaux.
+    // Résultat : TVA lue 2 089,78 € au lieu de 1 171,74 € (+918 € de TVA déductible).
+    const t = `P Désignation PUHT Qté Total HT
+1 Coulissant 2 rails 2 vantaux 001 21 044,89 € 2 089,78 €
+Net à payer : 7 030,42 €
+TVA (20 %) :
+Total TTC :
+1 171,74 €
+7 030,42 €
+Total HT : 5 858,68 €`;
+    const a = extractAmounts(t);
+    expect(a.totalHT).toBe(5858.68);
+    expect(a.totalVAT).toBe(1171.74);
+    expect(a.totalTTC).toBe(7030.42);
+    expect(a.totalHT! + a.totalVAT!).toBeCloseTo(a.totalTTC!, 2);
+  });
+
+  it("« Date de prélèvement » est une échéance, jamais la date de facture", () => {
+    // Facture d'électricité réelle : datée du 08/07, prélevée le 25/08.
+    // L'ancienne version la classait en août -> mauvais mois de TVA.
+    const t = `FACTURE D'ELECTRICITE du 08 juillet 2026
+Montant TTC 458,16 €
+Date de prélèvement de cette facture le 25/08/2026
+N° de facture : 105006519306
+Date de facture : 08/07/26`;
+    const d = extractDates(t);
+    expect(d.invoiceDate).toBe("2026-07-08");
+    expect(d.dueDate).toBe("2026-08-25");
+  });
+
+  it("un libellé explicite « Date de facture » l'emporte sur une « Date : » plus haut", () => {
+    const t = `Date : 25/07/2026
+Prestation
+Date de facture : 15/07/2026`;
+    expect(extractDates(t).invoiceDate).toBe("2026-07-15");
+  });
+
+  it("à défaut de libellé explicite, l'échéance n'est pas prise pour la date de facture", () => {
+    const t = `Prestation du mois
+15/07/2026
+Date de prélèvement : 25/07/2026`;
+    const d = extractDates(t);
+    expect(d.invoiceDate).toBe("2026-07-15");
+    expect(d.dueDate).toBe("2026-07-25");
+  });
+});
+
+// Mise en page « colonnes entrelacées » : à l'extraction du texte, les libellés
+// des totaux et leurs valeurs tombent sur des lignes séparées. Cas réel
+// SAUVATVERRE (Fac_26070472) : aucun montant n'était trouvé alors que les trois
+// figurent bien dans le document.
+
+describe("totaux en colonnes — libellé sur une ligne, valeur sur la suivante", () => {
+  it("retient le trio quand HT + TVA = TTC avec un taux standard", () => {
+    const t = `555,23 €462,69 ( 20,0 % )
+T.V.A
+92,54
+Net à Payer
+555,23 €
+HT Brut
+462,69`;
+    const a = extractAmounts(t);
+    expect(a.totalHT).toBe(462.69);
+    expect(a.totalVAT).toBe(92.54);
+    expect(a.totalTTC).toBe(555.23);
+  });
+
+  it("n'invente RIEN quand les valeurs empilées ne se recoupent pas", () => {
+    // Facture ASF/Ulys : « Montant HT » est suivi de 289,50 qui est en réalité
+    // le TTC. Prise isolément, chaque valeur est fausse ; sans trio cohérent on
+    // préfère ne rien remplir plutôt que proposer un montant faux.
+    const t = `Montant TVA
+Montant HT
+289,50
+241,25
+Montant TTC
+48,25`;
+    const a = extractAmounts(t);
+    expect(a.totalHT).toBeUndefined();
+    expect(a.totalVAT).toBeUndefined();
+    expect(a.totalTTC).toBeUndefined();
+  });
+
+  it("ne prend pas la valeur d'une ligne qui contient aussi du texte", () => {
+    const t = `Total HT
+Quantité : 14 Surface : 8,76 M²`;
+    expect(extractAmounts(t).totalHT).toBeUndefined();
+  });
+});
+
+describe("numéro de facture — titre seul sur sa ligne", () => {
+  it("lit « FAC0049472 du 07/07/2026 » sous un titre « Facture » nu", () => {
+    const t = `Facture
+FAC0049472 du 07/07/2026
+CLIENT: C000364
+Livraison N°114732 du 07/07/26 pour la commande CDF0123287`;
+    expect(extractInvoiceNumber(t)).toBe("FAC0049472");
+  });
+
+  it("ne prend pas le code client placé sous un titre « FACTURE » nu", () => {
+    const t = `LUYNES
+FACTURE
+MDP13
+105 CHEMIN DE LA CHENAIEDate Pièce Code Client
+MDP13 13080`;
+    expect(extractInvoiceNumber(t)).not.toBe("MDP13");
+  });
+
+  it("une « pré-facture » interne ne fournit ni date ni numéro de facture", () => {
+    const t = `Facture éditée le 03 Aoû. 2026
+31/07/2026
+( PrÈ-facture n∞ 26070577 du 29/07/2026 )`;
+    expect(extractDates(t).invoiceDate).toBe("2026-07-31");
+  });
+});
+
+describe("fournisseur — mot isolé en tête de page", () => {
+  it("préfère le domaine de l'e-mail à une commune seule en première ligne", () => {
+    const t = `LUYNES
+FACTURE
+74 ROUTE DES CAMOINS
+13367 MARSEILLE CEDEX 11
+Email : contact@sauvatverre.com`;
+    expect(extractSupplier(t)).toBe("Sauvatverre");
+  });
+
+  it("garde le mot isolé quand aucun domaine ne figure sur le document", () => {
+    const t = `NORALIS
+12 rue des Lilas
+69003 Lyon`;
+    expect(extractSupplier(t)).toBe("NORALIS");
   });
 });

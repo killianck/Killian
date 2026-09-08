@@ -132,11 +132,29 @@ function setupUserData() {
   process.env.DESKTOP_APP = "1";
   process.env.TESSDATA_DIR = path.join(standaloneDir, "tessdata");
 
-  // Déchiffrement des données si activé.
-  if (dataEncryption.isRequested(dataDir)) {
+  // -------------------------------------------------------------------------
+  //  Déchiffrement des données.
+  //
+  //  ⚠️ On déchiffre dès qu'il EXISTE des fichiers .enc, que le chiffrement soit
+  //  encore demandé ou non. Conditionner le déchiffrement au marqueur causait une
+  //  perte de données totale : « Désactiver le chiffrement » ne retire que le
+  //  marqueur, la fermeture re-chiffrait quand même (lockData était encore actif),
+  //  et au démarrage suivant tout ce bloc était sauté — l'application recréait une
+  //  base VIDE et proposait de créer un nouvel administrateur, la comptabilité
+  //  paraissant effacée.
+  //
+  //  Le marqueur ne décide donc plus que d'UNE chose : faut-il RE-chiffrer à la
+  //  fermeture. Désactiver le chiffrement laisse ainsi les données en clair au
+  //  prochain démarrage, ce que le bouton promet.
+  // -------------------------------------------------------------------------
+  const encryptionRequested = dataEncryption.isRequested(dataDir);
+  const encryptedFilesPresent = hasEncryptedData(dataDir);
+
+  if (encryptionRequested || encryptedFilesPresent) {
     if (dataEncryption.available()) {
       try {
-        lockData = dataEncryption.unlock(dataDir);
+        const relock = dataEncryption.unlock(dataDir);
+        lockData = encryptionRequested ? relock : null;
       } catch (e) {
         // Clé illisible (profil Windows reconstruit, autre session…). NE PAS
         // continuer sur une base vide : les données ne sont PAS perdues.
@@ -146,9 +164,9 @@ function setupUserData() {
             `(${e && e.message})`,
         );
       }
-    } else if (hasEncryptedData(dataDir)) {
+    } else if (encryptedFilesPresent) {
       throw new Error(
-        "Le chiffrement des données est activé mais le système ne permet pas de les déchiffrer " +
+        "Des données chiffrées sont présentes mais le système ne permet pas de les déchiffrer " +
           "sur cette session. Vos données ne sont pas perdues, mais l'application ne peut pas démarrer ici.",
       );
     } else {

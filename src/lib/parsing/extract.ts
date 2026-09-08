@@ -78,13 +78,28 @@ export function extractDates(text: string): ExtractedDates {
   let invoiceDate: string | undefined;
   let dueDate: string | undefined;
 
-  const DUE = /(echeance|\bech\b|date limite|a regler (avant|le)|payable (le|avant)|reglement (avant|au|le)|a payer (avant|le)|date de (reglement|paiement)|paiement (au|le))/;
-  const INVOICE = /(date de facture|date facture|date d.?emission|date d.?edition|emise? le|edite le|fait le|facture du|^date\b|date\s*:)/;
-  const OTHER = /(livraison|commande|prestation|periode|reception|expedi|creee? le|inscription|immatricul|\bbl\b|bon de|contrat|signe)/;
+  // « prélèvement » = date à laquelle l'argent part : c'est une ÉCHÉANCE, jamais
+  // la date de la facture. Constaté sur une vraie facture d'électricité : la
+  // facture du 08/07 était datée du 25/08 → mauvais mois de TVA, en silence.
+  const DUE = /(echeance|\bech\b|date limite|a regler (avant|le)|payable (le|avant)|reglement (avant|au|le)|a payer (avant|le)|date de (reglement|paiement|prelevement)|paiement (au|le)|prelevement)/;
+  // Libellé EXPLICITE de date de facture : fait autorité sur tout le document.
+  const INVOICE_STRONG = /(date de facture|date facture|date d.?emission|date d.?edition|emise? le|edite le|fait le|facture du)/;
+  // Libellé FAIBLE (« Date : ») : retenu seulement à défaut de libellé explicite.
+  const INVOICE_WEAK = /(^date\b|date\s*:)/;
+  // « pré-facture », proforma, devis, acompte : ces documents ont leur propre date,
+  // qui n'est PAS celle de la facture. Constaté : « ( Pré-facture n° … du 29/07 ) »
+  // au milieu du détail datait la facture du 29/07 au lieu du 31/07.
+  const OTHER = /(livraison|commande|prestation|periode|reception|expedi|creee? le|inscription|immatricul|\bbl\b|bon de|contrat|signe|pre.?facture|proforma|pro forma|acompte|devis)/;
 
   // Motif « N° <num> du JJ/MM/AAAA » (ou « Facture … du … ») = date de facture,
   // sauf s'il s'agit d'une livraison / commande / BL.
   const NUM_DU_DATE = /(facture|\bn[o°º]\s*[a-z]*\d)[^\n]{0,30}\bdu\s+\d{1,2}[/.]\d{1,2}[/.]\d{2,4}/;
+
+  // Deux niveaux de priorité : un libellé EXPLICITE l'emporte toujours sur un
+  // libellé faible, où qu'il soit dans le document (une « Date : » en haut de page
+  // ne doit pas battre une « Date de facture : » en bas).
+  let strongDate: string | undefined;
+  let weakDate: string | undefined;
 
   for (let i = 0; i < lines.length; i++) {
     const d = deburr(lines[i]);
@@ -92,17 +107,23 @@ export function extractDates(text: string): ExtractedDates {
     const dates = datesInLine(lines[i]);
     const nextDates = dates.length ? dates : datesInLine(lines[i + 1] ?? "");
 
-    if (DUE.test(d) && !dueDate && nextDates.length && isPlausibleInvoiceDate(nextDates[0])) {
-      dueDate = nextDates[0];
+    // Une ligne d'échéance / de prélèvement n'est JAMAIS une date de facture.
+    if (DUE.test(d)) {
+      if (!dueDate && nextDates.length && isPlausibleInvoiceDate(nextDates[0])) dueDate = nextDates[0];
+      continue;
+    }
+    if (!dates.length || OTHER.test(d)) continue;
+
+    if (!strongDate && INVOICE_STRONG.test(d)) {
+      strongDate = dates[0];
     } else if (
-      !invoiceDate && dates.length &&
-      ((INVOICE.test(d) && !OTHER.test(d)) ||
-        (NUM_DU_DATE.test(d) && !OTHER.test(d)) ||
-        (/^facture$/.test(prevD.trim()) && /\bdu\s+\d/.test(d)))
+      !weakDate &&
+      (INVOICE_WEAK.test(d) || NUM_DU_DATE.test(d) || (/^facture$/.test(prevD.trim()) && /\bdu\s+\d/.test(d)))
     ) {
-      invoiceDate = dates[0];
+      weakDate = dates[0];
     }
   }
+  invoiceDate = strongDate ?? weakDate;
 
   // À défaut : première date "plausible" du document = date de facture, MAIS on
   // le signale (c'est une supposition, pas une lecture fiable).
@@ -191,10 +212,13 @@ export function extractInvoiceNumber(input: string): string | undefined {
     /\bn[o°º]\s*(?:de\s+)?facture\s*[:.]?\s*([A-Za-z0-9][A-Za-z0-9/\-_.]{2,20})/i,
     /\bfacture\s*(?:n[o°º]|#)\s*[:.]?\s*([A-Za-z0-9][A-Za-z0-9/\-_.]{2,20})/i,
   ];
+  // `[^\S\n]*` = espaces SANS saut de ligne. Un « FACTURE » seul sur sa ligne ne
+  // doit pas happer le premier jeton de la ligne suivante : c'est ainsi que le
+  // code client « MDP13 » se retrouvait enregistré comme numéro de facture.
   const weak = [
-    /\b(?:facture|avoir|invoice)\s*(?:n[o°º]|number|#)?\s*[:.]?\s*([A-Za-z0-9][A-Za-z0-9/\-_.]{3,20})/i,
-    /\bn[o°º]\s*[:.]?\s*([A-Za-z0-9][A-Za-z0-9/\-_.]{4,20})/i,
-    /\bref(?:erence)?\s*[:.]?\s*([A-Za-z0-9][A-Za-z0-9/\-_.]{3,20})/i,
+    /\b(?:facture|avoir|invoice)[^\S\n]*(?:n[o°º]|number|#)?[^\S\n]*[:.]?[^\S\n]*([A-Za-z0-9][A-Za-z0-9/\-_.]{3,20})/i,
+    /\bn[o°º][^\S\n]*[:.]?[^\S\n]*([A-Za-z0-9][A-Za-z0-9/\-_.]{4,20})/i,
+    /\bref(?:erence)?[^\S\n]*[:.]?[^\S\n]*([A-Za-z0-9][A-Za-z0-9/\-_.]{3,20})/i,
   ];
 
   const tryPatterns = (patterns: RegExp[], guardContext: boolean) => {
@@ -225,6 +249,19 @@ export function extractInvoiceNumber(input: string): string | undefined {
       const v = tok.replace(/[.,;:]+$/, "");
       if (NUMBER_TOKEN.test(v) && ok(v) && /[A-Za-z]/.test(v)) return v;
     }
+  }
+
+  // Mise en page « titre » : le mot « Facture » SEUL sur sa ligne (sans « N° »),
+  // le numéro ouvrant la ligne suivante : « FAC0049472 du 07/07/2026 ».
+  // On exige la forme « … du <date> » : la ligne qui suit un tel titre est tout
+  // aussi souvent un code client (« MDP13 » chez un autre fournisseur), et rien
+  // ne les distingue sinon cette confirmation.
+  for (let i = 0; i < lines.length - 1; i++) {
+    if (!/^(facture|avoir|invoice)$/.test(deburr(lines[i]).replace(/[^a-z]+/g, ""))) continue;
+    const m = /^([A-Za-z0-9][A-Za-z0-9/\-_.]{2,20})\s+du\s+\d{1,2}[/.\-]\d{1,2}[/.\-]\d{2,4}/i.exec(
+      lines[i + 1].trim(),
+    );
+    if (m && ok(m[1])) return m[1];
   }
 
   return tryPatterns(weak, true);
@@ -338,6 +375,11 @@ export function extractSupplier(text: string): string | undefined {
   }
 
   // 2) Première ligne « significative » de l'en-tête (hors bloc client, hors adresse).
+  //    Un mot SEUL sans forme juridique est mis en réserve plutôt que renvoyé
+  //    tout de suite : c'est très souvent une commune ou une agence (« LUYNES »
+  //    en tête d'une facture SAUVATVERRE). Le domaine de l'e-mail (étape 3) est
+  //    alors une bien meilleure source. On ne le perd pas pour autant.
+  let loneWord: string | undefined;
   for (let i = 0; i < Math.min(lines.length, 8); i++) {
     const line = lines[i].trim();
     if (line.length < 4 || inClientBlock(i)) continue;
@@ -347,6 +389,10 @@ export function extractSupplier(text: string): string | undefined {
     if (!/[A-Za-zÀ-ÿ]{3}/.test(line)) continue;
     const name = line.split(/\s[-–—]\s|\s{2,}|,| tel| tél/i)[0].trim();
     if (name.length >= 4 && name.length <= 60 && !NAME_STUB.test(name) && !/\d{2,}/.test(name)) {
+      if (!/\s/.test(name) && !ORG_SUFFIX.test(name)) {
+        loneWord = name;
+        break;
+      }
       return name;
     }
   }
@@ -363,7 +409,7 @@ export function extractSupplier(text: string): string | undefined {
     const d = domains.sort((a, b) => domains.filter((x) => x === b).length - domains.filter((x) => x === a).length)[0];
     return d.charAt(0).toUpperCase() + d.slice(1);
   }
-  return undefined;
+  return loneWord;
 }
 
 // ---------------------------------------------------------------------------
@@ -378,6 +424,34 @@ const KW = {
 };
 /** Un libellé qui décrit une BASE, pas un montant de taxe. */
 const KW_IS_BASE = /(base|montant\s+ht|assiette|ht\s+soumis|soumis a (la )?tva)/;
+
+/**
+ * Une ligne qui ne contient QUE le libellé d'un total (« T.V.A », « HT Net »,
+ * « Net à Payer »…), sa valeur étant sur une autre ligne. On exige que la ligne
+ * se réduise EXACTEMENT au libellé une fois la ponctuation et les chiffres
+ * retirés : « Code Base Taux Taxe Total HT Total TTC » n'est pas un libellé
+ * simple mais un en-tête de tableau, et ne doit pas déclencher ce cas.
+ */
+function bareTotalLabel(line: string): "ht" | "vat" | "ttc" | null {
+  const d = deburr(line).replace(/[^a-z]+/g, " ").replace(/\s+/g, " ").trim();
+  if (!d) return null;
+  if (/^(net a payer|net a regler|total ttc|ttc|t t c|montant ttc|montant du|total general|total a payer)$/.test(d)) return "ttc";
+  if (/^(t v a|tva|total tva|montant tva|total de la tva|montant de la tva)$/.test(d)) return "vat";
+  if (/^(ht|ht net|ht brut|net ht|total ht|montant ht|base ht|total hors taxe|total hors taxes)$/.test(d)) return "ht";
+  return null;
+}
+
+/**
+ * Valeur d'une ligne qui ne contient QU'UN montant (et éventuellement un symbole
+ * monétaire). Renvoie null dès qu'il y a du texte autour : « Quantité : 14
+ * Surface : 8,76 M² » ne doit jamais être pris pour la valeur du libellé du dessus.
+ */
+function valueOnlyLine(line: string): number | null {
+  const toks = findMoneyTokens(line);
+  if (toks.length !== 1) return null;
+  const reste = deburr(line).replace(/[^a-z]/g, "");
+  return reste.length > 2 ? null : toks[0];
+}
 
 /** Provenance d'un montant : influe fortement sur la confiance. */
 type Provenance = "observed" | "table" | "computed" | "guessed";
@@ -404,6 +478,10 @@ function impliedStandardRate(vat: number, ht: number): number | undefined {
   return EXTRACTION_VAT_RATES.find((s) => Math.abs(s - r) <= 0.15);
 }
 
+/** En-tête de colonnes d'un tableau d'articles (≠ ligne de libellés de totaux). */
+const COLUMN_HEADER =
+  /(designation|designations|qte|quantite|p.?s?u.?|prix|reference|references|article|articles|libelle|code|unite|repere)/;
+
 /**
  * Cherche, sur une même ligne, un triplet (HT, TVA, TTC) cohérent :
  *   HT + TVA ≈ TTC   et   TVA / HT ≈ un taux de TVA standard,
@@ -425,8 +503,13 @@ function bestCoherentTriple(
     if (/intracommunautaire|n[o°]\s*tva|iban|siret|\brib\b/.test(d)) continue;
     const hasTotalKw = KW.ht.test(d) || KW.tva.test(d) || KW.ttc.test(d);
     // Ligne de VALEURS juste sous une ligne de LIBELLÉS de totaux ?
+    // ⚠️ Un EN-TÊTE DE COLONNES (« Désignation Qté P.U. HT Total HT ») contient lui
+    //    aussi « total » et « ht » : sans cette exclusion, CHAQUE ligne d'article
+    //    du tableau passerait pour une ligne de totaux. Constaté sur une vraie
+    //    facture : TVA lue 2 089,78 € au lieu de 1 171,74 €.
     const prev = deburr(lines[i - 1] ?? "");
     const underLabelRow =
+      !COLUMN_HEADER.test(prev) &&
       findMoneyTokens(lines[i - 1] ?? "").length === 0 &&
       (prev.match(/\b(total|montant|ht|ttc|tva|taxe|net|base|remise|escompte)\b/g)?.length ?? 0) >= 2;
     const tokens = [...new Set(findMoneyTokens(raw).filter((v) => v > 0 && !isRateValue(v)))];
@@ -440,9 +523,12 @@ function bestCoherentTriple(
         const expectedTtc = round2(ht + vat);
         const found = tokens.find((t) => Math.abs(t - expectedTtc) <= 0.02);
         const observedTtc = found !== undefined;
-        // On n'accepte un triplet QUE si le TTC est observé, ou si la ligne
-        // (ou celle des libellés juste au-dessus) porte un mot-clé de total.
-        if (!observedTtc && !hasTotalKw && !underLabelRow) continue;
+        // On n'accepte un triplet QUE si le TTC est RÉELLEMENT présent sur la
+        // ligne, ou si la ligne porte elle-même un mot-clé de total.
+        // « underLabelRow » ne suffit PAS à ACCEPTER : il ne sert qu'à départager
+        // (score). Sinon une simple ligne d'article sous un en-tête de tableau
+        // deviendrait un « bloc de totaux » et fabriquerait une TVA fausse.
+        if (!observedTtc && !hasTotalKw) continue;
         const score =
           (observedTtc ? 100 : 0) +
           (hasTotalKw || underLabelRow ? 25 : 0) +
@@ -504,12 +590,34 @@ export function extractAmounts(input: string): ExtractedAmounts {
   const ttcCandidates: number[] = [];
   const htCandidates: number[] = [];
   const vatCandidates: number[] = [];
+  // Valeurs lues en « libellé au-dessus, valeur en dessous ». Volontairement
+  // TENUES À L'ÉCART des listes ci-dessus : dans un PDF aux colonnes
+  // entrelacées, chaque appariement pris isolément est peu fiable. Elles ne
+  // seront retenues qu'en bloc, et seulement si les trois se recoupent.
+  const stackedHT: number[] = [];
+  const stackedVAT: number[] = [];
+  const stackedTTC: number[] = [];
 
-  for (const raw of lines) {
+  for (let li = 0; li < lines.length; li++) {
+    const raw = lines[li];
     const d = deburr(raw);
     if (/intracommunautaire|numero de tva|n[o°]\s*tva|identification t\.?v\.?a/.test(d)) continue;
     const tokens = findMoneyTokens(raw).filter((v) => !isRateValue(v));
-    if (!tokens.length) continue;
+
+    // Bloc de totaux « en colonnes » : le libellé est SEUL sur sa ligne et sa
+    // valeur se trouve sur la suivante. Certains PDF (colonnes entrelacées à
+    // l'extraction) ne produisent que cette forme — sans ce cas, aucun montant
+    // n'était trouvé alors que les trois figurent bien dans le document.
+    if (!tokens.length) {
+      const label = bareTotalLabel(raw);
+      const value = label ? valueOnlyLine(lines[li + 1] ?? "") : null;
+      if (label && value !== null && !isRateValue(value)) {
+        if (label === "ht") stackedHT.push(value);
+        else if (label === "vat") stackedVAT.push(value);
+        else stackedTTC.push(value);
+      }
+      continue;
+    }
 
     // HT testé AVANT TVA (une ligne « Base HT … TVA : » décrit une base).
     if (KW.ht.test(d) || (KW.tva.test(d) && KW_IS_BASE.test(d))) {
@@ -594,6 +702,32 @@ export function extractAmounts(input: string): ExtractedAmounts {
           provenance.ttc = triple.observedTtc ? "table" : "computed";
         }
       }
+    }
+  }
+
+  // Bloc de totaux « en colonnes » (libellé sur une ligne, valeur sur la
+  // suivante). On ne s'en sert QUE si la lecture normale n'a rien donné du tout,
+  // et QUE si les trois valeurs se recoupent : HT + TVA = TTC avec un taux
+  // standard. Cette double exigence est indispensable — sur un PDF aux colonnes
+  // entrelacées (facture ASF/Ulys), « Montant HT » était suivi de 289,50 qui est
+  // en réalité le TTC. Prise isolément la valeur est fausse ; c'est la cohérence
+  // du trio qui prouve que la mise en page a été lue correctement.
+  if (totalHT === undefined && totalVAT === undefined && totalTTC === undefined) {
+    let found: { ht: number; vat: number; ttc: number } | undefined;
+    for (const ht of stackedHT) {
+      for (const vat of stackedVAT) {
+        if (!impliedStandardRate(vat, ht)) continue;
+        for (const ttc of stackedTTC) {
+          if (Math.abs(ht + vat - ttc) > 0.02) continue;
+          if (!found || ttc > found.ttc) found = { ht, vat, ttc };
+        }
+      }
+    }
+    if (found) {
+      totalHT = found.ht;
+      totalVAT = found.vat;
+      totalTTC = found.ttc;
+      provenance.ht = provenance.vat = provenance.ttc = "table";
     }
   }
 

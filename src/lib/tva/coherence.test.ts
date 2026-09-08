@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkCoherence } from "./coherence";
+import { checkCoherence, storedCoherence } from "./coherence";
 
 describe("checkCoherence", () => {
   it("valide une facture où HT + TVA = TTC", () => {
@@ -125,5 +125,30 @@ describe("checkCoherence", () => {
   it("signale une TVA qui dépasse le TTC", () => {
     const r = checkCoherence({ totalHT: 1000, totalVAT: 2000, totalTTC: 1200, vatLines: [] });
     expect(r.level).toBe("incoherent");
+  });
+});
+
+describe("storedCoherence — une incohérence arithmétique ne doit jamais être masquée", () => {
+  const report = (level: "coherent" | "a_verifier" | "incoherent") => ({ level, issues: [] });
+
+  it("classe « incohérent » une facture dont seul le TTC a été lu, MÊME si les montants sont incertains", () => {
+    // Cas réel : l'extraction ne retrouve que « Net à payer » -> HT=0, TVA=0, TTC=500.
+    // Avant correction, amountsUncertain la faisait basculer en « a_verifier » : elle
+    // échappait alors au filtre « Montants incohérents » censé la faire corriger.
+    const r = checkCoherence({ totalHT: 0, totalVAT: 0, totalTTC: 500, vatLines: [] });
+    expect(r.level).toBe("incoherent");
+    expect(storedCoherence(r, { amountsUncertain: true, hasAmounts: true })).toBe("incoherent");
+  });
+
+  it("reste « à vérifier » quand les montants sont incertains mais arithmétiquement cohérents", () => {
+    expect(storedCoherence(report("coherent"), { amountsUncertain: true, hasAmounts: true })).toBe("a_verifier");
+  });
+
+  it("reste « à vérifier » quand aucun montant n'a été trouvé", () => {
+    expect(storedCoherence(report("coherent"), { amountsUncertain: false, hasAmounts: false })).toBe("a_verifier");
+  });
+
+  it("laisse passer « cohérent » quand tout est sûr", () => {
+    expect(storedCoherence(report("coherent"), { amountsUncertain: false, hasAmounts: true })).toBe("coherent");
   });
 });

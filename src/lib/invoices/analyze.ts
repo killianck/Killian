@@ -8,7 +8,7 @@ import { readFile } from "node:fs/promises";
 import { prisma } from "@/lib/db";
 import { resolveUploadPath } from "@/lib/paths";
 import { getInvoiceParser } from "@/lib/parsing";
-import { checkCoherence } from "@/lib/tva/coherence";
+import { checkCoherence, storedCoherence } from "@/lib/tva/coherence";
 import { resolveParty } from "@/lib/invoices/party";
 import { duplicateKey } from "@/lib/invoices/duplicates";
 import { reconcileStatements } from "@/lib/invoices/statements";
@@ -34,7 +34,44 @@ const STUB: ParsedInvoice = {
   warnings: ["Impossible de lire automatiquement ce document. Veuillez saisir les informations manuellement."],
 };
 
-export type AnalyzeMode = "import" | "reanalyze";
+/**
+ * - "import"     : 1re analyse d'un document qui vient d'être déposé (rien à préserver).
+ * - "reanalyze"  : l'utilisateur a demandé une nouvelle analyse -> on préserve les
+ *                  valeurs existantes que l'analyseur ne retrouve pas, et on
+ *                  journalise les changements.
+ * - "resume"     : analyse interrompue (application fermée / plantée) reprise au
+ *                  démarrage. On ne sait plus si c'était un import ou une
+ *                  ré-analyse : on préserve donc l'existant (une facture déjà
+ *                  corrigée à la main ne doit pas être remise à zéro), sans
+ *                  journaliser — l'utilisateur n'a rien demandé.
+ */
+export type AnalyzeMode = "import" | "reanalyze" | "resume";
+
+/** Note posée à l'import, en attendant l'analyse. Ne vaut pas une saisie de l'utilisateur. */
+export const ANALYSIS_PENDING_NOTE = "Analyse automatique en cours…";
+
+/**
+ * Ce que le mode autorise :
+ * - `keepExisting` : préserver une valeur déjà en base que l'analyseur ne retrouve pas.
+ * - `journal`      : inscrire les changements au journal des modifications.
+ *
+ * Seul un PREMIER import peut repartir d'une page blanche : dans tous les autres
+ * cas la facture peut déjà contenir une saisie de l'utilisateur.
+ */
+export function analysisModeFlags(mode: AnalyzeMode): { keepExisting: boolean; journal: boolean } {
+  return { keepExisting: mode !== "import", journal: mode === "reanalyze" };
+}
+
+/**
+ * L'analyse a-t-elle encore le droit d'écrire ses résultats ?
+ *
+ * Import et « Ré-analyser » placent tous deux la facture en « analyse_en_cours »
+ * avant de la mettre en file. Tout autre statut à l'arrivée signifie qu'un humain
+ * est intervenu pendant l'analyse : c'est LUI qui fait autorité.
+ */
+export function analysisMayWrite(statusNow: string): boolean {
+  return statusNow === "analyse_en_cours";
+}
 
 /**
  * Délai maximum ABSOLU pour l'analyse d'un document. Dernier filet de sécurité :
@@ -57,12 +94,11 @@ function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
 /**
  * (Ré)analyse la facture `id` et met à jour sa ligne. Ne lève jamais : en cas
  * d'échec la facture passe au statut « erreur » avec une note explicative.
- * @param mode  "import" = 1re analyse (écrase tout) ; "reanalyze" = journalise les
- *              changements et ne remplace une valeur que si le parseur la trouve.
+ * @param mode  voir AnalyzeMode.
  * @param userName  auteur des lignes de journal (ré-analyse manuelle).
  */
 export async function applyAnalysis(id: string, mode: AnalyzeMode, userName?: string): Promise<void> {
-  const inv = await prisma.invoice.findUnique({ where: { id }, include: { vatLines: true } });
+  let inv = await prisma.invoice.findUnique({ where: { id }, include: { vatLines: true } });
   if (!inv) return;
 
   const src = resolveUploadPath(inv.originalFilePath);
@@ -81,6 +117,28 @@ export async function applyAnalysis(id: string, mode: AnalyzeMode, userName?: st
   } catch (e) {
     console.error(`Analyse de la facture ${id} impossible :`, e);
     const timedOut = e instanceof Error && /délai/i.test(e.message);
+    // Même garde-fou que le chemin de succès (voir plus bas) : l'ÉCHEC d'une
+    // analyse ne doit pas davantage écraser une saisie de l'utilisateur. Il peut
+    // avoir tout saisi à la main pendant les minutes qu'a duré l'OCR — le bouton
+    // « Modifier » reste actif pendant l'analyse. Sans ce test, sa facture
+    // repassait en « erreur » et SA note était remplacée par « L'analyse
+    // automatique a échoué », sans la moindre trace.
+    const now = await prisma.invoice.findUnique({ where: { id }, select: { status: true } });
+    if (!now) return; // supprimée entre-temps
+    if (!analysisMayWrite(now.status)) {
+      console.warn(`Échec d'analyse de ${id} ignoré : la facture a été modifiée entre-temps.`);
+      await prisma.invoiceRevision
+        .create({
+          data: {
+            invoiceId: id,
+            field: "Analyse automatique",
+            oldValue: "échec ignoré",
+            newValue: "l'analyse a échoué mais la facture avait déjà été modifiée : vos saisies sont conservées",
+          },
+        })
+        .catch(() => {});
+      return;
+    }
     await prisma.invoice
       .update({
         where: { id },
@@ -97,7 +155,42 @@ export async function applyAnalysis(id: string, mode: AnalyzeMode, userName?: st
     return;
   }
 
-  const keepExisting = mode === "reanalyze";
+  // -------------------------------------------------------------------------
+  //  GARDE-FOU : l'analyse ne doit JAMAIS écraser une saisie de l'utilisateur.
+  //
+  //  L'analyse (OCR) dure plusieurs secondes, parfois plusieurs minutes. Pendant
+  //  ce temps, l'utilisateur peut très bien ouvrir la facture et saisir les
+  //  montants lui-même — c'est même le réflexe naturel quand l'analyse traîne.
+  //  Sa correction faisait alors passer la facture en « à vérifier »... puis
+  //  l'analyse se terminait et remettait numéro, montants, dates et lignes de
+  //  TVA à zéro, sans laisser la moindre trace.
+  //
+  //  Les deux seuls points d'entrée (import et « Ré-analyser ») mettent la
+  //  facture en « analyse_en_cours » AVANT de la mettre en file : si ce n'est
+  //  plus le cas ici, quelqu'un d'autre est passé par là et c'est LUI qui fait
+  //  autorité. On abandonne le résultat de l'analyse, en le disant.
+  // -------------------------------------------------------------------------
+  const current = await prisma.invoice.findUnique({ where: { id }, include: { vatLines: true } });
+  if (!current) return; // supprimée entre-temps
+  if (!analysisMayWrite(current.status)) {
+    console.warn(`Analyse de ${id} abandonnée : la facture a été modifiée pendant l'analyse.`);
+    await prisma.invoiceRevision
+      .create({
+        data: {
+          invoiceId: id,
+          field: "Analyse automatique",
+          oldValue: "résultat ignoré",
+          newValue: "la facture a été modifiée pendant l'analyse : vos saisies ont été conservées",
+        },
+      })
+      .catch(() => {});
+    return;
+  }
+  // À partir d'ici on travaille sur la version FRAÎCHE de la facture, pas sur
+  // celle lue avant l'analyse (qui peut avoir plusieurs minutes de retard).
+  inv = current;
+
+  const { keepExisting, journal } = analysisModeFlags(mode);
 
   // Un relevé de factures : le parseur le repère ; en ré-analyse on ne retire
   // jamais le drapeau tout seul (l'utilisateur le corrige via la fiche).
@@ -120,15 +213,15 @@ export async function applyAnalysis(id: string, mode: AnalyzeMode, userName?: st
   const invoiceDate = parsed.invoiceDate ? new Date(parsed.invoiceDate) : keepExisting ? inv.invoiceDate : new Date();
   const dueDate = parsed.dueDate ? new Date(parsed.dueDate) : keepExisting ? inv.dueDate : null;
 
-  const coherence =
-    parsed.amountsUncertain || !(totalHT || totalTTC)
-      ? "a_verifier"
-      : checkCoherence({
-          totalHT, totalVAT, totalTTC, vatLines,
-          documentType,
-          invoiceDate: parsed.invoiceDate ?? undefined,
-          dueDate: dueDate ? dueDate.toISOString().slice(0, 10) : undefined,
-        }).level;
+  const coherence = storedCoherence(
+    checkCoherence({
+      totalHT, totalVAT, totalTTC, vatLines,
+      documentType,
+      invoiceDate: parsed.invoiceDate ?? undefined,
+      dueDate: dueDate ? dueDate.toISOString().slice(0, 10) : undefined,
+    }),
+    { amountsUncertain: parsed.amountsUncertain === true, hasAmounts: Boolean(totalHT || totalTTC) },
+  );
 
   const party = await resolveParty(prisma, {
     name: parsed.partyName ?? inv.partyName,
@@ -182,7 +275,7 @@ export async function applyAnalysis(id: string, mode: AnalyzeMode, userName?: st
   };
 
   const revisions =
-    mode === "reanalyze"
+    journal
       ? diffInvoice(
           { ...inv, vatLines: inv.vatLines.map((l) => ({ rate: l.rate, baseHT: l.baseHT, vatAmount: l.vatAmount })) } as Record<string, unknown>,
           { ...inv, ...data, vatLines } as Record<string, unknown>,
@@ -200,7 +293,13 @@ export async function applyAnalysis(id: string, mode: AnalyzeMode, userName?: st
       where: { id },
       data: {
         ...data,
-        notes: warnings.length ? warnings.join("\n") : keepExisting ? inv.notes : null,
+        // La note d'attente posée à l'import n'est pas une saisie : on ne la garde
+        // jamais (sinon une facture analysée resterait « analyse en cours… »).
+        notes: warnings.length
+          ? warnings.join("\n")
+          : keepExisting && inv.notes !== ANALYSIS_PENDING_NOTE
+            ? inv.notes
+            : null,
         vatLines: vatLines.length ? { create: vatLines } : undefined,
         statementLines: newStatementLines
           ? {
@@ -217,7 +316,7 @@ export async function applyAnalysis(id: string, mode: AnalyzeMode, userName?: st
           : undefined,
       },
     }),
-    ...(mode === "reanalyze"
+    ...(journal
       ? [
           prisma.invoiceRevision.create({
             data: {

@@ -1,6 +1,8 @@
 // Construction du filtre Prisma pour la liste des factures.
 // Isolé ici pour pouvoir être testé.
 
+import { validMonth, validYear } from "@/lib/domain/dateParams";
+
 export type InvoiceFilterParams = {
   q: string;
   year: string;
@@ -32,7 +34,12 @@ export function buildInvoiceWhere(p: InvoiceFilterParams, availableYears: number
   if (p.direction) and.push({ direction: p.direction });
   if (p.type) and.push({ documentType: p.type });
   if (p.category) and.push({ category: p.category });
-  if (p.rate) and.push({ vatLines: { some: { rate: Number(p.rate) } } });
+  // Un taux non numérique (URL modifiée à la main, lien périmé) donnerait NaN,
+  // que Prisma refuse : le filtre est simplement ignoré, jamais fatal.
+  if (p.rate) {
+    const rate = Number(p.rate);
+    if (Number.isFinite(rate)) and.push({ vatLines: { some: { rate } } });
+  }
 
   switch (p.statut) {
     case "a_traiter":
@@ -49,8 +56,10 @@ export function buildInvoiceWhere(p: InvoiceFilterParams, availableYears: number
 
   // Dates stockées à minuit UTC : bornes calculées en UTC (cf. aggregate.ts).
   const utc = (yy: number, mm: number) => new Date(Date.UTC(yy, mm, 1));
-  const y = p.year ? Number(p.year) : null;
-  const m = p.month ? Number(p.month) : null;
+  // Année / mois hors plage (ou non numériques) : filtre ignoré. Sans ce garde-fou,
+  // `?year=1e999` construisait une Date invalide et faisait échouer toute la page.
+  const y = validYear(p.year);
+  const m = validMonth(p.month);
   if (y && m) {
     and.push({ invoiceDate: { gte: utc(y, m - 1), lt: utc(y, m) } });
   } else if (y) {

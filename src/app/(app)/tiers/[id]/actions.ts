@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { PARTY_KINDS } from "@/lib/invoices/party";
 import { requireAdmin, requireUser } from "@/lib/auth";
+import { reconcileStatements } from "@/lib/invoices/statements";
 
 export type PartyFormState = { error?: string };
 
@@ -43,6 +44,15 @@ export async function updateParty(
     return { error: "L'enregistrement a échoué. Réessayez." };
   }
 
+  // Le nom du tiers sert à rapprocher les lignes de relevé : après un renommage,
+  // les rapprochements doivent être recalculés (sinon un relevé garderait un
+  // montant compensé fondé sur l'ancien nom).
+  try {
+    await reconcileStatements(prisma);
+  } catch (e) {
+    console.error("Rapprochement des relevés impossible après renommage du tiers :", e);
+  }
+
   revalidatePath(`/tiers/${id}`);
   revalidatePath("/tiers");
   redirect(`/tiers/${id}`);
@@ -51,8 +61,19 @@ export async function updateParty(
 export async function deleteParty(id: string): Promise<void> {
   await requireAdmin();
   // Les factures liées gardent leur nom ; elles sont simplement "déliées".
-  await prisma.invoice.updateMany({ where: { partyId: id }, data: { partyId: null } });
-  await prisma.party.delete({ where: { id } });
+  // EN TRANSACTION : sans cela, une interruption entre les deux écritures
+  // laisserait des factures déliées ET le tiers encore présent.
+  await prisma.$transaction([
+    prisma.invoice.updateMany({ where: { partyId: id }, data: { partyId: null } }),
+    prisma.party.delete({ where: { id } }),
+  ]);
+
+  try {
+    await reconcileStatements(prisma);
+  } catch (e) {
+    console.error("Rapprochement des relevés impossible après suppression du tiers :", e);
+  }
+
   revalidatePath("/tiers");
   redirect("/tiers");
 }

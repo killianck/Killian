@@ -14,7 +14,12 @@ export type AggregatableInvoice = {
   totalVAT: number;
   totalTTC: number;
   deductible?: boolean;
+  /** Devise de la facture. Absente = EUR (cas normal). */
+  currency?: string | null;
 };
+
+/** Devise de référence : une déclaration de TVA française est en euros. */
+export const BASE_CURRENCY = "EUR";
 
 export type VatTotals = {
   count: number;
@@ -35,6 +40,15 @@ export type VatTotals = {
   incoherentCount: number;
   /** Écart global TTC − (HT + TVA), arrondi. 0 = totaux cohérents. */
   gap: number;
+  /**
+   * Factures libellées dans une AUTRE devise que l'euro. Elles sont EXCLUES des
+   * totaux : additionner des dollars à des euros donnerait un cumul faux, et
+   * convertir à notre initiative reviendrait à inventer un taux de change.
+   * L'utilisateur doit les convertir lui-même. Jamais silencieux.
+   */
+  foreignCurrencyCount: number;
+  /** Codes des devises étrangères rencontrées (pour le message d'alerte). */
+  foreignCurrencies: string[];
 };
 
 const EMPTY: VatTotals = {
@@ -48,6 +62,8 @@ const EMPTY: VatTotals = {
   excludedCount: 0,
   incoherentCount: 0,
   gap: 0,
+  foreignCurrencyCount: 0,
+  foreignCurrencies: [],
 };
 
 function asDate(d: Date | string): Date {
@@ -69,7 +85,7 @@ function normDocType(v: string): "facture" | "avoir" | undefined {
 
 /** Totalise une liste de factures (déjà filtrée sur la période voulue). */
 export function sumInvoices(invoices: AggregatableInvoice[]): VatTotals {
-  const t = { ...EMPTY };
+  const t = { ...EMPTY, foreignCurrencies: [] as string[] };
 
   for (const inv of invoices) {
     const direction = normDirection(String(inv.direction));
@@ -77,6 +93,15 @@ export function sumInvoices(invoices: AggregatableInvoice[]): VatTotals {
     const dateOk = !Number.isNaN(asDate(inv.invoiceDate).getTime());
     if (!direction || !documentType || !dateOk || !Number.isFinite(inv.totalVAT)) {
       t.excludedCount += 1;
+      continue;
+    }
+
+    // Devise étrangère : on n'additionne PAS (cumul faux) et on ne convertit PAS
+    // (ce serait inventer un taux). On la met de côté et on le signale.
+    const cur = (inv.currency ?? BASE_CURRENCY).toUpperCase() || BASE_CURRENCY;
+    if (cur !== BASE_CURRENCY) {
+      t.foreignCurrencyCount += 1;
+      if (!t.foreignCurrencies.includes(cur)) t.foreignCurrencies.push(cur);
       continue;
     }
 

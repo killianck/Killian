@@ -73,5 +73,8 @@ export async function resumeStuckAnalyses(): Promise<void> {
     where: { status: "analyse_en_cours", updatedAt: { lt: cutoff } },
     select: { id: true },
   });
-  for (const s of stuck) enqueueAnalysis(s.id, "import");
+  // Mode "resume" et NON "import" : on ignore ici s'il s'agissait d'un premier
+  // import ou d'une ré-analyse demandée sur une facture déjà corrigée à la main.
+  // Repartir en "import" remettait cette dernière à zéro (montants, numéro, dates).
+  for (const s of stuck) enqueueAnalysis(s.id, "resume");
 }

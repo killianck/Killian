@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { uploadDir } from "@/lib/paths";
 import { enqueueAnalysis } from "@/lib/invoices/analysisQueue";
+import { ANALYSIS_PENDING_NOTE } from "@/lib/invoices/analyze";
 import { requireUser } from "@/lib/auth";
 
 const MAX_SIZE = 20 * 1024 * 1024; // 20 Mo
@@ -90,7 +91,7 @@ async function saveOne(
         currency: "EUR",
         status: "analyse_en_cours",
         coherence: "a_verifier",
-        notes: "Analyse automatique en cours…",
+        notes: ANALYSIS_PENDING_NOTE,
         originalFileName: name,
         originalFilePath: storedName, // relatif (voir resolveUploadPath)
       },
