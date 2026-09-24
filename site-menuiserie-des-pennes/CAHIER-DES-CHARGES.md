@@ -43,7 +43,7 @@
 | Clientèle | **80 % professionnels** (constructeurs, promoteurs, maçons, chefs de chantier, architectes, syndics, agences immobilières, sociétés de construction) · 20 % particuliers |
 | Type de chantier | **70 % neuf** · 30 % rénovation |
 | Zone | PACA, **80 % dans les Bouches-du-Rhône** |
-| Implantation | Les Pennes-Mirabeau. Pas de showroom ; clients reçus sur rendez-vous, ou déplacement sur place |
+| Implantation | **Bureaux et atelier : 105 chemin de la Chênaie, 13080 Aix-en-Provence** (SIREN 480 377 308). « Menuiserie des Pennes » = nom de la société, pas le lieu. Pas de showroom ; clients reçus sur rendez-vous, ou déplacement sur place |
 | SAV | Uniquement sur nos propres poses |
 | Secteurs protégés | Oui, des chantiers réalisés en secteur protégé |
 | Photos | En général 4 à 5 photos par chantier |
@@ -59,7 +59,7 @@
 | Principaux fabricants | Novelis, Noralis, Laloi Menuiseries, Menuiseries Combes (bois), Futurol, Sothoferm (volets), Technicdoor, Porte Gervais, Tordjman Métal (portes blindées), La Toulousaine (portails) — liste non exhaustive ; statut de partenariat à préciser |
 | Arguments du client | 20 ans d'expérience, connaissance fine des produits, adaptation au besoin ; petite structure = flexibilité et moins de paperasse ; produits premium ; suivi de chantier ; pose soignée : délais respectés, propreté absolue, finitions parfaites, y compris en **résidences ou locaux commerciaux en activité** |
 | Avis Google | **4,2/5 sur 9 avis** (septembre 2026) |
-| Labels / certifications | Aucun label. **Entreprise référencée auprès du patrimoine de la Ville d'Aix-en-Provence pour la menuiserie extérieure bois** : en rénovation, la mairie peut orienter vers l'entreprise (formulation exacte et justificatif à obtenir avant affichage) |
+| Labels / certifications | Aucun label. **Entreprise référencée auprès du patrimoine de la Ville d'Aix-en-Provence pour la menuiserie extérieure bois** : en rénovation, la mairie peut orienter vers l'entreprise. **Aucun justificatif à ce jour** : ne pas l'afficher tant que la formulation exacte n'est pas confirmée par écrit par l'Atelier du Patrimoine (04 42 91 99 40, atelier_patrimoine@mairie-aixenprovence.fr) |
 | Photos transmises | 1 villa contemporaine (vue de nuit éclairée, intérieur avec angle vitré vue mer, vues de rue) |
 
 ---
@@ -110,7 +110,7 @@ Menuiseries · Réalisations · **Professionnels** · L'entreprise · Contact + 
 - FAQ générale (FAQ courtes intégrées aux pages produits et devis).
 - Page « Avis clients » (avis affichés dans les pages, lien vers Google).
 - Page « Zone d'intervention » listant des communes.
-- Page Les Pennes-Mirabeau (couverte par l'accueil, le contact et la fiche Google).
+- Page Les Pennes-Mirabeau (sans objet : l'entreprise est à Aix-en-Provence).
 - Pages par matériau, pages « Neuf » / « Rénovation ».
 - **Guide « PVC, bois ou alu : que choisir ? »** — refusé par le client (inutile pour une clientèle à 80 % professionnelle).
 
@@ -167,6 +167,10 @@ Menuiseries · Réalisations · **Professionnels** · L'entreprise · Contact + 
 ---
 
 ## 5. En attente
+
+- [ ] Confirmation écrite du référencement patrimoine (Atelier du Patrimoine, Ville d'Aix).
+- [ ] Harmoniser nom / adresse / téléphone / activité sur Google et les annuaires (PagesJaunes décrit du mobilier et de l'agencement intérieur).
+- [ ] À rediscuter : l'extension « page locale Aix » (l'adresse étant à Aix, l'accueil et la fiche Google couvrent déjà Aix — risque de doublon).
 
 - [ ] **Inventaire des chantiers** des 2-3 dernières années (commune, produit, type de client) — à redemander au client ; conditionne pages locales et projets détaillés.
 - [ ] Marques et gammes posées, statut de partenariat.
