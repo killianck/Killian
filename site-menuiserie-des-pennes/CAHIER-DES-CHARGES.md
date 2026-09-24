@@ -50,6 +50,15 @@
 | Suivi client | Pas d'interlocuteur nommé publiquement, mais **une seule personne suit le dossier du devis jusqu'à la pose** |
 | Délai de réponse | **24 à 48 h** |
 | Visite technique | **Quasi systématique** : prise des cotes exactes et vérification des contraintes de pose |
+| Création | **5 janvier 2005** |
+| Volume | Environ **85 à 100 chantiers par an** (chiffre exact non disponible) |
+| Équipe | Nombre de poseurs : **ne pas communiquer** |
+| Plus grande menuiserie posée | **7,80 m × 2,55 m**, vitrage retardateur d'effraction **SP10** |
+| Assureur décennal | **Generali** |
+| Références clients citables | **Aucune** pour l'instant |
+| Principaux fabricants | Novelis, Noralis, Laloi Menuiseries, Menuiseries Combes (bois), Futurol, Sothoferm (volets), Technicdoor, Porte Gervais, Tordjman Métal (portes blindées), La Toulousaine (portails) — liste non exhaustive ; statut de partenariat à préciser |
+| Arguments du client | 20 ans d'expérience, connaissance fine des produits, adaptation au besoin ; petite structure = flexibilité et moins de paperasse ; produits premium ; suivi de chantier ; pose soignée : délais respectés, propreté absolue, finitions parfaites, y compris en **résidences ou locaux commerciaux en activité** |
+| Photos transmises | 1 villa contemporaine (vue de nuit éclairée, intérieur avec angle vitré vue mer, vues de rue) |
 
 ---
 
