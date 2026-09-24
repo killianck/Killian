@@ -47,6 +47,9 @@
 | SAV | Uniquement sur nos propres poses |
 | Secteurs protégés | Oui, des chantiers réalisés en secteur protégé |
 | Photos | En général 4 à 5 photos par chantier |
+| Suivi client | Pas d'interlocuteur nommé publiquement, mais **une seule personne suit le dossier du devis jusqu'à la pose** |
+| Délai de réponse | **24 à 48 h** |
+| Visite technique | **Quasi systématique** : prise des cotes exactes et vérification des contraintes de pose |
 
 ---
 
