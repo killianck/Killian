@@ -58,6 +58,8 @@
 | Références clients citables | **Aucune** pour l'instant |
 | Principaux fabricants | Novelis, Noralis, Laloi Menuiseries, Menuiseries Combes (bois), Futurol, Sothoferm (volets), Technicdoor, Porte Gervais, Tordjman Métal (portes blindées), La Toulousaine (portails) — liste non exhaustive ; statut de partenariat à préciser |
 | Arguments du client | 20 ans d'expérience, connaissance fine des produits, adaptation au besoin ; petite structure = flexibilité et moins de paperasse ; produits premium ; suivi de chantier ; pose soignée : délais respectés, propreté absolue, finitions parfaites, y compris en **résidences ou locaux commerciaux en activité** |
+| Avis Google | **4,2/5 sur 9 avis** (septembre 2026) |
+| Labels / certifications | Aucun. Le client indique « appartenir au patrimoine d'Aix-en-Provence » (nature exacte à préciser : référencement Atelier du Patrimoine ?) |
 | Photos transmises | 1 villa contemporaine (vue de nuit éclairée, intérieur avec angle vitré vue mer, vues de rue) |
 
 ---
@@ -83,7 +85,7 @@ Accueil · Nos réalisations · Demande de devis · Contact.
 │   │                                 type de projet (maison, programme neuf, copropriété…)
 │   └── /realisations/[projet]/       projets détaillés uniquement
 ├── /professionnels/                  sections : promoteurs & constructeurs · maçons & chefs de chantier ·
-│                                     architectes · syndics & agences
+│                                     architectes · syndics & agences · locaux commerciaux (ajout validé)
 ├── /l-entreprise/                    histoire, équipe, méthode, garanties & SAV
 ├── /demande-de-devis/                aiguillage particulier / professionnel (+ page merci en noindex)
 ├── /contact/                         adresse, accueil sur rendez-vous, déplacement
@@ -99,7 +101,7 @@ Menuiseries · Réalisations · **Professionnels** · L'entreprise · Contact + 
 - **Deux regroupements de produits** : « Portes de garage et portails » (fermetures d'accès à la propriété) et « Pergolas et stores » (extérieur, protection solaire). Séparation possible plus tard si le volume le justifie.
 - **Porte-fenêtre** : section de la page Fenêtres, pas de page dédiée.
 - **Neuf / rénovation et matériaux (PVC, bois, alu)** : traités en sections dans chaque page produit, jamais en pages séparées.
-- **Une seule page Professionnels** au lancement, avec une section par profil.
+- **Une seule page Professionnels** au lancement, avec une section par profil. Ajout validé : section **locaux commerciaux** (commerces, bureaux, intervention en site occupé).
 - **Réalisations à deux niveaux** : galerie filtrable pour tous les chantiers ; page individuelle seulement pour les projets qui ont une vraie histoire (secteur protégé, grandes dimensions, programme de logements, rénovation délicate…).
 - **SAV** : section de « L'entreprise », présenté comme un engagement, pas comme un service de dépannage.
 
@@ -153,6 +155,9 @@ Menuiseries · Réalisations · **Professionnels** · L'entreprise · Contact + 
 ---
 
 ## 4. Points d'attention notés
+
+- **Préférence DA du client (à confirmer à l'étape DA)** : garder du site actuel le côté très épuré, simple, facile à comprendre ; couleurs sobres, **fond blanc**, formes esthétiques.
+- **Avis** : 9 avis à 4,2 = sous la barre locale (> 21 avis à ≥ 4,8 selon l'étude). Lancer la collecte d'avis dès maintenant.
 
 - **Positionnement** : avec 80 % de pros et 70 % de neuf, le premium doit s'exprimer autant par la fiabilité, les délais et la capacité à tenir un chantier que par l'esthétique (à traiter à l'étape Accueil / DA).
 - **Deux rôles du site** : les pros viennent surtout vérifier le sérieux (références, capacité) ; le trafic SEO viendra surtout des particuliers.
