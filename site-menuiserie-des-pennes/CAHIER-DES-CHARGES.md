@@ -112,6 +112,35 @@ Menuiseries · Réalisations · **Professionnels** · L'entreprise · Contact + 
 | Séparation des pages regroupées | Si le volume du produit le justifie |
 | Guides budget, aides & TVA (page unique datée) | Données fiables ; MaPrimeRénov' : fenêtre seule à 0 € depuis le 01/09/2026 |
 
+### 3.7 Parcours de visite (validé)
+
+**Profils** : professionnel (80 % — promoteurs/constructeurs/maçons, architectes, syndics/agences ; arrive surtout par recommandation ou par le nom, vient **vérifier**) · particulier (20 % — arrive surtout par Google sur une page produit, **compare**).
+
+| # | Parcours |
+|---|---|
+| 1 | **Pro, principal** : Accueil → Réalisations → Professionnels → Devis avec plans (téléphone accessible à chaque étape) |
+| 2 | **Pro, court** : Accueil → Professionnels → Devis, ou appel direct |
+| 3 | **Particulier, principal** : Page produit (Google) → Réalisations → Devis |
+| 4 | **Particulier, prudent** : Page produit → L'entreprise → Devis |
+
+**Règle devis / contact** : Devis = projet identifié (plans pour les pros, besoin décrit pour les particuliers). Contact = tout le reste (question, rendez-vous, SAV, fournisseur, candidature).
+
+**CTA** :
+- CTA principal unique **« Demande de devis »**, libellé contextualisé : « Envoyer un projet à chiffrer » (Professionnels), « Demander un devis pour vos fenêtres » (produits), « Un projet similaire ? » (réalisations).
+- Page devis : aiguillage **particulier / professionnel** dès le départ ; envoi de plans et fichiers lourds pour les pros.
+- **Téléphone** : CTA secondaire, visible en permanence dans l'en-tête ; sur mobile, barre fixe « Appeler » + « Demande de devis ».
+- **Pas de prise de rendez-vous en ligne** comme CTA principal.
+
+**Trois engagements** placés au plus près des CTA (sous le formulaire, bas des pages Professionnels et produits, méthode dans L'entreprise) :
+1. un seul interlocuteur du devis jusqu'à la pose (sans le nommer) ;
+2. réponse sous 48 h (afficher uniquement un délai toujours tenu) ;
+3. visite technique et prise de cotes sur place.
+
+**Conséquences retenues pour les étapes suivantes** :
+- Accueil = porte d'entrée des pros : preuves de capacité très tôt, aiguillage pro / particulier rapide, réalisations mêlant programmes et maisons.
+- Réassurance pros : chiffres de capacité, références, délais, assureur décennal, zone, marques posées, suivi unique.
+- Réassurance particuliers : avis Google (note + nombre + lien), photos réelles, garanties, visite technique, poseurs de l'entreprise, SAV.
+
 ---
 
 ## 4. Points d'attention notés
@@ -130,4 +159,4 @@ Menuiseries · Réalisations · **Professionnels** · L'entreprise · Contact + 
 - [ ] Contenu du site actuel (non consultable depuis l'environnement de travail) — à fournir par copier-coller si besoin.
 
 ## 6. Prochaine étape proposée
-Définir les **parcours utilisateurs** (professionnel / particulier → prise de contact), avant la conception des pages.
+Structure de la **page d'accueil** (en commençant par les questions au client sur ce qu'il souhaite y voir).
