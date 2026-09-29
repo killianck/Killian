@@ -24,7 +24,7 @@ export async function setupFirstUser(_prev: SetupState, fd: FormData): Promise<S
     data: { name, passwordHash: hashPassword(password), role: "admin" },
   });
 
-  (await cookies()).set(SESSION_COOKIE, await createSessionToken(user.id), {
+  (await cookies()).set(SESSION_COOKIE, await createSessionToken(user.id, user.passwordHash), {
     httpOnly: true,
     sameSite: "lax",
     path: "/",
