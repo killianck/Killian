@@ -417,7 +417,7 @@ export async function reconcileStatements(db: DB): Promise<void> {
       Math.abs(st.totalTTC - comp.totalTTC) < 0.005;
     if (
       sameLinks && sameTotals && st.coherence === comp.coherence &&
-      (st.notes ?? "") === (noteText || "") && Object.keys(grossBackfill).length === 0
+      (st.autoNotes ?? "") === (noteText || "") && Object.keys(grossBackfill).length === 0
     ) {
       continue;
     }
@@ -438,7 +438,10 @@ export async function reconcileStatements(db: DB): Promise<void> {
           totalVAT: comp.totalVAT,
           totalTTC: comp.totalTTC,
           coherence: comp.coherence,
-          notes: noteText || null,
+          // `notes` appartient à l'utilisateur et n'est jamais touchée ici : le
+          // rapprochement tourne après CHAQUE dépôt/modification de facture, il
+          // effaçait donc la note qu'il venait tout juste de saisir sur un relevé.
+          autoNotes: noteText || null,
           vatLines: comp.vatLines.length ? { create: comp.vatLines } : undefined,
         },
       }),

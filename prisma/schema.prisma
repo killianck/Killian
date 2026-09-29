@@ -61,7 +61,13 @@ model Invoice {
   // Confiance de la dernière analyse automatique (0..1), null si saisie manuelle.
   confidence Float?
 
+  // Note libre de l'utilisateur. N'est JAMAIS écrite par un traitement
+  // automatique : le rapprochement des relevés écrit dans `autoNotes`.
   notes String?
+
+  // Explications produites par le logiciel (rapprochement d'un relevé).
+  // Recalculées à chaque rapprochement, donc jamais une saisie à préserver.
+  autoNotes String?
 
   // --- Fichier PDF original (jamais supprimé automatiquement) ---
   originalFileName String?

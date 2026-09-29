@@ -331,6 +331,18 @@ export default async function InvoiceDetailPage({
               </div>
             ))}
           </dl>
+          {/* Explications produites par le logiciel (rapprochement d'un relevé) :
+              colonne distincte de la note de l'utilisateur, affichée juste avant. */}
+          {inv.autoNotes && (
+            <div className="mt-3 rounded-lg border border-[var(--warning-bg)] bg-[var(--warning-bg)] p-3 text-sm text-[var(--warning)]">
+              <p className="font-semibold">Rapprochement du relevé</p>
+              <ul className="mt-1 list-disc space-y-0.5 pl-5">
+                {inv.autoNotes.split(/\n+/).map((s) => s.trim()).filter(Boolean).map((it, i) => (
+                  <li key={i}>{it}</li>
+                ))}
+              </ul>
+            </div>
+          )}
           {inv.notes && (() => {
             const items = inv.notes.split(/\n+/).map((s) => s.trim()).filter(Boolean);
             const looksLikeChecklist =
