@@ -3,19 +3,23 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { SESSION_COOKIE, verifySessionToken } from "./session";
+import { SESSION_COOKIE, passwordFingerprint, verifySessionToken } from "./session";
 
 export type CurrentUser = { id: string; name: string; role: string };
 
 export async function getCurrentUser(): Promise<CurrentUser | null> {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
-  const uid = await verifySessionToken(token);
-  if (!uid) return null;
+  const claims = await verifySessionToken(token);
+  if (!claims) return null;
   const user = await prisma.user.findUnique({
-    where: { id: uid },
-    select: { id: true, name: true, role: true },
+    where: { id: claims.uid },
+    select: { id: true, name: true, role: true, passwordHash: true },
   });
-  return user;
+  if (!user) return null;
+  // Session émise avant un changement/une réinitialisation du mot de passe
+  // (ou jeton d'avant l'empreinte) : révoquée.
+  if (claims.pv !== (await passwordFingerprint(user.passwordHash))) return null;
+  return { id: user.id, name: user.name, role: user.role };
 }
 
 /** À utiliser dans une action : renvoie l'utilisateur ou coupe court. */

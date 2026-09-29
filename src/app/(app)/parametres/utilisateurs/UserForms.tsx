@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { changePassword, createUser, type UserActionState } from "./actions";
+import { changePassword, createUser, resetUserPassword, type UserActionState } from "./actions";
 
 const field = "rounded-lg border border-[var(--border)] bg-white px-2.5 py-1.5 text-sm";
 
@@ -38,6 +38,50 @@ export function CreateUserForm() {
       >
         Ajouter
       </button>
+      <div className="w-full"><Msg state={state} /></div>
+    </form>
+  );
+}
+
+/** Réinitialisation, par un administrateur, du mot de passe d'un autre compte. */
+export function ResetPasswordForm({ users }: { users: { id: string; name: string }[] }) {
+  const [state, action, pending] = useActionState<UserActionState, FormData>(resetUserPassword, {});
+  if (users.length === 0) {
+    return (
+      <p className="text-sm text-[var(--muted)]">
+        Aucun autre compte à réinitialiser.
+      </p>
+    );
+  }
+  return (
+    <form action={action} className="flex flex-wrap items-end gap-2">
+      <div>
+        <label className="mb-1 block text-xs text-[var(--muted)]">Compte</label>
+        <select name="id" className={field} defaultValue={users[0].id}>
+          {users.map((u) => (
+            <option key={u.id} value={u.id}>{u.name}</option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <label className="mb-1 block text-xs text-[var(--muted)]">Nouveau mot de passe</label>
+        <input name="next" type="password" autoComplete="new-password" className={field} />
+      </div>
+      <div>
+        <label className="mb-1 block text-xs text-[var(--muted)]">Confirmer</label>
+        <input name="confirm" type="password" autoComplete="new-password" className={field} />
+      </div>
+      <button
+        type="submit"
+        disabled={pending}
+        className="rounded-lg bg-[var(--foreground)] px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+      >
+        Réinitialiser
+      </button>
+      <p className="w-full text-xs text-[var(--muted)]">
+        À utiliser quand quelqu&apos;un a oublié son mot de passe. Communiquez-lui le
+        nouveau mot de passe, qu&apos;il pourra ensuite changer lui-même.
+      </p>
       <div className="w-full"><Msg state={state} /></div>
     </form>
   );

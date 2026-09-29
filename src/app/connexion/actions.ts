@@ -29,7 +29,7 @@ export async function login(_prev: LoginState, fd: FormData): Promise<LoginState
 
   await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
 
-  (await cookies()).set(SESSION_COOKIE, await createSessionToken(user.id), {
+  (await cookies()).set(SESSION_COOKIE, await createSessionToken(user.id, user.passwordHash), {
     httpOnly: true,
     sameSite: "lax",
     path: "/",

@@ -91,7 +91,14 @@ export function sumInvoices(invoices: AggregatableInvoice[]): VatTotals {
     const direction = normDirection(String(inv.direction));
     const documentType = normDocType(String(inv.documentType));
     const dateOk = !Number.isNaN(asDate(inv.invoiceDate).getTime());
-    if (!direction || !documentType || !dateOk || !Number.isFinite(inv.totalVAT)) {
+    // Les TROIS montants doivent être finis, pas seulement la TVA : une seule
+    // valeur NaN/Infinity contaminait la somme, et `round2` la ramenait ensuite
+    // à 0 — le cumul HT de TOUTES les autres factures disparaissait alors de
+    // l'écran, sans être compté nulle part. Mieux vaut écarter la facture
+    // fautive et le DIRE (excludedCount est affiché).
+    const amountsOk =
+      Number.isFinite(inv.totalHT) && Number.isFinite(inv.totalVAT) && Number.isFinite(inv.totalTTC);
+    if (!direction || !documentType || !dateOk || !amountsOk) {
       t.excludedCount += 1;
       continue;
     }

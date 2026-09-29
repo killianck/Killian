@@ -52,9 +52,17 @@ export function formatDate(value: Date | string | null | undefined): string {
   }).format(d);
 }
 
-/** Libellé de mois français : "Septembre 2026". */
+/**
+ * Libellé de mois français : "Septembre 2026".
+ *
+ * Une année aberrante (venue d'une URL modifiée à la main : `?year=1e999`)
+ * produit une Date invalide, que `Intl.DateTimeFormat` refuse de formater en
+ * LEVANT une RangeError — ce qui faisait tomber l'écran entier. Un libellé
+ * d'affichage ne doit jamais casser une page : on renvoie un repli lisible.
+ */
 export function formatMonthLabel(year: number, month1to12: number): string {
   const d = new Date(year, month1to12 - 1, 1);
+  if (Number.isNaN(d.getTime())) return "Période invalide";
   const s = new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" }).format(d);
   return s.charAt(0).toUpperCase() + s.slice(1);
 }

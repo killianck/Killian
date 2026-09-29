@@ -159,9 +159,10 @@ export async function setStatementFlag(id: string, isStatement: boolean): Promis
               statementGrossVAT: null,
               statementGrossTTC: null,
               coherence: "a_verifier",
-              // Les notes de rapprochement (« Relevé rapproché à… ») n'ont plus lieu
-              // d'être une fois reclassé en facture simple.
-              notes: null,
+              // Les explications de rapprochement (« Relevé rapproché à… ») n'ont
+              // plus lieu d'être une fois reclassé en facture simple. La note de
+              // l'utilisateur (`notes`), elle, est conservée.
+              autoNotes: null,
             },
       }),
       ...(isStatement ? [] : [prisma.statementLine.deleteMany({ where: { statementId: id } })]),

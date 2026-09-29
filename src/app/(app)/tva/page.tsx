@@ -6,6 +6,7 @@ import { monthlyBreakdown, totalsForMonth, totalsForYear } from "@/lib/tva/aggre
 import { MONTH_NAMES_FR, formatDate, formatMoney, formatMonthLabel } from "@/lib/format";
 import { TVA_DISCLAIMER } from "@/lib/tva/rules";
 import { DIRECTIONS, type Direction } from "@/lib/domain/enums";
+import { validMonth, validYear } from "@/lib/domain/dateParams";
 
 export const dynamic = "force-dynamic";
 
@@ -15,8 +16,13 @@ const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) 
 export default async function TvaPage({ searchParams }: { searchParams: Promise<SP> }) {
   const sp = await searchParams;
   const now = new Date();
-  const year = Number(one(sp.year)) || now.getFullYear();
-  const month = Number(one(sp.month)) || now.getMonth() + 1;
+  // Année/mois venant de l'URL : une valeur hors plage doit être IGNORÉE, jamais
+  // fatale. Sans ce garde-fou, `?year=1e999` donnait year = Infinity, donc une
+  // Date invalide que `formatMonthLabel` refuse de formater (RangeError) :
+  // l'écran TVA entier tombait en erreur. Mêmes règles que /factures et
+  // /echeances (src/lib/domain/dateParams.ts).
+  const year = validYear(one(sp.year)) ?? now.getFullYear();
+  const month = validMonth(one(sp.month)) ?? now.getMonth() + 1;
 
   const invoices = await getInvoices();
   const agg = toAggregatable(invoices);
@@ -34,7 +40,19 @@ export default async function TvaPage({ searchParams }: { searchParams: Promise<
     })
     .sort((a, b) => +new Date(a.invoiceDate) - +new Date(b.invoiceDate));
 
-  const years = [now.getFullYear() + 1, now.getFullYear(), now.getFullYear() - 1, now.getFullYear() - 2];
+  // Années réellement présentes en base (+ l'année en cours, la suivante et
+  // celle demandée) : une liste figée sur 4 ans rendait une facture plus
+  // ancienne inatteignable depuis le sélecteur, alors qu'elle est bien en base.
+  // Déduites des factures DÉJÀ chargées (UTC, comme les totaux) : pas de
+  // requête supplémentaire.
+  const years = [
+    ...new Set([
+      ...invoices.map((i) => new Date(i.invoiceDate).getUTCFullYear()).filter(Number.isFinite),
+      now.getFullYear(),
+      now.getFullYear() + 1,
+      year,
+    ]),
+  ].sort((a, b) => b - a);
 
   const chartData: MonthlyPoint[] = months.map((t, i) => ({
     mois: MONTH_NAMES_FR[i].slice(0, 3),
@@ -67,6 +85,13 @@ export default async function TvaPage({ searchParams }: { searchParams: Promise<
             « Modifier ») pour qu&apos;elles soient prises en compte.
           </p>
         </div>
+      )}
+
+      {yearTotals.excludedCount > 0 && (
+        <p className="mb-4 rounded-lg border border-[var(--danger-bg)] bg-[var(--danger-bg)] px-3 py-2 text-xs text-[var(--danger)]">
+          ⚠️ {yearTotals.excludedCount} facture(s) de {year} exclue(s) des totaux ci-dessous faute de
+          date ou de montant exploitable — corrigez-les dans la liste des factures.
+        </p>
       )}
 
       {suspect && (

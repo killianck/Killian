@@ -44,12 +44,31 @@ async function hmac(data: string): Promise<string> {
   return b64urlFromBytes(sig);
 }
 
-export async function createSessionToken(userId: string): Promise<string> {
+/**
+ * Empreinte du mot de passe embarquée dans le jeton. Le jeton étant sans état,
+ * c'est ce qui permet de RÉVOQUER les sessions : un changement ou une
+ * réinitialisation du mot de passe (nouveau sel => nouveau hash) change
+ * l'empreinte, et les anciens jetons sont refusés par `getCurrentUser`.
+ * HMAC avec le secret : le cookie ne révèle rien du hash.
+ */
+export async function passwordFingerprint(passwordHash: string): Promise<string> {
+  return (await hmac(`pv:${passwordHash}`)).slice(0, 22);
+}
+
+export async function createSessionToken(userId: string, passwordHash: string): Promise<string> {
   const payload = b64urlFromBytes(
-    enc.encode(JSON.stringify({ uid: userId, exp: Math.floor(Date.now() / 1000) + MAX_AGE_SECONDS })),
+    enc.encode(
+      JSON.stringify({
+        uid: userId,
+        pv: await passwordFingerprint(passwordHash),
+        exp: Math.floor(Date.now() / 1000) + MAX_AGE_SECONDS,
+      }),
+    ),
   );
   return `${payload}.${await hmac(payload)}`;
 }
+
+export type SessionClaims = { uid: string; pv: string | null };
 
 /** Comparaison à temps constant de deux chaînes base64url. */
 function timingSafeEqualStr(a: string, b: string): boolean {
@@ -59,14 +78,18 @@ function timingSafeEqualStr(a: string, b: string): boolean {
   return diff === 0;
 }
 
-export async function verifySessionToken(token: string | undefined | null): Promise<string | null> {
+/**
+ * Vérifie signature et expiration. Ne consulte PAS la base (utilisable dans le
+ * proxy) : l'empreinte `pv` est contrôlée par `getCurrentUser`.
+ */
+export async function verifySessionToken(token: string | undefined | null): Promise<SessionClaims | null> {
   if (!token || !token.includes(".")) return null;
   const [payload, sig] = token.split(".");
-  if (!timingSafeEqualStr(await hmac(payload), sig)) return null;
+  if (!sig || !timingSafeEqualStr(await hmac(payload), sig)) return null;
   try {
-    const { uid, exp } = JSON.parse(new TextDecoder().decode(bytesFromB64url(payload)));
+    const { uid, pv, exp } = JSON.parse(new TextDecoder().decode(bytesFromB64url(payload)));
     if (typeof uid !== "string" || typeof exp !== "number" || exp * 1000 < Date.now()) return null;
-    return uid;
+    return { uid, pv: typeof pv === "string" ? pv : null };
   } catch {
     return null;
   }

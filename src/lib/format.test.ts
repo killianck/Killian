@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addMonths, formatDate, formatMoney, formatRate, parseAmount } from "./format";
+import { addMonths, formatDate, formatMonthLabel, formatMoney, formatRate, parseAmount } from "./format";
 
 describe("addMonths", () => {
   it("avance d'un mois", () => {
@@ -49,5 +49,20 @@ describe("parseAmount", () => {
     expect(parseAmount("1 250,50")).toBe(1250.5);
     expect(parseAmount("1250.5")).toBe(1250.5);
     expect(parseAmount("1 234,56 €")).toBeCloseTo(1234.56);
+  });
+});
+
+describe("formatMonthLabel", () => {
+  it("formate un mois normal", () => {
+    expect(formatMonthLabel(2026, 9)).toBe("Septembre 2026");
+  });
+
+  // Régression : `/tva?year=1e999` donnait year = Infinity -> Date invalide ->
+  // Intl levait une RangeError et l'écran TVA entier tombait en erreur.
+  it("ne lève pas sur une année aberrante venue de l'URL", () => {
+    for (const year of [Infinity, -Infinity, NaN, 99999999]) {
+      expect(() => formatMonthLabel(year, 9)).not.toThrow();
+      expect(formatMonthLabel(year, 9)).toBe("Période invalide");
+    }
   });
 });

@@ -179,3 +179,29 @@ describe("devises étrangères — jamais additionnées aux euros", () => {
     expect(t.totalTTC).toBe(0);
   });
 });
+
+describe("montants non finis", () => {
+  // Régression : seul `totalVAT` était contrôlé. Un HT NaN contaminait la somme,
+  // puis `round2` la ramenait à 0 : le Total HT affiché tombait à 0 € alors que
+  // les AUTRES factures étaient parfaitement valides, et rien ne le signalait.
+  it("écarte la facture fautive au lieu d'anéantir le cumul", () => {
+    const t = sumInvoices([
+      { invoiceDate: new Date("2026-01-10"), direction: "achat", documentType: "facture", totalHT: 1000, totalVAT: 200, totalTTC: 1200 },
+      { invoiceDate: new Date("2026-01-11"), direction: "achat", documentType: "facture", totalHT: NaN, totalVAT: 50, totalTTC: 300 },
+    ]);
+    expect(t.totalHT).toBe(1000);
+    expect(t.totalVAT).toBe(200);
+    expect(t.totalTTC).toBe(1200);
+    expect(t.count).toBe(1);
+    expect(t.excludedCount).toBe(1);
+    expect(t.gap).toBe(0);
+  });
+
+  it("écarte aussi un TTC infini", () => {
+    const t = sumInvoices([
+      { invoiceDate: new Date("2026-02-01"), direction: "vente", documentType: "facture", totalHT: 100, totalVAT: 20, totalTTC: Infinity },
+    ]);
+    expect(t.excludedCount).toBe(1);
+    expect(t.totalTTC).toBe(0);
+  });
+});

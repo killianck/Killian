@@ -4,12 +4,25 @@ import { formatDate } from "@/lib/format";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { DeleteInvoiceButton } from "@/components/DeleteInvoiceButton";
-import { CreateUserForm, ChangePasswordForm } from "./UserForms";
+import { CreateUserForm, ChangePasswordForm, ResetPasswordForm } from "./UserForms";
 import { deleteUser } from "./actions";
 
 export const dynamic = "force-dynamic";
 
-export default async function UtilisateursPage() {
+const DELETE_ERRORS: Record<string, string> = {
+  soi_meme: "Vous ne pouvez pas supprimer votre propre compte.",
+  dernier_admin:
+    "Impossible de supprimer le dernier administrateur : créez d'abord un autre compte administrateur.",
+  introuvable: "Ce compte n'existe plus.",
+  suppression: "La suppression a échoué. Réessayez.",
+};
+
+type SP = Record<string, string | string[] | undefined>;
+
+export default async function UtilisateursPage({ searchParams }: { searchParams: Promise<SP> }) {
+  const sp = await searchParams;
+  const erreurKey = Array.isArray(sp.erreur) ? sp.erreur[0] : sp.erreur;
+  const erreur = erreurKey ? DELETE_ERRORS[erreurKey] : undefined;
   const me = await requireUser();
   const isAdmin = me.role === "admin";
   const users = await prisma.user.findMany({ orderBy: { createdAt: "asc" } });
@@ -21,6 +34,12 @@ export default async function UtilisateursPage() {
         subtitle="Comptes autorisés à ouvrir l'application."
         action={<Link href="/parametres" className="text-sm text-[var(--muted)]">← Paramètres</Link>}
       />
+
+      {erreur && (
+        <div className="mb-4 rounded-lg border border-[var(--danger-bg)] bg-[var(--danger-bg)] px-3 py-2.5 text-sm text-[var(--danger)]">
+          {erreur}
+        </div>
+      )}
 
       <Card className="mb-4 overflow-x-auto">
         <table className="data-table">
@@ -69,6 +88,13 @@ export default async function UtilisateursPage() {
         <Card className="mb-4 p-4">
           <h2 className="mb-3 text-sm font-semibold">Ajouter un utilisateur</h2>
           <CreateUserForm />
+        </Card>
+      )}
+
+      {isAdmin && (
+        <Card className="mb-4 p-4">
+          <h2 className="mb-3 text-sm font-semibold">Réinitialiser un mot de passe oublié</h2>
+          <ResetPasswordForm users={users.filter((u) => u.id !== me.id).map((u) => ({ id: u.id, name: u.name }))} />
         </Card>
       )}
 

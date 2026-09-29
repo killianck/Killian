@@ -1,6 +1,9 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
+import { redirect, unstable_rethrow } from "next/navigation";
+import { SESSION_COOKIE, SESSION_MAX_AGE, createSessionToken } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { requireAdmin, requireUser } from "@/lib/auth";
 import { hashPassword, passwordProblem, verifyPassword } from "@/lib/auth/password";
@@ -25,16 +28,68 @@ export async function createUser(_prev: UserActionState, fd: FormData): Promise<
   return { ok: `Utilisateur « ${name} » créé.` };
 }
 
+/**
+ * Supprime un compte.
+ *
+ * Les refus sont renvoyés à l'écran via `?erreur=` (comme les actions de la
+ * fiche facture) et NON en levant une exception : un `throw` dans une action
+ * serveur fait tomber la limite d'erreur, et Next MASQUE le message dans une
+ * application compilée. L'administrateur voyait donc « Une erreur s'est
+ * produite » sans jamais apprendre qu'il s'agissait du dernier administrateur.
+ */
 export async function deleteUser(id: string): Promise<void> {
   const me = await requireAdmin();
-  if (id === me.id) throw new Error("Vous ne pouvez pas supprimer votre propre compte.");
-  const admins = await prisma.user.count({ where: { role: "admin" } });
+  if (id === me.id) redirect("/parametres/utilisateurs?erreur=soi_meme");
+
   const target = await prisma.user.findUnique({ where: { id } });
-  if (target?.role === "admin" && admins <= 1) {
-    throw new Error("Impossible de supprimer le dernier administrateur.");
+  if (!target) redirect("/parametres/utilisateurs?erreur=introuvable");
+  const admins = await prisma.user.count({ where: { role: "admin" } });
+  if (target.role === "admin" && admins <= 1) {
+    redirect("/parametres/utilisateurs?erreur=dernier_admin");
   }
-  await prisma.user.delete({ where: { id } });
+
+  try {
+    await prisma.user.delete({ where: { id } });
+  } catch (e) {
+    unstable_rethrow(e);
+    console.error("Suppression d'utilisateur impossible :", e);
+    redirect("/parametres/utilisateurs?erreur=suppression");
+  }
   revalidatePath("/parametres/utilisateurs");
+}
+
+/**
+ * Réinitialisation du mot de passe d'un AUTRE compte par un administrateur.
+ * C'est ce que promet la page de connexion (« un administrateur peut le
+ * réinitialiser dans Paramètres → Utilisateurs ») ; sans cela, un utilisateur
+ * qui oublie son mot de passe ne peut plus entrer qu'en passant par la ligne de
+ * commande `npm run auth:reset`.
+ *
+ * Le nouveau hash change l'empreinte de session : toutes les sessions ouvertes
+ * du compte concerné sont révoquées (voir `passwordFingerprint`).
+ */
+export async function resetUserPassword(_prev: UserActionState, fd: FormData): Promise<UserActionState> {
+  const me = await requireAdmin();
+  const id = String(fd.get("id") ?? "");
+  const next = String(fd.get("next") ?? "");
+  const confirm = String(fd.get("confirm") ?? "");
+
+  const target = await prisma.user.findUnique({ where: { id } });
+  if (!target) return { error: "Utilisateur introuvable." };
+  // Son propre mot de passe se change avec l'ancien (voir `changePassword`) :
+  // ne pas ouvrir ici un contournement de cette vérification.
+  if (target.id === me.id) {
+    return { error: "Pour votre propre compte, utilisez « Changer mon mot de passe »." };
+  }
+  const pb = passwordProblem(next);
+  if (pb) return { error: pb };
+  if (next !== confirm) return { error: "Les deux mots de passe ne correspondent pas." };
+
+  await prisma.user.update({ where: { id }, data: { passwordHash: hashPassword(next) } });
+  revalidatePath("/parametres/utilisateurs");
+  return {
+    ok: `Mot de passe de « ${target.name} » réinitialisé. Ses sessions ouvertes ont été déconnectées.`,
+  };
 }
 
 export async function changePassword(_prev: UserActionState, fd: FormData): Promise<UserActionState> {
@@ -51,6 +106,15 @@ export async function changePassword(_prev: UserActionState, fd: FormData): Prom
   if (pb) return { error: pb };
   if (next !== confirm) return { error: "Les deux nouveaux mots de passe ne correspondent pas." };
 
-  await prisma.user.update({ where: { id: me.id }, data: { passwordHash: hashPassword(next) } });
-  return { ok: "Mot de passe modifié." };
+  const passwordHash = hashPassword(next);
+  await prisma.user.update({ where: { id: me.id }, data: { passwordHash } });
+  // Le nouveau hash révoque toutes les sessions existantes de ce compte (autres
+  // postes/navigateurs compris) ; on ré-émet celle de l'utilisateur courant.
+  (await cookies()).set(SESSION_COOKIE, await createSessionToken(me.id, passwordHash), {
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+    maxAge: SESSION_MAX_AGE,
+  });
+  return { ok: "Mot de passe modifié. Vos autres sessions ont été déconnectées." };
 }
