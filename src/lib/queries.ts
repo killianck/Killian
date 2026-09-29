@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/db";
 import type { AggregatableInvoice } from "@/lib/tva/aggregate";
 import { isDuplicatePair, type DuplicateCandidate } from "@/lib/invoices/duplicates";
+import { utcDayStart } from "@/lib/domain/dateParams";
 
 export type InvoiceWithLines = Awaited<ReturnType<typeof getInvoices>>[number];
 
@@ -134,8 +135,10 @@ export async function countToReview(): Promise<number> {
 
 /** Prochaines échéances (dueDate >= aujourd'hui), triées, limitées. */
 export async function getUpcomingDueDates(limit = 8) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  // UTC, comme les dates stockées (minuit UTC) et comme l'écran « Échéances »
+  // (`buildDueRange`). Avec un minuit LOCAL, l'échéance du jour disparaissait du
+  // tableau de bord pour un utilisateur situé à l'ouest de Greenwich.
+  const today = utcDayStart(new Date());
   return prisma.invoice.findMany({
     where: { dueDate: { gte: today } },
     orderBy: { dueDate: "asc" },
