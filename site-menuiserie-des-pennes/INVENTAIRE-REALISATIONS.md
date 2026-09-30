@@ -3,7 +3,7 @@
 > Relevé le 30/09/2026 sur la page « Nos réalisations » du site de travail WordPress
 > (https://menuiseriedespennes-fr-888371.hostingersite.com/nos-realisations/). Lecture seule, rien n'a été modifié.
 > Les communes et années sont **déduites des noms de fichiers** quand elles ne figurent pas dans le texte : **à confirmer par le client**.
-> ⚠ Colonne « Photos » : les fichiers `chatgpt-image-…` et les PNG à nom descriptif (« immeuble moderne sous ciel bleu »…) peuvent être des images générées ou retouchées par IA — **statut à confirmer avant toute publication**.
+> ⚠ Colonne « Photos » : les fichiers `chatgpt-image-…` et les PNG à nom descriptif (« immeuble moderne sous ciel bleu »…) peuvent être des images générées ou retouchées par IA — → **confirmé par le client : vraies photos retouchées** (ciel, lumière, nettoyage). Conserver les originaux.
 
 | # | Chantier | Commune / année | Client | Produits | Photos (fichiers) |
 |---|---|---|---|---|---|
