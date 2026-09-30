@@ -21,3 +21,16 @@
 - L'atelier **fabrique** certains éléments sur mesure (porte d'entrée alu + frêne, coffres de volets roulants).
 - Référence publique : **Mairie de Fos-sur-Mer** (12 logements) — citable ? à confirmer.
 - Le site de travail contient aussi des pages créées automatiquement (Hostinger AI) qui ne suivent pas l'arborescence validée (ex. : page « Porte fenêtre » séparée, page « Syndics de copropriété », page « Portail, portillon et garde-corps ») et de nombreuses images `generated-…` (IA). À reprendre à l'étape développement.
+
+## Évaluation des photos (vues le 30/09/2026)
+
+| # | Meilleures photos | Usage recommandé | Réserves |
+|---|---|---|---|
+| 1 | Vue de nuit éclairée ; intérieur angle vitré vue mer | **Ouverture de l'accueil** (vue de nuit) ; réalisation | Escabeau visible au RDC (à retirer en retouche ou recadrer) ; vues de rue à éviter (câbles, poteaux) |
+| 2 | Façade retouchée (roche, brise-soleil) ; photo « avant crépi » | Réalisation à la une ; **avant / après** | Antenne en haut de la photo (recadrer) ; capture d'écran de téléphone (points de carrousel) à exclure |
+| 3 | Villa et piscine (3 vues) ; entrée + porte | Réalisation à la une ; bloc « particulier » | Photos de 2008, bonne qualité |
+| 4 | Façade porte bois/alu ; élévation d'architecte | Projet détaillé (plan → réalisation) | Chantier non terminé (terre, gravats) ; droits du plan d'architecte à vérifier |
+| 5 | Façade résidence ; rue et portillon | **Bloc « professionnel »**, réalisation à la une | Intérieur duplex très retouché : vérifier que plantes et bacs n'ont pas été ajoutés |
+| 6 | Façade avec volets verts | Page Professionnels, réalisation | Photos de rue (panneaux, pylône, barrières de chantier) : peu adaptées à l'accueil |
+| 7 | Maison ocre, imposte trapézoïdale | Réalisation | Toboggan, voiture, échafaudage : rendu peu premium |
+| 8 | Porte biométrique (détail) ; intérieur en chantier | Détail produit, section atelier / pose | **Aucune photo terminée** des galandages de 7,80 m |
