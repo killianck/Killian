@@ -177,7 +177,7 @@ Menuiseries · Réalisations · **Professionnels** · L'entreprise · Contact + 
 - [ ] Harmoniser nom / adresse / téléphone / activité sur Google et les annuaires (PagesJaunes décrit du mobilier et de l'agencement intérieur).
 - [ ] À rediscuter : l'extension « page locale Aix » (l'adresse étant à Aix, l'accueil et la fiche Google couvrent déjà Aix — risque de doublon).
 
-- [ ] **Inventaire des chantiers** des 2-3 dernières années (commune, produit, type de client) — à redemander au client ; conditionne pages locales et projets détaillés.
+- [ ] **Inventaire des chantiers** (version provisoire : [`INVENTAIRE-REALISATIONS.md`](./INVENTAIRE-REALISATIONS.md), 9 chantiers) des 2-3 dernières années (commune, produit, type de client) — à redemander au client ; conditionne pages locales et projets détaillés.
 - [ ] Marques et gammes posées, statut de partenariat.
 - [ ] Contenu du site actuel (non consultable depuis l'environnement de travail) — à fournir par copier-coller si besoin.
 
