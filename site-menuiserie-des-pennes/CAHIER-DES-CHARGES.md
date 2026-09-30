@@ -62,7 +62,7 @@
 | Labels / certifications | Aucun label. **Entreprise référencée auprès du patrimoine de la Ville d'Aix-en-Provence pour la menuiserie extérieure bois** : en rénovation, la mairie peut orienter vers l'entreprise. **Aucun justificatif à ce jour** : ne pas l'afficher tant que la formulation exacte n'est pas confirmée par écrit par l'Atelier du Patrimoine (04 42 91 99 40, atelier_patrimoine@mairie-aixenprovence.fr) |
 | Chiffres 2025 (confirmés par le client, formulation modifiable) | 82 chantiers · 1 027 fenêtres posées · 28 rénovations |
 | Contact actuel | 06 20 71 13 36 · mdp13@hotmail.fr (adresse e-mail professionnelle sur le domaine recommandée avant la mise en ligne) |
-| Produits complémentaires (ajout) | **Garde-corps** (confirmé le 30/09/2026) — place dans l'arborescence à décider |
+| Produits complémentaires (ajout) | **Garde-corps** (confirmé le 30/09/2026) — page « Portails, portillons et garde-corps » (option A validée) |
 | Référence citable | **Mairie de Fos-sur-Mer** (12 logements) — citable selon le client, à confirmer par écrit si possible |
 | Photos retouchées | Les fichiers « chatgpt-image » sont de **vraies photos de chantier retouchées** (ciel, lumière, nettoyage). Règle : retouche d'ambiance autorisée, **aucune modification des menuiseries ni du bâti**, originaux conservés |
 | Photos transmises | 1 villa contemporaine (vue de nuit éclairée, intérieur avec angle vitré vue mer, vues de rue) |
@@ -83,7 +83,8 @@ Accueil · Nos réalisations · Demande de devis · Contact.
 │   ├── /baies-vitrees/
 │   ├── /portes-d-entree/
 │   ├── /volets/                      Volets roulants et volets bois
-│   ├── /portes-de-garage-et-portails/
+│   ├── /portes-de-garage/
+│   ├── /portails-portillons-et-garde-corps/
 │   └── /pergolas-et-stores/
 ├── /realisations/                    Nos réalisations (hub filtrable)
 │   │                                 filtres : produit · matériau · neuf/rénovation ·
@@ -97,13 +98,13 @@ Accueil · Nos réalisations · Demande de devis · Contact.
 └── Mentions légales · Confidentialité · Cookies
 ```
 
-14 pages fixes + les projets détaillés. URLs indicatives, à confirmer à l'étape SEO.
+15 pages fixes + les projets détaillés. URLs indicatives, à confirmer à l'étape SEO.
 
 ### 3.3 Menu principal (validé)
 Menuiseries · Réalisations · **Professionnels** · L'entreprise · Contact + bouton **« Demande de devis »**.
 
 ### 3.4 Règles d'architecture (validé)
-- **Deux regroupements de produits** : « Portes de garage et portails » (fermetures d'accès à la propriété) et « Pergolas et stores » (extérieur, protection solaire). Séparation possible plus tard si le volume le justifie.
+- **Regroupements de produits** : « Portails, portillons et garde-corps » (métallerie extérieure alu) et « Pergolas et stores » (extérieur, protection solaire) ; « Portes de garage » a sa propre page. *Révisé le 30/09/2026 (option A validée) : remplace le regroupement « Portes de garage et portails » suite à l'ajout des garde-corps.* Séparation possible plus tard si le volume le justifie.
 - **Porte-fenêtre** : section de la page Fenêtres, pas de page dédiée.
 - **Neuf / rénovation et matériaux (PVC, bois, alu)** : traités en sections dans chaque page produit, jamais en pages séparées.
 - **Une seule page Professionnels** au lancement, avec une section par profil. Ajout validé : section **locaux commerciaux** (commerces, bureaux, intervention en site occupé).
