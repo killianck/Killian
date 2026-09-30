@@ -456,6 +456,24 @@ function valueOnlyLine(line: string): number | null {
 /** Provenance d'un montant : influe fortement sur la confiance. */
 type Provenance = "observed" | "table" | "computed" | "guessed";
 
+/**
+ * Vrai si une liste de candidats (même montant lu à plusieurs endroits) montre
+ * un désaccord réel — pas juste un arrondi — entre ses valeurs.
+ *
+ * ⚠️ On compare à l'ÉCHELLE en VALEUR ABSOLUE, jamais à `Math.max(...values)`
+ * brut : sur un AVOIR, les montants sont négatifs, et `max` l'est alors aussi.
+ * `spread > 0.05 * max` devient alors `0 > 0.05 * (nombre négatif)`, donc
+ * `0 > négatif` — TOUJOURS vrai, même avec un candidat UNIQUE (spread = 0).
+ * Ça déclenchait « Plusieurs montants TTC possibles » sur un avoir n'ayant
+ * pourtant lu qu'une seule valeur, sans la moindre ambiguïté.
+ */
+function hasSpread(values: number[]): boolean {
+  if (values.length < 2) return false;
+  const spread = Math.max(...values) - Math.min(...values);
+  const scale = Math.max(...values.map(Math.abs));
+  return scale > 0 && spread > 0.05 * scale;
+}
+
 /** Valeur la plus fréquente d'une liste (sinon la plus grande). */
 function mostFrequent(values: number[]): number {
   const count = new Map<number, number>();
@@ -637,17 +655,33 @@ export function extractAmounts(input: string): ExtractedAmounts {
   if (ttcCandidates.length) {
     totalTTC = Math.max(...ttcCandidates);
     provenance.ttc = "observed";
-    if (Math.max(...ttcCandidates) - Math.min(...ttcCandidates) > 0.05 * Math.max(...ttcCandidates)) {
+    if (hasSpread(ttcCandidates)) {
       notes.push("Plusieurs montants « TTC » possibles ont été trouvés — vérifiez le total retenu.");
     }
   }
   if (vatCandidates.length) {
     totalVAT = Math.max(...vatCandidates);
     provenance.vat = "observed";
+    if (hasSpread(vatCandidates)) {
+      notes.push("Plusieurs montants « TVA » possibles ont été trouvés — vérifiez le total retenu.");
+    }
   }
   if (htCandidates.length) {
     totalHT = mostFrequent(htCandidates);
     provenance.ht = "observed";
+    // Même garde-fou que pour le TTC ci-dessus : sur une facture MULTI-LIVRAISON
+    // (plusieurs sections, chacune avec son propre « Montant HT » de section),
+    // htCandidates contient alors PLUSIEURS valeurs distinctes — mostFrequent()
+    // tranche en silence (la plus fréquente, puis la plus grande) vers un
+    // SOUS-TOTAL DE SECTION au lieu du total général. Repéré sur une facture
+    // FUTUROL réelle (FAC0046333, deux livraisons à 1 857,20 € et 972,00 € —
+    // Total HT réel : 2 829,20 €) : la facture avait déjà un avertissement
+    // fortuit (taux implicite invraisemblable), mais rien ne garantit que ce
+    // soit toujours le cas — un htCandidates dispersé doit être signalé pour
+    // lui-même, comme pour le TTC.
+    if (hasSpread(htCandidates)) {
+      notes.push("Plusieurs montants « HT » possibles ont été trouvés — vérifiez le total retenu.");
+    }
   }
 
   // Tableau de totaux (libellés séparés des valeurs).

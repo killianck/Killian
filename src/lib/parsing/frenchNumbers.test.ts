@@ -51,3 +51,19 @@ describe("findMoneyTokens", () => {
     expect(findMoneyTokens("TVA 20%")).toEqual([]);
   });
 });
+
+describe("findMoneyTokens — chiffre collé à un taux « % »", () => {
+  it("lit le Total HT même juste après un taux, séparé par un simple espace de colonne", () => {
+    // Ticket de caisse réel (Castorama) : « V5 TVA 20,00% 17,49 3,50 20,99 »
+    // (code, TVA, taux, Total HT, Montant TVA, Total TTC). 17,49 est le Total HT
+    // — une colonne différente, pas une décoration du taux — et ne doit donc
+    // PAS être exclu au même titre que le taux lui-même.
+    expect(findMoneyTokens("V5 TVA 20,00% 17,49 3,50 20,99")).toEqual([17.49, 3.5, 20.99]);
+  });
+
+  it("ignore toujours un taux vraiment COLLÉ (zéro espace) à la valeur suivante", () => {
+    // Artefact de mise en page dégradée : « 444,90%20.00 » — le 20.00 est le
+    // taux, littéralement soudé au montant sans le moindre espace.
+    expect(findMoneyTokens("Montant TVA 444,90%20.00")).toEqual([444.9]);
+  });
+});

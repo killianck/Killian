@@ -262,3 +262,46 @@ Email : contact@sauvatverre.com`;
     expect(extractSupplier(t)).toBe("NORALIS");
   });
 });
+
+describe("ticket de caisse — taux et Total HT sur la même ligne, un seul espace", () => {
+  it("lit HT/TVA/TTC corrects malgré « 20,00% 17,49 3,50 20,99 » (facture réelle Castorama)", () => {
+    const t = `Référence Description PU HT PU TTC Qté Remise Total TTC TVA
+------------------------------------------------------------------------------------------------------------------
+3253560306571 MESURE BIMATIERE 8M 12,08 14,50 1 14,50 V5
+------------------------------------------------------------------------------------------------------------------
+Total à payer 20,99 €
+CODE TVA Total HT Montant de TVA Total TTC
+V5 TVA 20,00% 17,49 3,50 20,99`;
+    const a = extractAmounts(t);
+    expect(a.totalHT).toBe(17.49);
+    expect(a.totalVAT).toBe(3.5);
+    expect(a.totalTTC).toBe(20.99);
+  });
+});
+
+describe("plusieurs montants HT/TVA possibles — avertissement, jamais silencieux", () => {
+  it("signale une facture multi-livraison dont deux sections ont chacune leur « Montant HT »", () => {
+    // Facture réelle FUTUROL (FAC0046333) : deux livraisons, chacune avec son
+    // propre sous-total « Montant HT ». Avant ce correctif, l'extraction
+    // tranchait EN SILENCE vers le plus grand des deux (un sous-total de
+    // section, pas le vrai total) — comme c'était déjà signalé pour le TTC.
+    const t = `Montant HT                    1 857,20
+Montant HT                    972,00
+Total HT   TVA: 20,00 %   Montant TTC
+2 829,20 €   565,84 €   3 395,04 €`;
+    const a = extractAmounts(t);
+    expect(a.notes.some((n) => /Plusieurs montants « HT »/.test(n))).toBe(true);
+  });
+
+  it("ne signale RIEN quand un seul montant HT/TVA a été lu (même négatif, sur un avoir)", () => {
+    // Bug réel trouvé en écrivant ce correctif : avec un SEUL candidat négatif,
+    // `max - min > 0.05 * max` devient `0 > 0.05 * (négatif)`, donc
+    // `0 > négatif` — toujours vrai. Ça déclenchait « Plusieurs montants TTC
+    // possibles » sur un avoir n'ayant pourtant lu qu'une seule valeur.
+    const t = `Total HT -567,00
+Total TVA 20,0 % -113,40
+Total TTC -680,40`;
+    const a = extractAmounts(t);
+    expect(a.notes.some((n) => /Plusieurs montants/.test(n))).toBe(false);
+  });
+});

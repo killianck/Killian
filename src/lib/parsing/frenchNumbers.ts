@@ -82,11 +82,24 @@ export function findMoneyTokens(line: string): number[] {
   while ((m = MONEY_RE.exec(line))) {
     const v = parseFrAmount(m[0]);
     if (v === null) continue;
-    // ignore un petit nombre collé à « % » (avant ou après) : c'est un taux.
+    // Ignore un petit nombre collé à « % » : c'est un taux, pas un montant
+    // (« 20,00 % » ne doit jamais compter comme 20 €).
+    //
+    // ⚠️ Côté « avant » (un « % » précède immédiatement ce nombre), on exige
+    // qu'il n'y ait STRICTEMENT AUCUN espace entre les deux — un taux vraiment
+    // « collé » façon OCR/mise en page dégradée (« 444,90%20.00 », voir test
+    // ci-dessous). Un espace, même un seul, signale une colonne différente,
+    // pas une décoration du taux : trouvé en reproduisant une vraie erreur sur
+    // un ticket de caisse (Castorama) dont la ligne de récap TVA est
+    // « V5 TVA 20,00% 17,49 3,50 20,99 » (Total HT / Montant TVA / Total TTC).
+    // L'ancien test (avec `\s*`, espace optionnel) excluait alors 17,49 — le
+    // Total HT, séparé du taux par un simple espace de colonne — cassant
+    // l'appariement HT/TVA cohérent et faisant retomber la TVA lue sur 20,99
+    // (le TTC) au lieu de 3,50.
     if (Math.abs(v) <= 30) {
       const after = line.slice(m.index + m[0].length);
       const before = line.slice(0, m.index);
-      if (/^\s*%/.test(after) || /%\s*$/.test(before)) continue;
+      if (/^\s*%/.test(after) || /%$/.test(before)) continue;
     }
     out.push(v);
   }
