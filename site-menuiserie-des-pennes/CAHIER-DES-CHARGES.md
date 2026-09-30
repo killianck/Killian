@@ -176,6 +176,18 @@ Principe : porte d'entrée des professionnels (preuve de capacité très tôt), 
 
 **Exclus** : bloc d'avis (à activer au-delà d'environ 20 avis ≥ 4,5), mur de logos, carrousel, compteurs animés, « devis gratuit » répété, promotions, MaPrimeRénov', FAQ.
 
+### 3.9 Direction artistique et prototype (validé le 30/09/2026, réglages à venir)
+
+Le prototype complet (« menuiserie-des-pennes-prototype.html ») est validé comme base du site, avec des réglages à préciser.
+
+- **Couleurs** : pierre claire #EDECE8 (fond), noir #0B0C0D, anthracite **RAL 7016** #383E42, accent unique sable #C9AE84.
+- **Typographie** : serif fine (accroches, chiffres) · sans-serif moderne (titres, texte) · mono technique en capitales (menu, repères, boutons).
+- **Ergonomie de référence** : usdc.com. **Motif signature** : colonne gauche fixe (grand numéro, barre de progression cliquable, photo) pendant que les éléments défilent à droite — utilisé pour les familles de produits, la méthode, les délais, les solutions produits.
+- **Composants** : cartes 01-04 dépliables (réalisations à la une), lignes dépliables (métiers), avant / après à glisser, filtres de réalisations, devis en 2 étapes avec aiguillage particulier / professionnel.
+- **Photo d'ouverture** : villa de nuit (escabeau à retirer en retouche).
+- **Pages du prototype** : Accueil · Menuiseries + 7 produits · Réalisations + pages projets · Professionnels · L'entreprise · Demande de devis · Contact.
+- Structure d'accueil adaptée par rapport à 3.8 : ouverture · chiffres · orientation pro / particulier · réalisations à la une (cartes) · 7 familles (défilement) · atelier et savoir-faire · méthode en 6 étapes (défilement) · appel final.
+
 ---
 
 ## 4. Points d'attention notés
@@ -204,4 +216,4 @@ Principe : porte d'entrée des professionnels (preuve de capacité très tôt), 
 - [ ] Contenu du site actuel (non consultable depuis l'environnement de travail) — à fournir par copier-coller si besoin.
 
 ## 6. Prochaine étape proposée
-Choisir la prochaine page à concevoir (proposition : Professionnels, puis Nos réalisations).
+Recueillir les réglages du client sur le prototype, puis textes définitifs page par page.
