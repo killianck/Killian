@@ -60,6 +60,8 @@
 | Arguments du client | 20 ans d'expérience, connaissance fine des produits, adaptation au besoin ; petite structure = flexibilité et moins de paperasse ; produits premium ; suivi de chantier ; pose soignée : délais respectés, propreté absolue, finitions parfaites, y compris en **résidences ou locaux commerciaux en activité** |
 | Avis Google | **4,2/5 sur 9 avis** (septembre 2026) |
 | Labels / certifications | Aucun label. **Entreprise référencée auprès du patrimoine de la Ville d'Aix-en-Provence pour la menuiserie extérieure bois** : en rénovation, la mairie peut orienter vers l'entreprise. **Aucun justificatif à ce jour** : ne pas l'afficher tant que la formulation exacte n'est pas confirmée par écrit par l'Atelier du Patrimoine (04 42 91 99 40, atelier_patrimoine@mairie-aixenprovence.fr) |
+| Chiffres 2025 (relevés sur le site actuel, à confirmer) | 82 chantiers · 1 027 fenêtres posées · 28 rénovations |
+| Contact actuel | 06 20 71 13 36 · mdp13@hotmail.fr (adresse e-mail professionnelle sur le domaine recommandée avant la mise en ligne) |
 | Photos transmises | 1 villa contemporaine (vue de nuit éclairée, intérieur avec angle vitré vue mer, vues de rue) |
 
 ---
@@ -167,6 +169,8 @@ Menuiseries · Réalisations · **Professionnels** · L'entreprise · Contact + 
 ---
 
 ## 5. En attente
+
+- [ ] **Plateforme** : nouveau site WordPress 7.1 sur Hostinger (https://menuiseriedespennes-fr-888371.hostingersite.com), quasi vide au 30/09/2026, thème « Hostinger AI theme ». Choix du thème / constructeur à trancher à l'étape développement. Le site de travail est actuellement **indexable** (blog_public = 1) : à passer en « Demander aux moteurs de ne pas indexer » jusqu'à la mise en ligne, avec l'accord du client.
 
 - [ ] Confirmation écrite du référencement patrimoine (Atelier du Patrimoine, Ville d'Aix).
 - [ ] Harmoniser nom / adresse / téléphone / activité sur Google et les annuaires (PagesJaunes décrit du mobilier et de l'agencement intérieur).
