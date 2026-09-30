@@ -158,6 +158,24 @@ Menuiseries · Réalisations · **Professionnels** · L'entreprise · Contact + 
 - Réassurance pros : chiffres de capacité, références, délais, assureur décennal, zone, marques posées, suivi unique.
 - Réassurance particuliers : avis Google (note + nombre + lien), photos réelles, garanties, visite technique, poseurs de l'entreprise, SAV.
 
+### 3.8 Structure de la page d'accueil (validé le 30/09/2026)
+
+Principe : porte d'entrée des professionnels (preuve de capacité très tôt), envie pour le particulier ; **7 sections**, épurées, 600 à 900 mots, un seul H1 (« menuiseries extérieures » + Aix-en-Provence).
+
+| # | Section | Rôle | Visuel |
+|---|---|---|---|
+| — | En-tête | Logo, menu validé, **téléphone visible**, bouton « Demande de devis » ; mobile : barre fixe Appeler + Devis | — |
+| 1 | Ouverture | H1 : menuiseries extérieures, fourniture et pose, Aix-en-Provence / Bouches-du-Rhône ; neuf et rénovation, particuliers et professionnels. CTA « Demande de devis » + lien « Voir nos réalisations » | Villa de nuit (escabeau à retirer) |
+| 2 | Chiffres clés | Depuis 2005 · 82 chantiers en 2025 · 1 027 fenêtres posées · baies jusqu'à 7,80 m (SP10) · atelier à Aix — sobres, sans animation | — |
+| 3 | Orientation | « Vous êtes un professionnel » (→ Professionnels, « Envoyer un projet à chiffrer ») / « Vous êtes un particulier » (→ Nos menuiseries) | Résidence Sindona / villa de Puyricard |
+| 4 | Réalisations à la une | Villa vue mer (nuit) · villa dans la roche · Résidence Sindona · villa de Puyricard ; type, commune, un fait. CTA « Toutes nos réalisations » | Photos de chantier |
+| 5 | Nos menuiseries | 7 familles, une photo réelle chacune, liens vers les pages produits | Photos de chantier |
+| 6 | Atelier et savoir-faire | Fabrication sur mesure à l'atelier (portes, coffres), pose soignée (délais, propreté, finitions, site occupé), fabricants en texte ; patrimoine d'Aix une fois confirmé. CTA « Découvrir l'entreprise » | Photo d'atelier (à produire) ; à défaut porte biométrique ou photo de pose |
+| 7 | Démarrer un projet | Étapes : demande → visite technique → devis sous 48 h → fabrication → pose → SAV ; un seul interlocuteur ; zone en une ligne. CTA « Demande de devis » + téléphone | Sobre |
+| — | Pied de page | Adresse d'Aix, téléphone, e-mail, décennale Generali, liens, lien discret fiche Google, mentions | — |
+
+**Exclus** : bloc d'avis (à activer au-delà d'environ 20 avis ≥ 4,5), mur de logos, carrousel, compteurs animés, « devis gratuit » répété, promotions, MaPrimeRénov', FAQ.
+
 ---
 
 ## 4. Points d'attention notés
@@ -186,4 +204,4 @@ Menuiseries · Réalisations · **Professionnels** · L'entreprise · Contact + 
 - [ ] Contenu du site actuel (non consultable depuis l'environnement de travail) — à fournir par copier-coller si besoin.
 
 ## 6. Prochaine étape proposée
-Structure de la **page d'accueil** (en commençant par les questions au client sur ce qu'il souhaite y voir).
+Choisir la prochaine page à concevoir (proposition : Professionnels, puis Nos réalisations).
