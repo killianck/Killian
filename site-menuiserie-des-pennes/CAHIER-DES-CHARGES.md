@@ -10,6 +10,25 @@
 
 ---
 
+## 0. Où on en est (suivi d'avancement — mis à jour le 01/10/2026)
+
+| Étape | État |
+|---|---|
+| Stratégie et architecture | ✅ Validées |
+| Parcours de visite | ✅ Validés |
+| Structure des pages | ✅ Validée |
+| Direction artistique et prototype | ✅ Validés (réglages possibles à tout moment) |
+| Contenu : textes définitifs | À faire |
+| SEO (titres Google, adresses des pages, mots-clés, fiche Google) | À faire — prochaine étape recommandée (plan SEO avant les textes) |
+| Développement sur WordPress | À faire (thème sur mesure, formulaires, redirections de l'ancien site) |
+| Mise en ligne | À faire (réactiver l'indexation, Search Console, fiche Google) |
+
+**Côté client, en parallèle** : collecte d'avis Google · e-mail à l'Atelier du Patrimoine · photos (atelier, équipe, galandages terminés, pergola, avant/pendant/après) · liste des chantiers avec communes.
+
+**Préférence de collaboration** : ne plus envoyer de PDF ni de ZIP sauf demande explicite.
+
+---
+
 ## 1. Cadre de travail
 
 - **Méthode** : une problématique → une décision → une validation → étape suivante. Jamais tout le site d'un coup.
