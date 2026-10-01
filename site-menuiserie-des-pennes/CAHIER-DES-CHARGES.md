@@ -229,6 +229,7 @@ Le prototype complet (« menuiserie-des-pennes-prototype.html ») est validé co
 - « Sans sous-traitance » dès l'ouverture, pastille à l'étape Pose, point « Nos propres poseurs ».
 - Bandeau capacité : phrase validée « Assez structurés pour un programme de logements, assez souples pour une villa sur mesure. » · 82 chantiers en 2025 · 1 027 fenêtres · 22 logements (Marseille) · baie 7,80 m SP10.
 - **Immeuble cours Lieutaud, Marseille** : **22 logements** (confirmé), levage à la mini-grue ; **pas de photo** → cité dans le texte uniquement (pas de page réalisation).
+- Section « Avec qui nous travaillons » refaite en pleine largeur (retour client : trop vide / trop petite) : titre + phrase d'intro, 4 métiers en grandes lignes numérotées 01-04, grande photo à l'ouverture.
 - Appels d'offres : « Nous répondons aussi à des appels d'offres, publics comme privés » (non systématique).
 - Documents sur demande : fiches techniques, PV d'essais, attestation décennale.
 - **Clients cités** (décision client du 01/10/2026, sans accord préalable ; retrait sur simple demande d'un client) : EPC Travaux, Villas Bois Provence, Altea, Mairie d’Aix-en-Provence. Ligne texte « Ils nous ont confié des chantiers », sans logo, sous les projets de la page Professionnels.
