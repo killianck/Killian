@@ -61,7 +61,7 @@
 | Avis Google | **4,2/5 sur 9 avis** (septembre 2026) |
 | Labels / certifications | Aucun label. **Entreprise référencée auprès du patrimoine de la Ville d'Aix-en-Provence pour la menuiserie extérieure bois** : en rénovation, la mairie peut orienter vers l'entreprise. **Aucun justificatif à ce jour** : ne pas l'afficher tant que la formulation exacte n'est pas confirmée par écrit par l'Atelier du Patrimoine (04 42 91 99 40, atelier_patrimoine@mairie-aixenprovence.fr) |
 | Chiffres 2025 (confirmés par le client, formulation modifiable) | 82 chantiers · 1 027 fenêtres posées · 28 rénovations |
-| Contact actuel | 06 20 71 13 36 · mdp13@hotmail.fr (adresse e-mail professionnelle sur le domaine recommandée avant la mise en ligne) |
+| Contact | 06 20 71 13 36 · **mdp13@hotmail.fr** (adresse à afficher sur le site, choix du client du 01/10/2026) |
 | Produits complémentaires (ajout) | **Garde-corps** (confirmé le 30/09/2026) — page « Portails, portillons et garde-corps » (option A validée) |
 | Référence citable | **Mairie de Fos-sur-Mer** (12 logements) — citable selon le client, à confirmer par écrit si possible |
 | Photos retouchées | Les fichiers « chatgpt-image » sont de **vraies photos de chantier retouchées** (ciel, lumière, nettoyage). Règle : retouche d'ambiance autorisée, **aucune modification des menuiseries ni du bâti**, originaux conservés |
@@ -185,6 +185,7 @@ Le prototype complet (« menuiserie-des-pennes-prototype.html ») est validé co
 - **Ergonomie de référence** : usdc.com. **Motif signature** : colonne gauche fixe (grand numéro, barre de progression cliquable, photo) pendant que les éléments défilent à droite — utilisé pour les familles de produits, la méthode, les délais, les solutions produits.
 - **Composants** : cartes 01-04 dépliables (réalisations à la une), lignes dépliables (métiers), avant / après à glisser, filtres de réalisations, devis en 2 étapes avec aiguillage particulier / professionnel.
 - **Photo d'ouverture** : villa de nuit (escabeau à retirer en retouche).
+- **Phrase de la section chiffres (accueil)** : « Un atelier à Aix, une équipe spécialisée dans la pose, et une seule personne qui suit votre projet du devis à la pose. » (réglage client du 01/10/2026)
 - **Pages du prototype** : Accueil · Menuiseries + 7 produits · Réalisations + pages projets · Professionnels · L'entreprise · Demande de devis · Contact.
 - Structure d'accueil adaptée par rapport à 3.8 : ouverture · chiffres · orientation pro / particulier · réalisations à la une (cartes) · 7 familles (défilement) · atelier et savoir-faire · méthode en 6 étapes (défilement) · appel final.
 
