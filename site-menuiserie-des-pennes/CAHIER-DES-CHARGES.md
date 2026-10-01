@@ -20,10 +20,12 @@
 | Direction artistique et prototype | ✅ Validés (réglages possibles à tout moment) |
 | Contenu : textes définitifs | À faire |
 | SEO (titres Google, adresses des pages, mots-clés, fiche Google) | À faire — prochaine étape recommandée (plan SEO avant les textes) |
-| Développement sur WordPress | À faire (thème sur mesure, formulaires, redirections de l'ancien site) |
+| Développement sur WordPress | **En cours** — thème sur mesure « Menuiserie des Pennes » installé en **brouillon** (non publié, visible uniquement via le lien d'aperçu), reprenant le prototype validé. Reste : formulaires réels, textes définitifs, SEO, redirections de l'ancien site |
 | Mise en ligne | À faire (réactiver l'indexation, Search Console, fiche Google) |
 
 **Côté client, en parallèle** : collecte d'avis Google · e-mail à l'Atelier du Patrimoine · photos (atelier, équipe, galandages terminés, pergola, avant/pendant/après) · liste des chantiers avec communes.
+
+**Site de travail** : le thème est en brouillon WPVibe ; les visiteurs voient toujours l'ancien thème Hostinger, et l'indexation reste désactivée. **Ne pas publier le brouillon sans accord explicite et sauvegarde préalable.**
 
 **Préférence de collaboration** : ne plus envoyer de PDF ni de ZIP sauf demande explicite.
 
