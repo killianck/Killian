@@ -221,7 +221,8 @@ Le prototype complet (« menuiserie-des-pennes-prototype.html ») est validé co
 - **Fabricants cités sur l'accueil** (accord) : Noralis, Novelis, Laloi, Menuiseries Combes, Porte Gervais, Futurol.
 - **Villa contemporaine (photo de nuit) : Céreste (04)** — hors 13, illustre l'intervention en région PACA.
 - Méthode : le délai de 48 h porte sur la **première réponse** (étape 1), le devis détaillé vient après la visite.
-- Reste en jaune : photo pergolas / stores, mention patrimoine d'Aix (après confirmation écrite).
+- Pergolas et stores : **photo d'illustration provisoire** (Unsplash, Cesar Cid, média ID 201), légendée « Photo d'illustration » — accord client du 01/10/2026 ; à remplacer par une pergola posée par l'entreprise dès réception.
+- Reste en jaune : mention patrimoine d'Aix (après confirmation écrite ; e-mail à l'Atelier du Patrimoine rédigé, envoi par le client).
 
 ---
 
