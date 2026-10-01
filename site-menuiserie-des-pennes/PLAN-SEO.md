@@ -51,7 +51,7 @@
 | `/mentions-legales` | `/mentions-legales/` (page à créer) |
 | 13 pages de démonstration (casquette, sérum, chaise, pull, cours de langue…) | **410 (supprimées)** |
 
-⚠ Constat : le plan du site actuel déclare 13 produits de démonstration du constructeur Hostinger. À supprimer dès maintenant dans l'ancien site.
+⚠ Constat : le plan du site actuel déclare 13 produits de démonstration du constructeur Hostinger. Décision du 01/10/2026 : pas de suppression manuelle, l'ancien site sera remplacé ; ces adresses répondront 410 au lancement. Ne supprimer l'ancien site qu'une fois le nouveau branché sur le domaine.
 
 ## 4. Technique (thème + AIOSEO)
 
