@@ -227,7 +227,7 @@ Le prototype complet (« menuiserie-des-pennes-prototype.html ») est validé co
 ### 3.11 Textes de la page Professionnels (01/10/2026, intégrés au site)
 
 - « Sans sous-traitance » dès l'ouverture, pastille à l'étape Pose, point « Nos propres poseurs ».
-- Bandeau capacité : « Des chantiers de toutes tailles, de la villa à l'immeuble de logements, cours Lieutaud à Marseille » · 82 chantiers en 2025 · 1 027 fenêtres · 22 logements (Marseille) · baie 7,80 m SP10.
+- Bandeau capacité : phrase validée « Assez structurés pour un programme de logements, assez souples pour une villa sur mesure. » · 82 chantiers en 2025 · 1 027 fenêtres · 22 logements (Marseille) · baie 7,80 m SP10.
 - **Immeuble cours Lieutaud, Marseille** : **22 logements** (confirmé), levage à la mini-grue ; **pas de photo** → cité dans le texte uniquement (pas de page réalisation).
 - Appels d'offres : « Nous répondons aussi à des appels d'offres, publics comme privés » (non systématique).
 - Documents sur demande : fiches techniques, PV d'essais, attestation décennale.
