@@ -19,7 +19,7 @@
 | Structure des pages | ✅ Validée |
 | Direction artistique et prototype | ✅ Validés (réglages possibles à tout moment) |
 | Contenu : textes définitifs | À faire |
-| SEO (titres Google, adresses des pages, mots-clés, fiche Google) | **En cours** — plan dans [`PLAN-SEO.md`](./PLAN-SEO.md). Option B validée : 22 vraies pages WordPress **privées** (IDs 177 à 198) avec titre, description et mot-clé saisis dans All in One SEO, modifiables par le client. Reste : réglages globaux AIOSEO, données structurées, plan du site, fiche Google |
+| SEO (titres Google, adresses des pages, mots-clés, fiche Google) | **En cours** — plan dans [`PLAN-SEO.md`](./PLAN-SEO.md). Option B validée : 22 vraies pages WordPress **privées** (IDs 177 à 198) avec titre, description et mot-clé saisis dans All in One SEO, modifiables par le client. Réglages globaux AIOSEO faits (organisation, logo, téléphone, e-mail, date de création, séparateur « · », fil d'Ariane en français, image de partage par défaut, plan du site limité aux pages et sans les 14 anciennes pages Hostinger). Reste : données structurées locales (thème), profils sociaux / fiche Google, Search Console au lancement |
 | Développement sur WordPress | **En cours** — thème sur mesure « Menuiserie des Pennes » installé en **brouillon** (non publié, visible uniquement via le lien d'aperçu), reprenant le prototype validé. Reste : formulaires réels, textes définitifs, SEO, redirections de l'ancien site |
 | Mise en ligne | À faire (réactiver l'indexation, Search Console, fiche Google) |
 

@@ -55,6 +55,7 @@
 
 ## 4. Technique (thème + AIOSEO)
 
+- ✅ Fait le 01/10/2026 : nom du site, 22 pages privées renseignées, réglages globaux AIOSEO (organisation, logo ID 199, +33 6 20 71 13 36, mdp13@hotmail.fr, fondation 2005-01-05, séparateur « · », fil d'Ariane « Accueil › … », image de partage par défaut = villa de nuit, plan du site = pages uniquement, anciennes pages 163 à 176 exclues, flux RSS et plan HTML désactivés, archives auteur / date désactivées).
 - Nom du site WordPress : « Menuiserie des Pennes » (aujourd'hui : l'adresse technique).
 - AIOSEO : organisation (nom, téléphone, e-mail, logo), séparateur, réseaux sociaux ; balises Open Graph avec photo de chantier par page.
 - Balisage : `HomeAndConstructionBusiness` (adresse, géolocalisation, téléphone, `areaServed` Bouches-du-Rhône / PACA, `foundingDate` 2005) sur accueil / entreprise / contact ; `Service` sur chaque famille ; `CreativeWork` + `ImageObject` sur chaque réalisation ; `BreadcrumbList` partout. Pas d'avis balisés.
