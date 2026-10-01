@@ -231,7 +231,7 @@ Le prototype complet (« menuiserie-des-pennes-prototype.html ») est validé co
 - **Immeuble cours Lieutaud, Marseille** : **22 logements** (confirmé), levage à la mini-grue ; **pas de photo** → cité dans le texte uniquement (pas de page réalisation).
 - Appels d'offres : « Nous répondons aussi à des appels d'offres, publics comme privés » (non systématique).
 - Documents sur demande : fiches techniques, PV d'essais, attestation décennale.
-- **Clients cités** (décision client du 01/10/2026, sans accord préalable ; retrait sur simple demande d'un client) : EPC Travaux, Villas Bois Provence, Mairie d'Aix-en-Provence. Ligne texte « Ils nous ont confié des chantiers », sans logo, sous les projets de la page Professionnels.
+- **Clients cités** (décision client du 01/10/2026, sans accord préalable ; retrait sur simple demande d'un client) : EPC Travaux, Villas Bois Provence, Altea, Mairie d’Aix-en-Provence. Ligne texte « Ils nous ont confié des chantiers », sans logo, sous les projets de la page Professionnels.
 
 ---
 
