@@ -212,6 +212,17 @@ Le prototype complet (« menuiserie-des-pennes-prototype.html ») est validé co
 - **Pages du prototype** : Accueil · Menuiseries + 7 produits · Réalisations + pages projets · Professionnels · L'entreprise · Demande de devis · Contact.
 - Structure d'accueil adaptée par rapport à 3.8 : ouverture · chiffres · orientation pro / particulier · réalisations à la une (cartes) · 7 familles (défilement) · atelier et savoir-faire · méthode en 6 étapes (défilement) · appel final.
 
+### 3.10 Textes de la page d'accueil (validés le 01/10/2026, intégrés au site)
+
+- **Ouverture** : « Fenêtres, baies vitrées, portes, volets : nous fournissons et posons vos menuiseries en aluminium, PVC et bois, en construction neuve comme en rénovation. Que vous soyez un particulier ou un professionnel du bâtiment, nous vous répondons sous 48 heures. »
+- **Carte Particulier** : « Construction neuve ou rénovation de votre logement » (« logement » couvre les appartements).
+- **Chiffres 2025 confirmés** : 82 chantiers, 1 027 fenêtres posées.
+- **Poseurs salariés, aucune sous-traitance** (confirmé) → « Une pose soignée, sans sous-traitance » + étape Pose « par nos propres équipes, sans sous-traitance ».
+- **Fabricants cités sur l'accueil** (accord) : Noralis, Novelis, Laloi, Menuiseries Combes, Porte Gervais, Futurol.
+- **Villa contemporaine (photo de nuit) : Céreste (04)** — hors 13, illustre l'intervention en région PACA.
+- Méthode : le délai de 48 h porte sur la **première réponse** (étape 1), le devis détaillé vient après la visite.
+- Reste en jaune : photo pergolas / stores, mention patrimoine d'Aix (après confirmation écrite).
+
 ---
 
 ## 4. Points d'attention notés
