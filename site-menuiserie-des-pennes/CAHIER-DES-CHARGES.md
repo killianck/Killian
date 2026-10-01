@@ -206,7 +206,7 @@ Le prototype complet (« menuiserie-des-pennes-prototype.html ») est validé co
 - **Couleurs** : pierre claire #EDECE8 (fond), noir #0B0C0D, anthracite **RAL 7016** #383E42, accent unique sable #C9AE84.
 - **Typographie** : serif fine (accroches, chiffres) · sans-serif moderne (titres, texte) · mono technique en capitales (menu, repères, boutons).
 - **Ergonomie de référence** : usdc.com. **Motif signature** : colonne gauche fixe (grand numéro, barre de progression cliquable, photo) pendant que les éléments défilent à droite — utilisé pour les familles de produits, la méthode, les délais, les solutions produits.
-- **Composants** : cartes 01-04 dépliables (réalisations à la une), lignes dépliables (métiers), avant / après à glisser, filtres de réalisations, devis en 2 étapes avec aiguillage particulier / professionnel.
+- **Composants** : cartes 01-04 dépliables (réalisations à la une ; cartes fermées avec photo assombrie au lieu d'un fond noir, demande client du 01/10/2026), lignes dépliables (métiers), avant / après à glisser, filtres de réalisations, devis en 2 étapes avec aiguillage particulier / professionnel.
 - **Photo d'ouverture** : villa de nuit (escabeau à retirer en retouche).
 - **Phrase de la section chiffres (accueil)** : « Un atelier à Aix, une équipe spécialisée dans la pose, et une seule personne qui suit votre projet du devis à la pose. » (réglage client du 01/10/2026)
 - **Pages du prototype** : Accueil · Menuiseries + 7 produits · Réalisations + pages projets · Professionnels · L'entreprise · Demande de devis · Contact.
