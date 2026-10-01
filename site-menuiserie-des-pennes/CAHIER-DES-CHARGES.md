@@ -224,6 +224,15 @@ Le prototype complet (« menuiserie-des-pennes-prototype.html ») est validé co
 - Pergolas et stores : **photo d'illustration provisoire** (Unsplash, Cesar Cid, média ID 201), légendée « Photo d'illustration » — accord client du 01/10/2026 ; à remplacer par une pergola posée par l'entreprise dès réception.
 - Reste en jaune : mention patrimoine d'Aix (après confirmation écrite ; e-mail à l'Atelier du Patrimoine rédigé, envoi par le client).
 
+### 3.11 Textes de la page Professionnels (01/10/2026, intégrés au site)
+
+- « Sans sous-traitance » dès l'ouverture, pastille à l'étape Pose, point « Nos propres poseurs ».
+- Bandeau capacité : « Des chantiers de toutes tailles, de la villa à l'immeuble de logements, cours Lieutaud à Marseille » · 82 chantiers en 2025 · 1 027 fenêtres · ≈ 20 logements (Marseille) · baie 7,80 m SP10.
+- **Immeuble cours Lieutaud, Marseille** : une vingtaine de logements, levage à la mini-grue ; **pas de photo** → cité dans le texte uniquement (pas de page réalisation). Nombre exact de logements à confirmer.
+- Appels d'offres : « Nous répondons aussi à des appels d'offres, publics comme privés » (non systématique).
+- Documents sur demande : fiches techniques, PV d'essais, attestation décennale.
+- **Clients citables (en attente d'accord écrit)** : EPC Travaux, Villas Bois Provence, Mairie d'Aix-en-Provence. Ligne « Ils nous font confiance » en texte, sans logo, à afficher seulement après accord.
+
 ---
 
 ## 4. Points d'attention notés
