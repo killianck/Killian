@@ -259,6 +259,15 @@ Le prototype complet (« menuiserie-des-pennes-prototype.html ») est validé co
 - FAQ ajoutée : levage des vitrages lourds (mini-grue, nos propres équipes).
 - Pied de page : lien « Nos avis Google » branché sur la fiche (kgmid=/g/1tjbbcnd).
 
+### 3.15 Page Portes d'entrée (02/10/2026, intégrée au site)
+
+- Matériaux : aluminium, bois, acier. **Jamais de porte d'entrée en PVC** ; portes de service PVC possibles (FAQ uniquement).
+- Fabricants : Porte Gervais · Portes-EO · Zilten · Tordjman Métal · Technicdoor (orthographes confirmées) + fabrication atelier.
+- Délais : 5 à 12 semaines. **Aucune mention de certification** (A2P, etc.).
+- Section « chiffres » refusée par le client (pas pertinente) → remplacée par **« La porte qui signe votre façade »** : 3 photos d'exemples (Aluminium et frêne · **Sur pivot** · Acier vitrée) + carte « Et bien d'autres modèles » qui précise qu'il s'agit d'exemples parmi un large catalogue → lien devis.
+- Photos à améliorer quand possible : porte sur pivot finie (actuelle prise en chantier), gros plan porte frêne, portes Gervais de Fos.
+- Lien d'aperçu renouvelé le 02/10/2026 (l'ancien a expiré).
+
 ---
 
 ## 4. Points d'attention notés
