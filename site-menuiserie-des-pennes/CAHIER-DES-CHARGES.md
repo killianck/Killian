@@ -277,7 +277,8 @@ Le prototype complet (« menuiserie-des-pennes-prototype.html ») est validé co
 - Photo fournie par le client (persiennes bois, façade provençale, média ID 202, copie dans `photos/`) : grand visuel + 1er exemple.
 - Tableau vide remplacé par la galerie « Des volets assortis à votre façade » : persiennes bois · battants bois laqués (Fos) · carte « Et bien d'autres modèles ».
 - FAQ ajoutée : volets roulants solaires, volets assortis aux fenêtres.
-- **Photo manquante** : un volet roulant posé (idéalement le 6 m de la Résidence Sindona).
+- Photo persiennes **retouchée** (lumière, couleurs, netteté, rien d'ajouté ; média ID 204).
+- Volet roulant : photo envoyée par le client (375 px, agrandie ×3, média ID 203), légendée **« Photo d'illustration »** en attendant de connaître son origine (catalogue fabricant ?). À remplacer par une photo de chantier (idéalement le 6 m de Sindona).
 
 ---
 
