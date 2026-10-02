@@ -244,6 +244,12 @@ Le prototype complet (« menuiserie-des-pennes-prototype.html ») est validé co
 - FAQ secteur sauvegardé : « Oui, régulièrement. Nous sommes habitués à travailler dans le centre historique d'Aix-en-Provence… » (sans préciser le matériau).
 - Les 6 autres pages produit gardent provisoirement l'ancien tableau, à traiter page par page.
 
+### 3.13 Chiffres : une seule page par type d'information (02/10/2026)
+
+- **Accueil uniquement** : chiffres d'activité (2005 · 82 chantiers en 2025 · 1 027 fenêtres en 2025 · baie 7,80 m SP10).
+- **Professionnels** : références de capacité (22 logements cours Lieutaud, Marseille · 12 logements Fos-sur-Mer · 12 appartements Résidence Sindona · 31 menuiseries sur une villa).
+- **L'entreprise** : date de création 2005 · région d'intervention Provence-Alpes-Côte d'Azur · capital social 100 000 € (SAS) · atelier à Aix-en-Provence. « 28 rénovations en 2025 » retiré du site.
+
 ---
 
 ## 4. Points d'attention notés
