@@ -269,6 +269,16 @@ Le prototype complet (« menuiserie-des-pennes-prototype.html ») est validé co
 - Photos à améliorer quand possible : porte sur pivot finie (actuelle prise en chantier), gros plan porte frêne, portes Gervais de Fos.
 - Lien d'aperçu renouvelé le 02/10/2026 (l'ancien a expiré).
 
+### 3.16 Page Volets (02/10/2026, intégrée au site)
+
+- **Pas de volets en PVC.** Roulants motorisés **ou solaires** ; battants et persiennes bois ou alu ; coffres atelier jusqu'à 6 m.
+- Fabricants : volets roulants **Futurol · Sothoferm · David Fermeture** ; volets bois **France Volet** (ajoutés au bandeau du site).
+- Délais 5 à 8 semaines (confirmé).
+- Photo fournie par le client (persiennes bois, façade provençale, média ID 202, copie dans `photos/`) : grand visuel + 1er exemple.
+- Tableau vide remplacé par la galerie « Des volets assortis à votre façade » : persiennes bois · battants bois laqués (Fos) · carte « Et bien d'autres modèles ».
+- FAQ ajoutée : volets roulants solaires, volets assortis aux fenêtres.
+- **Photo manquante** : un volet roulant posé (idéalement le 6 m de la Résidence Sindona).
+
 ---
 
 ## 4. Points d'attention notés
