@@ -242,13 +242,21 @@ Le prototype complet (« menuiserie-des-pennes-prototype.html ») est validé co
 - Le tableau de performances vide est **remplacé par un comparatif PVC / Aluminium / Bois** (ton premium : « Trois matériaux, une même exigence de pose »), sans dévaloriser le PVC, sans promesse technique non validée. Ne **pas** écrire « seul matériau autorisé en secteur sauvegardé ».
 - Mention : « Sur demande, nous vous fournissons la fiche technique du produit lors du devis » (pas d'envoi automatique).
 - FAQ secteur sauvegardé : « Oui, régulièrement. Nous sommes habitués à travailler dans le centre historique d'Aix-en-Provence… » (sans préciser le matériau).
-- Les 6 autres pages produit gardent provisoirement l'ancien tableau, à traiter page par page.
+- Les autres pages produit gardent provisoirement l'ancien tableau, à traiter page par page.
 
 ### 3.13 Chiffres : une seule page par type d'information (02/10/2026)
 
 - **Accueil uniquement** : chiffres d'activité (2005 · 82 chantiers en 2025 · 1 027 fenêtres en 2025 · baie 7,80 m SP10).
 - **Professionnels** : engagements (48 h première réponse · 5 à 8 sem. de fabrication · 0 sous-traitance · 1 seul interlocuteur). Version « références de capacité » refusée par le client.
 - **L'entreprise** : date de création 2005 · région d'intervention Provence-Alpes-Côte d'Azur · capital social 100 000 € (SAS) · atelier à Aix-en-Provence. « 28 rénovations en 2025 » retiré du site.
+
+### 3.14 Page Baies vitrées et coulissants (02/10/2026, intégrée au site)
+
+- Baies **en aluminium** (Laloi · Noralis · Novelis · K-Line) ; gamme bois possible **sur demande, rare**.
+- **Pas de motorisation** des baies (ne pas la mentionner). **Seuil encastré** possible.
+- Tableau de performances remplacé par « Les grandes ouvertures, notre spécialité » : 7,80 m (villa aux 31 menuiseries) · 6 m (Résidence Sindona) · sans poteau (villa contemporaine, Céreste) ; chaque colonne renvoie au chantier.
+- FAQ ajoutée : levage des vitrages lourds (mini-grue, nos propres équipes).
+- Pied de page : lien « Nos avis Google » branché sur la fiche (kgmid=/g/1tjbbcnd).
 
 ---
 
