@@ -235,6 +235,15 @@ Le prototype complet (« menuiserie-des-pennes-prototype.html ») est validé co
 - Documents sur demande : fiches techniques, PV d'essais, attestation décennale.
 - **Clients cités** (décision client du 01/10/2026, sans accord préalable ; retrait sur simple demande d'un client) : EPC Travaux, Villas Bois Provence, Altea, Mairie d’Aix-en-Provence. Ligne texte « Ils nous ont confié des chantiers », sans logo, sous les projets de la page Professionnels.
 
+### 3.12 Page Fenêtres et portes-fenêtres (02/10/2026, intégrée au site)
+
+- **Fabricants par matériau (confirmés)** : Aluminium = Laloi, Noralis, Novelis, **K-Line** · PVC = Noralis, Novelis · Bois = **Molenat**, Menuiseries Combes. Bandeau des fabricants du site mis à jour (ajout K-Line, Molenat).
+- Les trois matériaux sont posés **chez les particuliers comme en collectif** ; le PVC est posé **en blanc**.
+- Le tableau de performances vide est **remplacé par un comparatif PVC / Aluminium / Bois** (ton premium : « Trois matériaux, une même exigence de pose »), sans dévaloriser le PVC, sans promesse technique non validée. Ne **pas** écrire « seul matériau autorisé en secteur sauvegardé ».
+- Mention : « Sur demande, nous vous fournissons la fiche technique du produit lors du devis » (pas d'envoi automatique).
+- FAQ secteur sauvegardé : « Oui, régulièrement. Nous sommes habitués à travailler dans le centre historique d'Aix-en-Provence… » (sans préciser le matériau).
+- Les 6 autres pages produit gardent provisoirement l'ancien tableau, à traiter page par page.
+
 ---
 
 ## 4. Points d'attention notés
