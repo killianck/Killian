@@ -265,7 +265,7 @@ Le prototype complet (« menuiserie-des-pennes-prototype.html ») est validé co
 - Fabricants : Porte Gervais · Portes-EO · Zilten · Tordjman Métal · Technicdoor (orthographes confirmées) + fabrication atelier.
 - Délais : 5 à 12 semaines. **Aucune mention de certification** (A2P, etc.).
 - Section « chiffres » refusée par le client (pas pertinente) → remplacée par **« La porte qui signe votre façade »** : 3 photos d'exemples (Aluminium et frêne · **Sur pivot** · Acier vitrée) + carte « Et bien d'autres modèles » qui précise qu'il s'agit d'exemples parmi un large catalogue → lien devis.
-- **Haut de page (demande client)** : pas de bandeau photo (le bandeau deux photos a été jugé « très moche ») ; la galerie de portes est placée directement sous le titre, **porte acier vitrée en premier**. Les cartes « Nos réalisations » de cette page affichent la photo de la porte et non la villa. Photo de la famille Portes (accueil / Menuiseries) : porte acier vitrée, cadrée sur la porte.
+- **Haut de page (demande client)** : pas de bandeau photo (le bandeau deux photos a été jugé « très moche ») ; la galerie de portes est placée directement sous le titre, **porte acier vitrée en premier**. Section « Nos réalisations / Posées par nos équipes » **supprimée sur cette page** (doublon avec la galerie, qui renvoie déjà aux chantiers). Photo de la famille Portes (accueil / Menuiseries) : porte acier vitrée, cadrée sur la porte.
 - Photos à améliorer quand possible : porte sur pivot finie (actuelle prise en chantier), gros plan porte frêne, portes Gervais de Fos.
 - Lien d'aperçu renouvelé le 02/10/2026 (l'ancien a expiré).
 
