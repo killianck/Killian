@@ -169,7 +169,8 @@ Menuiseries · Réalisations · **Professionnels** · L'entreprise · Contact + 
 **CTA** :
 - CTA principal unique **« Demande de devis »**, libellé contextualisé : « Envoyer un projet à chiffrer » (Professionnels), « Demander un devis pour vos fenêtres » (produits), « Un projet similaire ? » (réalisations).
 - Page devis : aiguillage **particulier / professionnel** dès le départ ; envoi de plans et fichiers lourds pour les pros.
-- **Téléphone** : CTA secondaire, visible en permanence dans l'en-tête ; sur mobile, barre fixe « Appeler » + « Demande de devis ».
+- **Téléphone** : CTA secondaire, visible en permanence dans l'en-tête ; sur mobile, barre fixe « Appeler » + « E-mail » + « Devis ».
+- **Règle (client, 02/10/2026)** : partout où le téléphone est proposé, l'e-mail l'est aussi (en-tête, menu mobile, barre mobile, appels finaux, en-têtes Produits et Professionnels, page Devis, pied de page, Contact).
 - **Pas de prise de rendez-vous en ligne** comme CTA principal.
 
 **Trois engagements** placés au plus près des CTA (sous le formulaire, bas des pages Professionnels et produits, méthode dans L'entreprise) :
