@@ -335,7 +335,7 @@ Le prototype complet (« menuiserie-des-pennes-prototype.html ») est validé co
 
 - **Villa dans la roche en tête** (grande carte), puis l'ordre habituel.
 - Note de travail « Filtres prévus… » retirée ; mention « photographe à créditer » masquée sur les fiches.
-- **Filtres Neuf / Rénovation** ajoutés. Classés : Appartement Joliette et Villa dans la roche = rénovation ; Résidence Sindona et Maison provençale = neuf. **À classer** (absents des deux filtres en attendant) : Villa contemporaine, Villa des galandages, 12 logements Fos, Villa minimaliste, Maison à la porte de frêne.
+- **Filtres Neuf / Rénovation** ajoutés. Classés : Appartement Joliette et Villa dans la roche = rénovation ; Résidence Sindona et Maison provençale = neuf. **Neuf aussi** (confirmé par le client sur photos) : Villa contemporaine, Villa des galandages, 12 logements Fos, Villa minimaliste, Maison à la porte de frêne.
 - Champs inconnus (**commune, année**) **masqués** au lieu d'afficher « à fournir ».
 - Noms jugés « moches » par le client, renommés : « Porte fabriquée à l'atelier » → **« Maison à la porte de frêne »** ; « Villa aux 31 menuiseries » → **« Villa des galandages »** (partout : fiches, pages Baies et Portes, pages privées SEO 194 et 197). Adresses `/realisations/porte-atelier/` et `/realisations/villa-31-menuiseries/` inchangées pour l'instant.
 
