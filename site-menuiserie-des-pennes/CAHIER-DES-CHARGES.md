@@ -281,7 +281,7 @@ Le prototype complet (« menuiserie-des-pennes-prototype.html ») est validé co
 - Photo persiennes **retouchée** (lumière, couleurs, netteté, rien d'ajouté ; média ID 204).
 - 05/10/2026 : **galerie limitée à 2 catégories** : **Volet battant** (photo persiennes) et **Volet roulant** + carte « Et bien d'autres modèles » (3 colonnes). « Battants bois laqués » (Fos) retiré.
 - Volet roulant : la photo envoyée (375 px, média ID 203) était trop floue → remplacée par la villa dans la roche (Marseille), cadrée sur la fenêtre et son volet roulant, avec lien vers le chantier.
-- Réalisations de la page : « Maison provençale » retirée (aucun volet visible) → remplacée par la villa contemporaine de Céreste ; « volets » retiré des produits de la Maison provençale.
+- Réalisations de la page : « Maison provençale » retirée (aucun volet visible) et villa contemporaine de Céreste non plus (pas de volet visible) → remplacées par la **villa dans la roche** (Marseille) ; « volets » retiré des produits de ces deux maisons et ajouté à la villa dans la roche. Baies : la mention « volets roulants assortis » de Céreste est retirée.
 
 ---
 
