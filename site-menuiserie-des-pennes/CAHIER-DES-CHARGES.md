@@ -306,6 +306,14 @@ Le prototype complet (« menuiserie-des-pennes-prototype.html ») est validé co
 - Réalisations : Résidence Sindona · Villa dans la roche.
 - FAQ : motorisation + interphone, garde-corps de balcon, normes, copropriétés, délais.
 
+### 3.19 Page Pergolas et stores (05/10/2026, intégrée au site)
+
+- Page **simple** : pergolas bioclimatiques, stores bannes, stores verticaux, brise-soleil et autres. **Alu et bois.** Le brise-soleil red cedar de la villa dans la roche est bien une réalisation de l'entreprise.
+- **Ne pas citer de fabricants.** Délais 5 à 8 semaines.
+- Comme Portes de garage : galerie « Vivre dehors, à l'ombre » (Pergola bioclimatique · Store banne · Store vertical) avec visuels dessinés **« En chantier »** + carte « Et bien d'autres modèles » (brise-soleil…) ; bas : « Matériaux : Aluminium · Bois ».
+- Sections « Nos réalisations » et « Les solutions possibles » retirées ; en-tête : photo d'illustration pergola (Unsplash) conservée.
+- FAQ : autorisation (déclaration préalable, à confirmer : l'entreprise monte-t-elle le dossier ?), délais.
+
 ---
 
 ## 4. Points d'attention notés
