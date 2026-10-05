@@ -339,6 +339,12 @@ Le prototype complet (« menuiserie-des-pennes-prototype.html ») est validé co
 - Champs inconnus (**commune, année**) **masqués** au lieu d'afficher « à fournir ».
 - Noms jugés « moches » par le client, renommés : « Porte fabriquée à l'atelier » → **« Maison à la porte de frêne »** ; « Villa aux 31 menuiseries » → **« Villa des galandages »** (partout : fiches, pages Baies et Portes, pages privées SEO 194 et 197). Adresses `/realisations/porte-atelier/` et `/realisations/villa-31-menuiseries/` inchangées pour l'instant.
 
+### 3.23 Rectification : pas de fabrication de portes d'entrée (05/10/2026)
+
+- **L'entreprise ne fabrique pas de portes d'entrée.** L'atelier sert aux modifications de menuiseries, aux volets battants, aux coffres de volets roulants, à la peinture et au soudage.
+- Retiré partout : accroche, introduction, solutions, FAQ et fabricants de la page Portes d'entrée ; galerie (« Sur mesure » au lieu de « Fabriquée à l'atelier ») ; fiche « Maison à la porte de frêne » (porte **sur mesure**, dessinée par l'architecte) ; accueil (section atelier : illustration des savoir-faire à la place de la photo de la porte) ; Professionnels ; descriptions Google 186 et 197.
+- Restent techniques (invisibles pour le visiteur, à renommer au lancement si souhaité) : l'adresse `/realisations/porte-atelier/` et le nom du fichier image `porte-entree-aluminium-frene-atelier.webp`.
+
 ---
 
 ## 4. Points d'attention notés
