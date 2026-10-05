@@ -329,7 +329,7 @@ Le prototype complet (« menuiserie-des-pennes-prototype.html ») est validé co
 - Appartement au **6e étage**, quartier de la Joliette (Marseille) : **coulissant aluminium de 12 m assemblé sur place**. Chantier terminé, **pas de photo du produit fini** → photos **prises pendant la pose**, retouchées (lumière, couleurs, netteté, recadrage) **sans ajout ni suppression d'éléments** (médias 206 à 209, copies `photos/joliette-*`).
 - Fiche `/realisations/appartement-joliette/`, titre **« Appartement Joliette »** · Marseille (le client n'aimait pas « Coulissant de 12 m ») ; en tête des réalisations de la page Baies ; 1re colonne « 12 m » de « Les grandes ouvertures, notre spécialité » (la colonne Sindona 6 m est retirée : 12 m · 7,80 m · sans poteau).
 - Filtre des réalisations renommé « Maisons, villas et appartements ».
-- À confirmer : client (« Particulier » supposé), année. À remplacer par des photos du produit fini si le client en obtient.
+- Client : **professionnel**, chantier de **rénovation**, **2024** (confirmé 05/10/2026). À remplacer par des photos du produit fini si le client en obtient.
 
 ---
 
