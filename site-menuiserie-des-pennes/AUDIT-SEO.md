@@ -27,7 +27,7 @@
 
 ### Complément du 05/10 (All in One SEO)
 
-- Titres raccourcis sous 60 caractères : Villa contemporaine, Villa dans la roche, Maison provençale. Descriptions mises à jour : Portails (alu ou acier, garde-corps vitrés), Portes de garage (aluminium), Maison provençale (plus de mention des volets), Villa dans la roche et Céreste (neuf). Reste à valider : Portes d'entrée (« blindées, connectées »).
+- Titres raccourcis sous 60 caractères : Villa contemporaine, Villa dans la roche, Maison provençale. Descriptions mises à jour : Portails (alu ou acier, garde-corps vitrés), Portes de garage (aluminium), Maison provençale (plus de mention des volets), Villa dans la roche et Céreste (neuf). Portes d'entrée : « blindées » conservé, « connectées » retiré (validé client).
 - Les scores AIOSEO « TruSEO » sont à 0 sur les nouvelles pages : c'est normal, l'extension analyse le texte de l'éditeur WordPress, alors que le contenu est affiché par le thème. **Ces scores ne sont pas à suivre.**
 - Version gratuite : pas de gestionnaire de redirections ni de module SEO local (versions payantes). Les redirections 301 / 410 seront faites dans le thème ou le fichier .htaccess. L'éditeur de robots.txt d'AIOSEO servira au lancement.
 
