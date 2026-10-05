@@ -293,6 +293,7 @@ Le prototype complet (« menuiserie-des-pennes-prototype.html ») est validé co
 - FAQ : assortie aux fenêtres, motorisation, remplacement, parking collectif, délais.
 - Grand visuel (en-tête) : porte de garage de la Maison provençale, conservé.
 - **Section « Nos réalisations » retirée** de la page (05/10/2026) : aucune photo de réalisation hormis l'en-tête, à ajouter plus tard avec de plus belles photos.
+- **Section « Les solutions possibles » retirée** aussi (05/10/2026) : la galerie « Trois façons d'ouvrir votre garage » présente déjà les types.
 
 ---
 
