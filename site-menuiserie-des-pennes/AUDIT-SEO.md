@@ -25,6 +25,12 @@
 - Villa dans la roche reclassée en **neuf** (filtre Réalisations).
 - **12 photos PNG converties en WebP** (24,4 Mo → 2,2 Mo, −91 %), avec des noms de fichiers descriptifs (médias 213 à 224). Images de l'accueil : ~1,25 Mo au lieu de ~15 Mo. Le score Lighthouse ne bouge pas (88) : le délai d'affichage vient maintenant des polices Google et du script Tailwind, et de l'absence de cache sur l'aperçu. Reste en PNG : l'image de partage par défaut (réseaux sociaux), sans effet sur la vitesse.
 
+### Complément du 05/10 (All in One SEO)
+
+- Titres raccourcis sous 60 caractères : Villa contemporaine, Villa dans la roche, Maison provençale. Descriptions mises à jour : Portails (alu ou acier, garde-corps vitrés), Portes de garage (aluminium), Maison provençale (plus de mention des volets), Villa dans la roche et Céreste (neuf). Reste à valider : Portes d'entrée (« blindées, connectées »).
+- Les scores AIOSEO « TruSEO » sont à 0 sur les nouvelles pages : c'est normal, l'extension analyse le texte de l'éditeur WordPress, alors que le contenu est affiché par le thème. **Ces scores ne sont pas à suivre.**
+- Version gratuite : pas de gestionnaire de redirections ni de module SEO local (versions payantes). Les redirections 301 / 410 seront faites dans le thème ou le fichier .htaccess. L'éditeur de robots.txt d'AIOSEO servira au lancement.
+
 ## 3. Bloquant au lancement (à faire le jour J, dans cet ordre)
 
 1. **Sauvegarde complète** du site, puis publication du thème (accord écrit du client).
