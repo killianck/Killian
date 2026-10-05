@@ -77,7 +77,8 @@
 | Création | **5 janvier 2005** |
 | Volume | Environ **85 à 100 chantiers par an** (chiffre exact non disponible) |
 | Équipe | Nombre de poseurs : **ne pas communiquer** |
-| Plus grande menuiserie posée | **7,80 m × 2,55 m**, vitrage retardateur d'effraction **SP10** |
+| Plus grande menuiserie posée | **Coulissant de 12 m** de large, assemblé sur place (rectification client du 05/10/2026). Aussi : 2 galandages **7,80 × 2,55 m** SP10 (villa aux 31 menuiseries) |
+| Volets roulants | **4,50 m de large maximum** (05/10/2026) |
 | Assureur décennal | **Generali** |
 | Références clients citables | **Aucune** pour l'instant |
 | Principaux fabricants | Novelis, Noralis, Laloi Menuiseries, Menuiseries Combes (bois), Futurol, Sothoferm (volets), Technicdoor, Porte Gervais, Tordjman Métal (portes blindées), La Toulousaine (portails) — liste non exhaustive ; statut de partenariat à préciser |
@@ -247,7 +248,7 @@ Le prototype complet (« menuiserie-des-pennes-prototype.html ») est validé co
 
 ### 3.13 Chiffres : une seule page par type d'information (02/10/2026)
 
-- **Accueil uniquement** : chiffres d'activité (2005 · 82 chantiers en 2025 · 1 027 fenêtres en 2025 · baie 7,80 m SP10).
+- **Accueil uniquement** : chiffres d'activité (2005 · 82 chantiers en 2025 · 1 027 fenêtres en 2025 · plus grand coulissant posé 12 m — remplace « baie 7,80 m SP10 » le 05/10/2026).
 - **Professionnels** : engagements (48 h première réponse · 5 à 8 sem. de fabrication · 0 sous-traitance · 1 seul interlocuteur). Version « références de capacité » refusée par le client.
 - **L'entreprise** : date de création 2005 · région d'intervention Provence-Alpes-Côte d'Azur · capital social 100 000 € (SAS) · atelier à Aix-en-Provence. « 28 rénovations en 2025 » retiré du site.
 
@@ -272,7 +273,7 @@ Le prototype complet (« menuiserie-des-pennes-prototype.html ») est validé co
 ### 3.16 Page Volets (02/10/2026, intégrée au site)
 
 - **Pas de volets en PVC.** Roulants motorisés **ou solaires** ; battants et persiennes bois ou alu ; coffres sur mesure faits à l'atelier.
-- **Ne pas écrire « coffres jusqu'à 6 m »**, seulement « coffres sur mesure » (05/10/2026, retiré partout : Volets, accueil, entreprise). Le 6 m reste uniquement dans la fiche du chantier Sindona (fait réel).
+- **Ne pas écrire « coffres jusqu'à 6 m »**, seulement « coffres sur mesure » (05/10/2026, retiré partout : Volets, accueil, entreprise). Le 6 m reste uniquement pour le **coulissant** de Sindona (fait réel). **Volets roulants : 4,50 m de large maximum** → les mentions « volet roulant de 6 m / de même largeur » ont été retirées (Sindona, Baies).
 - Fabricants : volets roulants **Futurol · Sothoferm · David Fermeture** ; volets bois **France Volet** (ajoutés au bandeau du site).
 - Délais 5 à 8 semaines (confirmé).
 - Photo fournie par le client (persiennes bois, façade provençale, média ID 202, copie dans `photos/`) : grand visuel + 1er exemple.
