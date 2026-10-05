@@ -324,6 +324,13 @@ Le prototype complet (« menuiserie-des-pennes-prototype.html ») est validé co
 - Garanties : décennale Generali, « attestation fournie sur demande » (pas de n° de contrat) ; garanties fabricants « selon les produits et les composants » (pas de durées).
 - Bandeau photo d'en-tête (villa contemporaine) conservé en attendant l'avis du client.
 
+### 3.21 Réalisation « Coulissant de 12 m » · La Joliette, Marseille (05/10/2026, intégrée)
+
+- Appartement au **6e étage**, quartier de la Joliette (Marseille) : **coulissant aluminium de 12 m assemblé sur place**. Chantier terminé, **pas de photo du produit fini** → photos **prises pendant la pose**, retouchées (lumière, couleurs, netteté, recadrage) **sans ajout ni suppression d'éléments** (médias 206 à 209, copies `photos/joliette-*`).
+- Nouvelle fiche `/realisations/coulissant-12-m-la-joliette/` ; en tête des réalisations de la page Baies ; 1re colonne « 12 m » de « Les grandes ouvertures, notre spécialité » (la colonne Sindona 6 m est retirée : 12 m · 7,80 m · sans poteau).
+- Filtre des réalisations renommé « Maisons, villas et appartements ».
+- À confirmer : client (« Particulier » supposé), année. À remplacer par des photos du produit fini si le client en obtient.
+
 ---
 
 ## 4. Points d'attention notés
