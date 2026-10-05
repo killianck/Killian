@@ -271,14 +271,17 @@ Le prototype complet (« menuiserie-des-pennes-prototype.html ») est validé co
 
 ### 3.16 Page Volets (02/10/2026, intégrée au site)
 
-- **Pas de volets en PVC.** Roulants motorisés **ou solaires** ; battants et persiennes bois ou alu ; coffres atelier jusqu'à 6 m.
+- **Pas de volets en PVC.** Roulants motorisés **ou solaires** ; battants et persiennes bois ou alu ; coffres sur mesure faits à l'atelier.
+- **Ne pas écrire « coffres jusqu'à 6 m »**, seulement « coffres sur mesure » (05/10/2026, retiré partout : Volets, accueil, entreprise). Le 6 m reste uniquement dans la fiche du chantier Sindona (fait réel).
 - Fabricants : volets roulants **Futurol · Sothoferm · David Fermeture** ; volets bois **France Volet** (ajoutés au bandeau du site).
 - Délais 5 à 8 semaines (confirmé).
 - Photo fournie par le client (persiennes bois, façade provençale, média ID 202, copie dans `photos/`) : grand visuel + 1er exemple.
-- Tableau vide remplacé par la galerie « Des volets assortis à votre façade » : persiennes bois · battants bois laqués (Fos) · carte « Et bien d'autres modèles ».
+- Tableau vide remplacé par la galerie « Des volets assortis à votre façade » (voir mise à jour du 05/10 ci-dessous).
 - FAQ ajoutée : volets roulants solaires, volets assortis aux fenêtres.
 - Photo persiennes **retouchée** (lumière, couleurs, netteté, rien d'ajouté ; média ID 204).
-- Volet roulant : photo envoyée par le client (375 px, agrandie ×3, média ID 203), légendée **« Photo d'illustration »** en attendant de connaître son origine (catalogue fabricant ?). À remplacer par une photo de chantier (idéalement le 6 m de Sindona).
+- 05/10/2026 : **galerie limitée à 2 catégories** : **Volet battant** (photo persiennes) et **Volet roulant** + carte « Et bien d'autres modèles » (3 colonnes). « Battants bois laqués » (Fos) retiré.
+- Volet roulant : la photo envoyée (375 px, média ID 203) était trop floue → remplacée par la villa dans la roche (Marseille), cadrée sur la fenêtre et son volet roulant, avec lien vers le chantier.
+- Réalisations de la page : « Maison provençale » retirée (aucun volet visible) → remplacée par la villa contemporaine de Céreste ; « volets » retiré des produits de la Maison provençale.
 
 ---
 
