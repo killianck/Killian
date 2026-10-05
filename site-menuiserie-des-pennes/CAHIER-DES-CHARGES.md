@@ -280,8 +280,8 @@ Le prototype complet (« menuiserie-des-pennes-prototype.html ») est validé co
 - FAQ ajoutée : volets roulants solaires, volets assortis aux fenêtres.
 - Photo persiennes **retouchée** (lumière, couleurs, netteté, rien d'ajouté ; média ID 204).
 - 05/10/2026 : **galerie limitée à 2 catégories** : **Volet battant** (photo persiennes) et **Volet roulant** + carte « Et bien d'autres modèles » (3 colonnes). « Battants bois laqués » (Fos) retiré.
-- Volet roulant : la photo envoyée (375 px, média ID 203) était trop floue → remplacée par la villa dans la roche (Marseille), cadrée sur la fenêtre et son volet roulant, avec lien vers le chantier.
-- Réalisations de la page : « Maison provençale » retirée (aucun volet visible) et villa contemporaine de Céreste non plus (pas de volet visible) → remplacées par la **villa dans la roche** (Marseille) ; « volets » retiré des produits de ces deux maisons et ajouté à la villa dans la roche. Baies : la mention « volets roulants assortis » de Céreste est retirée.
+- Volet roulant : la photo envoyée (375 px, média ID 203) était trop floue → remplacée (voir ligne suivante).
+- Réalisations de la page : « Maison provençale » retirée (aucun volet visible) et villa contemporaine de Céreste non plus (pas de volet visible) ni la villa dans la roche → **règle : sur la page Volets, n'afficher que des photos où un volet roulant ou battant est visible**. Réalisations limitées à 2 (Fos 12 logements, photo des battants verts ; Résidence Sindona), affichées sur 2 colonnes ; « volets » retiré des produits des trois maisons. Carte « Volet roulant » : photo Résidence Sindona (vue rue, volets roulants), lien vers le chantier. Baies : la mention « volets roulants assortis » de Céreste est retirée.
 
 ---
 
