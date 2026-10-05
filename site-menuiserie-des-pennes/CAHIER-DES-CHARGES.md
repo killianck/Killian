@@ -314,6 +314,15 @@ Le prototype complet (« menuiserie-des-pennes-prototype.html ») est validé co
 - Sections « Nos réalisations » et « Les solutions possibles » retirées ; en-tête : photo d'illustration pergola (Unsplash) conservée.
 - FAQ : autorisation (déclaration préalable, à confirmer : l'entreprise monte-t-elle le dossier ?), délais.
 
+### 3.20 Page L'entreprise (05/10/2026, intégrée au site)
+
+- Fondateur et dirigeant actuel : **Régis Ombrouck** (création le 5 janvier 2005). Origine du nom : sans importance, non mentionnée.
+- **Équipe de 3 poseurs** salariés ; « une équipe à taille humaine » (remplace « petite structure »).
+- Atelier : modifications des menuiseries si nécessaire, fabrication de volets battants et de coffres de volets roulants, peinture et soudage. **Pas de photo** d'atelier ni d'équipe → illustration dessinée (4 savoir-faire) à la place de la photo.
+- Zone : 80 % des chantiers dans les Bouches-du-Rhône (confirmé), « les autres dans les départements voisins ». Bureaux et atelier : accueil sur rendez-vous.
+- Garanties : décennale Generali, « attestation fournie sur demande » (pas de n° de contrat) ; garanties fabricants « selon les produits et les composants » (pas de durées).
+- Bandeau photo d'en-tête (villa contemporaine) conservé en attendant l'avis du client.
+
 ---
 
 ## 4. Points d'attention notés
