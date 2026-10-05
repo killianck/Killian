@@ -295,6 +295,17 @@ Le prototype complet (« menuiserie-des-pennes-prototype.html ») est validé co
 - **Section « Nos réalisations » retirée** de la page (05/10/2026) : aucune photo de réalisation hormis l'en-tête, à ajouter plus tard avec de plus belles photos.
 - **Section « Les solutions possibles » retirée** aussi (05/10/2026) : la galerie « Trois façons d'ouvrir votre garage » présente déjà les types.
 
+### 3.18 Page Portails, portillons et garde-corps (05/10/2026, intégrée au site)
+
+- Portails coulissants et battants, portillons, **clôtures** et garde-corps ; **pas de claustras**.
+- **Aluminium et acier** ; garde-corps possibles **en verre**.
+- Fabricants : **La Toulousaine · Diaz · Jeld-Wen**.
+- Portails **motorisés** ; interphone / visiophone possibles, **raccordements faits par l'électricien du client** (pas par l'entreprise).
+- Délais 5 à 8 semaines. Portails de copropriété ; garde-corps aux normes, fiches techniques sur demande.
+- Photos validées par le client : en-tête Résidence Sindona (portail + portillon + clôture) ; tableau remplacé par la galerie « Vos extérieurs, dessinés avec la façade » : Portail et portillon (Sindona) · Garde-corps barreaudé (villa contemporaine, Céreste, de nuit) · Garde-corps vitré (villa dans la roche, Marseille) + carte « Et bien d'autres modèles ».
+- Réalisations : Résidence Sindona · Villa dans la roche.
+- FAQ : motorisation + interphone, garde-corps de balcon, normes, copropriétés, délais.
+
 ---
 
 ## 4. Points d'attention notés
