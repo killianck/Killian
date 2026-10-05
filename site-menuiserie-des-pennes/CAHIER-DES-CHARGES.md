@@ -291,7 +291,8 @@ Le prototype complet (« menuiserie-des-pennes-prototype.html ») est validé co
 - Délais 5 à 8 semaines. Grandes largeurs, remplacement, portes de parking collectif.
 - Tableau « Les données, pas des adjectifs » (client « pas fan ») remplacé par la galerie « Trois façons d'ouvrir votre garage » : Enroulable · Sectionnelle · Battante, visuels dessinés avec badge **« En chantier »** (« Nos chantiers sont en cours : les photos arrivent bientôt. ») + carte « Et bien d'autres modèles » (grandes largeurs, parking collectif, remplacement). À remplacer par les photos des chantiers en cours.
 - FAQ : assortie aux fenêtres, motorisation, remplacement, parking collectif, délais.
-- Grand visuel : porte de garage de la Maison provençale (en attente de confirmation client).
+- Grand visuel (en-tête) : porte de garage de la Maison provençale, conservé.
+- **Section « Nos réalisations » retirée** de la page (05/10/2026) : aucune photo de réalisation hormis l'en-tête, à ajouter plus tard avec de plus belles photos.
 
 ---
 
