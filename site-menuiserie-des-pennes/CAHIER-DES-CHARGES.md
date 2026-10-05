@@ -322,7 +322,7 @@ Le prototype complet (« menuiserie-des-pennes-prototype.html ») est validé co
 - Atelier : modifications des menuiseries si nécessaire, fabrication de volets battants et de coffres de volets roulants, peinture et soudage. **Pas de photo** d'atelier ni d'équipe → illustration dessinée (4 savoir-faire) à la place de la photo.
 - Zone : 80 % des chantiers dans les Bouches-du-Rhône (confirmé), « les autres dans les départements voisins ». Bureaux et atelier : accueil sur rendez-vous.
 - Garanties : décennale Generali, « attestation fournie sur demande » (pas de n° de contrat) ; garanties fabricants « selon les produits et les composants » (pas de durées).
-- Bandeau photo d'en-tête (villa contemporaine) conservé en attendant l'avis du client.
+- Bandeau photo d'en-tête (villa contemporaine) **supprimé** à la demande du client → remplacé par le **logo mdp en blanc sur bandeau noir** (05/10/2026).
 
 ### 3.21 Réalisation « Appartement Joliette » · Marseille (05/10/2026, intégrée)
 
