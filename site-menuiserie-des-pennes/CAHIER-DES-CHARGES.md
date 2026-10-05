@@ -283,6 +283,16 @@ Le prototype complet (« menuiserie-des-pennes-prototype.html ») est validé co
 - Volet roulant : la photo envoyée (375 px, média ID 203) était trop floue → remplacée (voir ligne suivante).
 - Réalisations de la page : « Maison provençale » retirée (aucun volet visible) et villa contemporaine de Céreste non plus (pas de volet visible) ni la villa dans la roche → **règle : sur la page Volets, n'afficher que des photos où un volet roulant ou battant est visible**. Réalisations limitées à 2 (Fos 12 logements, photo des battants verts ; Résidence Sindona), affichées sur 2 colonnes ; « volets » retiré des produits des trois maisons. Carte « Volet roulant » : Sindona jugée floue et mal cadrée → **photo d'illustration Unsplash** (Dominik Puskas, volet roulant anthracite, média ID 205, copie `photos/volet-roulant-illustration.jpg`), légendée « Photo d'illustration · D. Puskas / Unsplash ». À remplacer par une photo nette d'un chantier dès que le client en fournit une. Texte d'intro : « Deux grandes familles de volets. » Baies : la mention « volets roulants assortis » de Céreste est retirée.
 
+### 3.17 Page Portes de garage (05/10/2026, intégrée au site)
+
+- **Uniquement de l'aluminium** (pas d'acier). Enroulables (lames 77 mm), sectionnelles, battantes. Basculantes / latérales : ne pas les mentionner.
+- Motorisation très fréquente, à la demande ; les sectionnelles peuvent rester manuelles.
+- Fabricants : **France Volet · Futurol · Hörmann**, et d'autres selon le projet (Technicdoor / La Toulousaine retirés de cette page).
+- Délais 5 à 8 semaines. Grandes largeurs, remplacement, portes de parking collectif.
+- Tableau « Les données, pas des adjectifs » (client « pas fan ») remplacé par la galerie « Trois façons d'ouvrir votre garage » : Enroulable · Sectionnelle · Battante, visuels dessinés avec badge **« En chantier »** (« Nos chantiers sont en cours : les photos arrivent bientôt. ») + carte « Et bien d'autres modèles » (grandes largeurs, parking collectif, remplacement). À remplacer par les photos des chantiers en cours.
+- FAQ : assortie aux fenêtres, motorisation, remplacement, parking collectif, délais.
+- Grand visuel : porte de garage de la Maison provençale (en attente de confirmation client).
+
 ---
 
 ## 4. Points d'attention notés
