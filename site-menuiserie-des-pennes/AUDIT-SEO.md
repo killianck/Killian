@@ -23,6 +23,7 @@
 - **Appartement Joliette** sans page SEO (pas de titre, de description, ni de balise noindex) : page créée (ID 212) et renseignée.
 - **4 images sans texte alternatif** sur la page Professionnels : corrigé.
 - Villa dans la roche reclassée en **neuf** (filtre Réalisations).
+- **12 photos PNG converties en WebP** (24,4 Mo → 2,2 Mo, −91 %), avec des noms de fichiers descriptifs (médias 213 à 224). Images de l'accueil : ~1,25 Mo au lieu de ~15 Mo. Le score Lighthouse ne bouge pas (88) : le délai d'affichage vient maintenant des polices Google et du script Tailwind, et de l'absence de cache sur l'aperçu. Reste en PNG : l'image de partage par défaut (réseaux sociaux), sans effet sur la vitesse.
 
 ## 3. Bloquant au lancement (à faire le jour J, dans cet ordre)
 
@@ -40,7 +41,7 @@
 
 ## 4. Priorité haute (avant ou juste après le lancement)
 
-- **Poids des images** : les photos sont en PNG de 0,8 à 2 Mo (ex. villa de nuit 2 Mo, Sindona 1,1 Mo). L'accueil charge environ 15 Mo d'images. → Convertir en **WebP/JPEG** (optimisation d'images LiteSpeed ou Hostinger) : gain attendu 70 à 80 %, LCP sous 2,5 s.
+- ~~Poids des images~~ : **fait le 05/10/2026** (WebP, voir §2).
 - **Scripts inutiles chargés sur toutes les pages** :
   - Tailwind (CDN jsdelivr), ajouté par l'extension WPVibe, alors que le thème a sa propre feuille de style ;
   - Hostinger Reach (`embed.js`), outil d'e-mailing non utilisé ;
