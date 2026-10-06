@@ -165,7 +165,7 @@ Menuiseries · Réalisations · **Professionnels** · L'entreprise · Contact + 
 | 3 | **Particulier, principal** : Page produit (Google) → Réalisations → Devis |
 | 4 | **Particulier, prudent** : Page produit → L'entreprise → Devis |
 
-**Règle devis / contact** : Devis = projet identifié (plans pour les pros, besoin décrit pour les particuliers). Contact = tout le reste (question, rendez-vous, SAV, fournisseur, candidature).
+**Règle devis / contact** : Devis = projet identifié (plans pour les pros, besoin décrit pour les particuliers). Contact = tout le reste (question, rendez-vous, SAV). « Fournisseur / partenariat » et « Candidature » retirés du formulaire (client, 06/10/2026).
 
 **CTA** :
 - CTA principal unique **« Demande de devis »**, libellé contextualisé : « Envoyer un projet à chiffrer » (Professionnels), « Demander un devis pour vos fenêtres » (produits), « Un projet similaire ? » (réalisations).
