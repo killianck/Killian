@@ -418,3 +418,9 @@ Recueillir les réglages du client sur le prototype, puis textes définitifs pag
 - Corrigé : « Un, deux ou trois vantaux » ; porte Puyricard « Acier vitré », « … vitrage retardateur d'effraction, face au jardin » ; vitrage « Antelio » (nom du produit, sans accent ; fiche et description Google 197) ; « trois poseurs salariés et une conviction » ; liste des menuiseries des fiches réalisations en minuscules après le premier mot ; page Professionnels : liens renommés « Voir la maison à la porte de frêne », « Voir la Villa des galandages », légende « Pose en cours · Villa des galandages ».
 - « cotes » (dimensions) s'écrit sans accent : conservé (validé client, « côte » = coteau, côte de bœuf).
 - Reste en anglais : la page 404 (à refaire, prévu).
+
+### 3.28 Boutons des formulaires invisibles : corrigé (06/10/2026)
+
+- Signalé par le client : pas de bouton pour passer à l'étape 2 du devis. Cause : une règle de style générale (`.mdp button{background:none}`) effaçait le fond noir des boutons « pill » ; le texte blanc devenait invisible sur fond blanc. Touchait **« Continuer »** et **« Envoyer ma demande »** (Devis) et **« Envoyer »** (Contact).
+- Corrigé dans `site.css` (fond rétabli pour tous les boutons pill) ; vérifié sur ordinateur et mobile : étape 1 → « Continuer » → étape 2 → « Envoyer ma demande ».
+- À chaque modification des formulaires : vérifier visuellement leurs boutons.
