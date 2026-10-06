@@ -72,7 +72,7 @@
 | Secteurs protégés | Oui, des chantiers réalisés en secteur protégé |
 | Photos | En général 4 à 5 photos par chantier |
 | Suivi client | Pas d'interlocuteur nommé publiquement, mais **une seule personne suit le dossier du devis jusqu'à la pose** |
-| Délai de réponse | **24 à 48 h** |
+| Délai de réponse | **72 h** (devis et contact, décision client du 06/10/2026 ; auparavant 48 h) |
 | Visite technique | **Quasi systématique** : prise des cotes exactes et vérification des contraintes de pose |
 | Création | **5 janvier 2005** |
 | Volume | Environ **85 à 100 chantiers par an** (chiffre exact non disponible) |
@@ -424,4 +424,5 @@ Recueillir les réglages du client sur le prototype, puis textes définitifs pag
 - Signalé par le client : pas de bouton pour passer à l'étape 2 du devis. Cause : une règle de style générale (`.mdp button{background:none}`) effaçait le fond noir des boutons « pill » ; le texte blanc devenait invisible sur fond blanc. Touchait **« Continuer »** et **« Envoyer ma demande »** (Devis) et **« Envoyer »** (Contact).
 - Corrigé dans `site.css` (fond rétabli pour tous les boutons pill) ; vérifié sur ordinateur et mobile : étape 1 → « Continuer » → étape 2 → « Envoyer ma demande ».
 - À chaque modification des formulaires : vérifier visuellement leurs boutons.
-- Contact (06/10/2026) : **réponse sous 72 heures** affichée dans l'introduction, dans le message de remerciement et dans l'e-mail de confirmation (le devis reste à 48 heures).
+- Contact (06/10/2026) : **réponse sous 72 heures** affichée dans l'introduction, dans le message de remerciement et dans l'e-mail de confirmation.
+- **Devis aussi à 72 heures, partout** (06/10/2026, client) : accueil, pied de page, appels finaux de toutes les pages, page Devis (intro, encadré, remerciement), e-mail de confirmation, page Professionnels (chiffre « 72 h », étapes, encadré), étapes « Comment ça se passe », descriptions Google (179, 180, 182 et description par défaut). Les mentions « 48 h » plus haut dans ce cahier sont **remplacées par 72 h**.
