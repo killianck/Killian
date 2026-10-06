@@ -431,7 +431,10 @@ Recueillir les réglages du client sur le prototype, puis textes définitifs pag
 
 - Même mise en page que le site : grand titre, sommaire à gauche, sections à droite. Page 404 en français : « Cette page n'existe pas », boutons Accueil / Réalisations / Devis, liens vers les 7 familles.
 - **Mentions légales** : éditeur (SAS, 100 000 €, siège, SIREN 480 377 308), directeur de la publication Régis Ombrouck, hébergeur Hostinger International Ltd (Larnaca, Chypre), assurance décennale Generali, médiation de la consommation, propriété intellectuelle, renvoi vers la confidentialité.
-- **À fournir par le client** : ville du RCS (Aix-en-Provence ?), n° de TVA (calculé à partir du SIREN : FR26 480 377 308, à confirmer), n° du contrat Generali, nom du médiateur de la consommation (obligatoire pour les clients particuliers).
+- **Confirmé par l'extrait Kbis (à jour au 23/12/2025) et le client** : 480 377 308 R.C.S. Aix-en-Provence ; SAS à associé unique, capital 100 000 € ; immatriculation 27/01/2005, début d'activité 05/01/2005 ; président : Régis Ombrouck ; TVA intracommunautaire **FR26480377308** (client).
+- **Point à vérifier** : le Kbis écrit le nom « OMBROUK » (sans c), le site écrit « Ombrouck ». Orthographe à confirmer par le client.
+- **Encore à fournir** : n° du contrat Generali, médiateur de la consommation (obligatoire pour les clients particuliers).
+- Le Kbis n'est pas conservé dans le dépôt (données personnelles du dirigeant).
 - **Confidentialité** : données des formulaires uniquement, finalités (devis, visite, suivi), accès (équipe, Hostinger, messagerie, Akismet), conservation (3 ans sans suite ; 10 ans clients), fichiers PDF supprimés du serveur après envoi, droits RGPD et CNIL.
 - **Cookies** : « aucun cookie publicitaire ni de mesure d'audience, pas de bandeau ». Vrai seulement si, avant le lancement, on **désactive Hostinger Reach** et on **héberge les polices sur le site** (aujourd'hui chargées depuis Google). Sinon, adapter le texte.
 - Intégration prévue : liens « Mentions légales · Confidentialité · Cookies » du pied de page (aujourd'hui non cliquables), puis retrait du script Tailwind.
