@@ -371,6 +371,7 @@ Le prototype complet (« menuiserie-des-pennes-prototype.html ») est validé co
 - Demande client : « on vend beaucoup de portes-fenêtres ». La catégorie s'appelle partout **« Fenêtres et portes-fenêtres »** : menu, pied de page, page Menuiseries, fil d'Ariane, FAQ, appel final, filtre Réalisations, produits des fiches réalisations.
 - Ajouts : accroche de la famille, FAQ « remplacer des fenêtres et portes-fenêtres sans casser », accueil (« Fenêtres, portes-fenêtres, baies vitrées… »), carte matériau Aluminium, données structurées (`knowsAbout`), descriptions Google de l'accueil (page 179) et de Menuiseries (177).
 - Devis : « Porte-fenêtre » est un produit à part entière dans le tableau (PVC · Alu · Bois).
+- Chiffre d'accueil « 1 027 fenêtres posées en 2025 » : **fenêtres seules** (confirmé client), libellé inchangé.
 
 ---
 
