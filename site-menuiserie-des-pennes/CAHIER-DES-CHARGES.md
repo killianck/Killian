@@ -373,6 +373,14 @@ Le prototype complet (« menuiserie-des-pennes-prototype.html ») est validé co
 - Devis : « Porte-fenêtre » est un produit à part entière dans le tableau (PVC · Alu · Bois).
 - Chiffre d'accueil « 1 027 fenêtres posées en 2025 » : **fenêtres seules** (confirmé client), libellé inchangé.
 
+### 3.26 Page Contact et e-mails (06/10/2026, intégré au site)
+
+- **Carte supprimée** (pas de Google Maps, pas de question de cookies) → bouton **« Itinéraire »** (Google Maps, nouvel onglet) sous l'adresse.
+- Bureaux : « **Uniquement sur rendez-vous.** Le plus souvent, c'est nous qui venons chez vous ou sur votre chantier. » (client : les clients peuvent venir sur rendez-vous, mais rien à montrer ; l'équipe préfère se déplacer). Intro : « Une question, un rendez-vous, un SAV ? » (plus de « rendez-vous à l'atelier »).
+- **E-mail principal : contact@menuiseriedespennes.fr** (en-tête, menu et barre mobiles, appels finaux, données Google). **Les deux adresses** (contact@ + mdp13@hotmail.fr) sur la page Contact, l'encadré de la page Devis et le pied de page.
+- Les formulaires continuent d'arriver sur **mdp13@hotmail.fr** (réglage `mail_to`, envoi testé le 01/10).
+- All in One SEO : e-mail de l'entreprise → contact@ ; description de l'entreprise et description par défaut de l'accueil avec « portes-fenêtres ».
+
 ---
 
 ## 4. Points d'attention notés
