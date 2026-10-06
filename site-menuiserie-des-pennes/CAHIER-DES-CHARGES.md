@@ -345,6 +345,27 @@ Le prototype complet (« menuiserie-des-pennes-prototype.html ») est validé co
 - Présentation retenue : **pièce unique**, pas une production courante. Page Portes : « sur catalogue ou sur mesure, jusqu'à la pièce unique fabriquée dans notre atelier » ; FAQ sur mesure : fabricants partenaires + « notre atelier peut aussi réaliser une pièce unique » ; galerie et fiche : « Fabriquée à l'atelier » ; accueil : photo de la porte rétablie ; descriptions Google 186 et 197 alignées.
 - « fabrication atelier » n'apparaît plus dans la liste des fabricants ; délais : « 5 à 12 semaines selon le modèle et le fabricant ».
 
+### 3.24 Devis : tableau « Vos menuiseries » (06/10/2026, intégré au site)
+
+- Étape 1 : les pastilles « Menuiseries concernées » sont remplacées par un tableau **facultatif**, une ligne par menuiserie : **Produit · Matériau · Qté**, puis **Hauteur × Largeur en mm** (ordre du métier : hauteur d'abord, validé client) **· Couleur**. Bouton « + Ajouter une menuiserie » (30 lignes au plus), croix pour supprimer.
+- Phrase : « Des cotes approximatives suffisent : nous prenons les mesures exactes lors de la visite technique. »
+- Produits : fenêtre, porte-fenêtre, baie vitrée / coulissant, porte d'entrée, porte de service, volet battant, volet roulant, porte de garage, portail / portillon, garde-corps, pergola, store.
+- Matériaux proposés selon le produit (validé client) :
+
+| Produit | Matériaux |
+|---|---|
+| Fenêtre, porte-fenêtre, porte de service | PVC · Alu · Bois |
+| Baie vitrée / coulissant | Alu · Bois (pas de PVC) |
+| Porte d'entrée | Alu · Bois |
+| Volet battant | Alu · Bois |
+| Garde-corps | Alu · Verre |
+| Pergola | Alu · Bois |
+| Volet roulant, porte de garage, portail / portillon, store | pas de choix affiché |
+
+- Venant d'une page produit, la 1re ligne est préremplie (ex. Baies vitrées → « Baie vitrée / coulissant »).
+- E-mail reçu : tableau Qté · Produit · Matériau · Hauteur × Largeur · Couleur ; même récapitulatif dans « Demandes reçues ». Contrôle côté serveur : produits et matériaux limités à la liste.
+- Champ « Votre projet » (étape 2) : exemple changé en « contraintes d'accès, motorisation, vitrage, délais… ».
+
 ---
 
 ## 4. Points d'attention notés
