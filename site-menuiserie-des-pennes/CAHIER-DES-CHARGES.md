@@ -364,7 +364,7 @@ Le prototype complet (« menuiserie-des-pennes-prototype.html ») est validé co
 
 - Venant d'une page produit, la 1re ligne est préremplie (ex. Baies vitrées → « Baie vitrée / coulissant »).
 - E-mail reçu : tableau Qté · Produit · Matériau · Hauteur × Largeur · Couleur ; même récapitulatif dans « Demandes reçues ». Contrôle côté serveur : produits et matériaux limités à la liste.
-- **Dépôt de PDF** (06/10/2026) déplacé à l'étape 1, sous le tableau : « Plans ou liste de vos menuiseries · facultatif » — « vous pouvez déposer les plans avec les cotes des menuiseries, ou une liste détaillée des menuiseries souhaitées ». **PDF uniquement** (contrôle navigateur + serveur, JPG refusés), 5 fichiers, 15 Mo au total.
+- **Ordre validé (06/10/2026)** : « Vos menuiseries » → d'abord **« Déposer vos PDF »** (plans avec les cotes des menuiseries, ou liste détaillée des menuiseries souhaitées), puis un séparateur **« ou »**, puis **« Renseignez-les manuellement »** (le tableau). Plus aucune mention « Facultatif ». **PDF uniquement** (contrôle navigateur + serveur, JPG refusés), 5 fichiers, 15 Mo au total. La zone « Plans, photos, dossier » de l'étape 2 est supprimée.
 - Champ « Votre projet » (étape 2) : exemple changé en « contraintes d'accès, motorisation, vitrage, délais… ».
 
 ### 3.25 Portes-fenêtres mises en avant (06/10/2026)
