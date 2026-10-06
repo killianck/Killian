@@ -424,3 +424,4 @@ Recueillir les réglages du client sur le prototype, puis textes définitifs pag
 - Signalé par le client : pas de bouton pour passer à l'étape 2 du devis. Cause : une règle de style générale (`.mdp button{background:none}`) effaçait le fond noir des boutons « pill » ; le texte blanc devenait invisible sur fond blanc. Touchait **« Continuer »** et **« Envoyer ma demande »** (Devis) et **« Envoyer »** (Contact).
 - Corrigé dans `site.css` (fond rétabli pour tous les boutons pill) ; vérifié sur ordinateur et mobile : étape 1 → « Continuer » → étape 2 → « Envoyer ma demande ».
 - À chaque modification des formulaires : vérifier visuellement leurs boutons.
+- Contact (06/10/2026) : **réponse sous 72 heures** affichée dans l'introduction, dans le message de remerciement et dans l'e-mail de confirmation (le devis reste à 48 heures).
