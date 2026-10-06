@@ -366,6 +366,12 @@ Le prototype complet (« menuiserie-des-pennes-prototype.html ») est validé co
 - E-mail reçu : tableau Qté · Produit · Matériau · Hauteur × Largeur · Couleur ; même récapitulatif dans « Demandes reçues ». Contrôle côté serveur : produits et matériaux limités à la liste.
 - Champ « Votre projet » (étape 2) : exemple changé en « contraintes d'accès, motorisation, vitrage, délais… ».
 
+### 3.25 Portes-fenêtres mises en avant (06/10/2026)
+
+- Demande client : « on vend beaucoup de portes-fenêtres ». La catégorie s'appelle partout **« Fenêtres et portes-fenêtres »** : menu, pied de page, page Menuiseries, fil d'Ariane, FAQ, appel final, filtre Réalisations, produits des fiches réalisations.
+- Ajouts : accroche de la famille, FAQ « remplacer des fenêtres et portes-fenêtres sans casser », accueil (« Fenêtres, portes-fenêtres, baies vitrées… »), carte matériau Aluminium, données structurées (`knowsAbout`), descriptions Google de l'accueil (page 179) et de Menuiseries (177).
+- Devis : « Porte-fenêtre » est un produit à part entière dans le tableau (PVC · Alu · Bois).
+
 ---
 
 ## 4. Points d'attention notés
