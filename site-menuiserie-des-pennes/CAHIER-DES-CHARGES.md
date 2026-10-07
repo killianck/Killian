@@ -193,8 +193,8 @@ Principe : porte d'entrée des professionnels (preuve de capacité très tôt), 
 | — | En-tête | Logo, menu validé, **téléphone visible**, bouton « Demande de devis » ; mobile : barre fixe Appeler + Devis | — |
 | 1 | Ouverture | H1 : menuiseries extérieures, fourniture et pose, Aix-en-Provence / Bouches-du-Rhône ; neuf et rénovation, particuliers et professionnels. CTA « Demande de devis » + lien « Voir nos réalisations » | Villa de nuit (escabeau à retirer) |
 | 2 | Chiffres clés | Depuis 2005 · 82 chantiers en 2025 · 1 027 fenêtres posées · baies jusqu'à 7,80 m (SP10) · atelier à Aix — sobres, sans animation | — |
-| 3 | Orientation | « Vous êtes un professionnel » (→ Professionnels, « Envoyer un projet à chiffrer ») / « Vous êtes un particulier » (→ Nos menuiseries) | Résidence Sindona / villa de Puyricard |
-| 4 | Réalisations à la une | Villa vue mer (nuit) · villa dans la roche · Résidence Sindona · villa de Puyricard ; type, commune, un fait. CTA « Toutes nos réalisations » | Photos de chantier |
+| 3 | Orientation | « Vous êtes un professionnel » (→ Professionnels, « Envoyer un projet à chiffrer ») / « Vous êtes un particulier » (→ Nos menuiseries) | Résidence Saint-Donat / villa de Puyricard |
+| 4 | Réalisations à la une | Villa vue mer (nuit) · villa dans la roche · Résidence Saint-Donat · villa de Puyricard ; type, commune, un fait. CTA « Toutes nos réalisations » | Photos de chantier |
 | 5 | Nos menuiseries | 7 familles, une photo réelle chacune, liens vers les pages produits | Photos de chantier |
 | 6 | Atelier et savoir-faire | Fabrication sur mesure à l'atelier (portes, coffres), pose soignée (délais, propreté, finitions, site occupé), fabricants en texte ; patrimoine d'Aix une fois confirmé. CTA « Découvrir l'entreprise » | Photo d'atelier (à produire) ; à défaut porte biométrique ou photo de pose |
 | 7 | Démarrer un projet | Étapes : demande → visite technique → devis sous 48 h → fabrication → pose → SAV ; un seul interlocuteur ; zone en une ligne. CTA « Demande de devis » + téléphone | Sobre |
@@ -256,7 +256,7 @@ Le prototype complet (« menuiserie-des-pennes-prototype.html ») est validé co
 
 - Baies **en aluminium** (Laloi · Noralis · Novelis · K-Line) ; gamme bois possible **sur demande, rare**.
 - **Pas de motorisation** des baies (ne pas la mentionner). **Seuil encastré** possible.
-- Tableau de performances remplacé par « Les grandes ouvertures, notre spécialité » : 7,80 m (villa aux 31 menuiseries) · 6 m (Résidence Sindona) · sans poteau (villa contemporaine, Céreste) ; chaque colonne renvoie au chantier.
+- Tableau de performances remplacé par « Les grandes ouvertures, notre spécialité » : 7,80 m (villa aux 31 menuiseries) · 6 m (Résidence Saint-Donat) · sans poteau (villa contemporaine, Céreste) ; chaque colonne renvoie au chantier.
 - FAQ ajoutée : levage des vitrages lourds (mini-grue, nos propres équipes).
 - Pied de page : lien « Nos avis Google » branché sur la fiche (kgmid=/g/1tjbbcnd).
 
@@ -273,7 +273,7 @@ Le prototype complet (« menuiserie-des-pennes-prototype.html ») est validé co
 ### 3.16 Page Volets (02/10/2026, intégrée au site)
 
 - **Pas de volets en PVC.** Roulants motorisés **ou solaires** ; battants et persiennes bois ou alu ; coffres sur mesure faits à l'atelier.
-- **Ne pas écrire « coffres jusqu'à 6 m »**, seulement « coffres sur mesure » (05/10/2026, retiré partout : Volets, accueil, entreprise). Le 6 m reste uniquement pour le **coulissant** de Sindona (fait réel). **Volets roulants : 4,50 m de large maximum** → les mentions « volet roulant de 6 m / de même largeur » ont été retirées (Sindona, Baies).
+- **Ne pas écrire « coffres jusqu'à 6 m »**, seulement « coffres sur mesure » (05/10/2026, retiré partout : Volets, accueil, entreprise). Le 6 m reste uniquement pour le **coulissant** de Saint-Donat (fait réel). **Volets roulants : 4,50 m de large maximum** → les mentions « volet roulant de 6 m / de même largeur » ont été retirées (Saint-Donat, Baies).
 - Fabricants : volets roulants **Futurol · Sothoferm · David Fermeture** ; volets bois **France Volet** (ajoutés au bandeau du site).
 - Délais 5 à 8 semaines (confirmé).
 - Photo fournie par le client (persiennes bois, façade provençale, média ID 202, copie dans `photos/`) : grand visuel + 1er exemple.
@@ -282,7 +282,7 @@ Le prototype complet (« menuiserie-des-pennes-prototype.html ») est validé co
 - Photo persiennes **retouchée** (lumière, couleurs, netteté, rien d'ajouté ; média ID 204).
 - 05/10/2026 : **galerie limitée à 2 catégories** : **Volet battant** (photo persiennes) et **Volet roulant** + carte « Et bien d'autres modèles » (3 colonnes). « Battants bois laqués » (Fos) retiré.
 - Volet roulant : la photo envoyée (375 px, média ID 203) était trop floue → remplacée (voir ligne suivante).
-- Réalisations de la page : « Maison provençale » retirée (aucun volet visible) et villa contemporaine de Céreste non plus (pas de volet visible) ni la villa dans la roche → **règle : sur la page Volets, n'afficher que des photos où un volet roulant ou battant est visible**. Réalisations limitées à 2 (Fos 12 logements, photo des battants verts ; Résidence Sindona), affichées sur 2 colonnes ; « volets » retiré des produits des trois maisons. Carte « Volet roulant » : Sindona jugée floue et mal cadrée → **photo d'illustration Unsplash** (Dominik Puskas, volet roulant anthracite, média ID 205, copie `photos/volet-roulant-illustration.jpg`), légendée « Photo d'illustration · D. Puskas / Unsplash ». À remplacer par une photo nette d'un chantier dès que le client en fournit une. Texte d'intro : « Deux grandes familles de volets. » Baies : la mention « volets roulants assortis » de Céreste est retirée.
+- Réalisations de la page : « Maison provençale » retirée (aucun volet visible) et villa contemporaine de Céreste non plus (pas de volet visible) ni la villa dans la roche → **règle : sur la page Volets, n'afficher que des photos où un volet roulant ou battant est visible**. Réalisations limitées à 2 (Fos 12 logements, photo des battants verts ; Résidence Saint-Donat), affichées sur 2 colonnes ; « volets » retiré des produits des trois maisons. Carte « Volet roulant » : Saint-Donat jugée floue et mal cadrée → **photo d'illustration Unsplash** (Dominik Puskas, volet roulant anthracite, média ID 205, copie `photos/volet-roulant-illustration.jpg`), légendée « Photo d'illustration · D. Puskas / Unsplash ». À remplacer par une photo nette d'un chantier dès que le client en fournit une. Texte d'intro : « Deux grandes familles de volets. » Baies : la mention « volets roulants assortis » de Céreste est retirée.
 
 ### 3.17 Page Portes de garage (05/10/2026, intégrée au site)
 
@@ -303,8 +303,8 @@ Le prototype complet (« menuiserie-des-pennes-prototype.html ») est validé co
 - Fabricants : **La Toulousaine · Diaz · Jeld-Wen**.
 - Portails **motorisés** ; interphone / visiophone possibles, **raccordements faits par l'électricien du client** (pas par l'entreprise).
 - Délais 5 à 8 semaines. Portails de copropriété ; garde-corps aux normes, fiches techniques sur demande.
-- Photos validées par le client : en-tête Résidence Sindona (portail + portillon + clôture) ; tableau remplacé par la galerie « Vos extérieurs, dessinés avec la façade » : Portail et portillon (Sindona) · Garde-corps barreaudé (villa contemporaine, Céreste, de nuit) · Garde-corps vitré (villa dans la roche, Marseille) + carte « Et bien d'autres modèles ».
-- Réalisations : Résidence Sindona · Villa dans la roche.
+- Photos validées par le client : en-tête Résidence Saint-Donat (portail + portillon + clôture) ; tableau remplacé par la galerie « Vos extérieurs, dessinés avec la façade » : Portail et portillon (Saint-Donat) · Garde-corps barreaudé (villa contemporaine, Céreste, de nuit) · Garde-corps vitré (villa dans la roche, Marseille) + carte « Et bien d'autres modèles ».
+- Réalisations : Résidence Saint-Donat · Villa dans la roche.
 - FAQ : motorisation + interphone, garde-corps de balcon, normes, copropriétés, délais.
 
 ### 3.19 Page Pergolas et stores (05/10/2026, intégrée au site)
@@ -327,7 +327,7 @@ Le prototype complet (« menuiserie-des-pennes-prototype.html ») est validé co
 ### 3.21 Réalisation « Appartement Joliette » · Marseille (05/10/2026, intégrée)
 
 - Appartement au **6e étage**, quartier de la Joliette (Marseille) : **coulissant aluminium de 12 m assemblé sur place**. Chantier terminé, **pas de photo du produit fini** → photos **prises pendant la pose**, retouchées (lumière, couleurs, netteté, recadrage) **sans ajout ni suppression d'éléments** (médias 206 à 209, copies `photos/joliette-*`).
-- Fiche `/realisations/appartement-joliette/`, titre **« Appartement Joliette »** · Marseille (le client n'aimait pas « Coulissant de 12 m ») ; en tête des réalisations de la page Baies ; 1re colonne « 12 m » de « Les grandes ouvertures, notre spécialité » (la colonne Sindona 6 m est retirée : 12 m · 7,80 m · sans poteau).
+- Fiche `/realisations/appartement-joliette/`, titre **« Appartement Joliette »** · Marseille (le client n'aimait pas « Coulissant de 12 m ») ; en tête des réalisations de la page Baies ; 1re colonne « 12 m » de « Les grandes ouvertures, notre spécialité » (la colonne Saint-Donat 6 m est retirée : 12 m · 7,80 m · sans poteau).
 - Filtre des réalisations renommé « Maisons, villas et appartements ».
 - Client : **professionnel**, chantier de **rénovation**, **2024** (confirmé 05/10/2026). À remplacer par des photos du produit fini si le client en obtient.
 
@@ -335,7 +335,7 @@ Le prototype complet (« menuiserie-des-pennes-prototype.html ») est validé co
 
 - **Villa dans la roche en tête** (grande carte), puis l'ordre habituel.
 - Note de travail « Filtres prévus… » retirée ; mention « photographe à créditer » masquée sur les fiches.
-- **Filtres Neuf / Rénovation** ajoutés. Classés : Appartement Joliette = rénovation ; Villa dans la roche = **neuf** (correction client) ; Résidence Sindona et Maison provençale = neuf. **Neuf aussi** (confirmé par le client sur photos) : Villa contemporaine, Villa des galandages, 12 logements Fos, Villa minimaliste, Maison à la porte de frêne.
+- **Filtres Neuf / Rénovation** ajoutés. Classés : Appartement Joliette = rénovation ; Villa dans la roche = **neuf** (correction client) ; Résidence Saint-Donat et Maison provençale = neuf. **Neuf aussi** (confirmé par le client sur photos) : Villa contemporaine, Villa des galandages, 12 logements Fos, Villa minimaliste, Maison à la porte de frêne.
 - Champs inconnus (**commune, année**) **masqués** au lieu d'afficher « à fournir ».
 - Noms jugés « moches » par le client, renommés : « Porte fabriquée à l'atelier » → **« Maison à la porte de frêne »** ; « Villa aux 31 menuiseries » → **« Villa des galandages »** (partout : fiches, pages Baies et Portes, pages privées SEO 194 et 197). Adresses `/realisations/porte-atelier/` et `/realisations/villa-31-menuiseries/` inchangées pour l'instant.
 
@@ -456,7 +456,7 @@ Détail et maquettes : `PROPOSITION-SEO-100.md`. Validé par le client avec troi
 - **Textes ajoutés** (uniquement à partir de faits déjà publiés) : phrase d'introduction sous le titre de chaque réalisation ; sous-titres « [Nom] en images » et « [Nom] : les menuiseries posées » (avec la présentation de chaque famille et un lien) ; phrase de contexte sur les cartes de la liste Réalisations, plus un court paragraphe sous « Toutes nos réalisations, par type de chantier » ; Devis : photo de chantier, « Votre devis en six étapes », FAQ (documents, zone, délais, gratuité) ; Contact : photo, « Contact et rendez-vous », « Où nous intervenons », « Un contact pour le service après-vente », six étapes ; L'entreprise : logo du bandeau en image avec texte alternatif.
 - **Expressions-clés** : accueil « menuiseries extérieures », Menuiseries « menuiseries », produits = nom de la famille (fenêtres, baies vitrées, portes d'entrée, volets, portes de garage, portails, pergolas), réalisations = nom du chantier, Réalisations « réalisations », Professionnels « professionnels », L'entreprise « menuisier », Devis « devis », Contact « contact ».
 - **Copie d'analyse AIOSEO** (outil `/wp-json/mdp/v1/seo-sync`, admin) : le texte de chaque page du thème est recopié dans sa page privée ; pied de page inclus (lien externe « Nos avis Google ») ; H1 du thème retiré (AIOSEO compte déjà le titre WordPress) ; titres de cartes (H3/H4) recopiés en gras ; premier vrai paragraphe placé en tête. **À relancer après toute modification de texte.** Toutes les pages indexables font au moins 300 mots.
-- Limite connue : le critère orthographe d'AIOSEO compte les noms propres (Sindona, Noralis, Generali…) comme fautes ; 100/100 exact n'est possible que sur les pages qui n'en contiennent pas.
+- Limite connue : le critère orthographe d'AIOSEO compte les noms propres (Saint-Donat, Noralis, Generali…) comme fautes ; 100/100 exact n'est possible que sur les pages qui n'en contiennent pas.
 
 - **Résultat du premier recalcul (07/10/2026)** : 89 à 97 sur les 19 pages recalculées (accueil 89, devis 97). Points restants : répartition de l'expression-clé dans le texte (longues suites de phrases sans l'expression, surtout en fin de page : appel final + pied de page), orthographe (noms propres et pied de page : environ −5 points sur toutes les pages, inévitable). Corrigés ensuite sans changement visible : titre Google de l'accueil raccourci (« Menuiseries extérieures à Aix-en-Provence »), descriptions Fenêtres et Pergolas allongées, texte alternatif « Nos réalisations : … » sur 5 des 10 cartes de la page Réalisations.
 - **2e passe (maquette `maquette-seo-2e-passe.html` validée et intégrée le 07/10/2026)** : expression-clé répartie dans la page. Réalisations : étiquette « [Nom] · le projet », titre « D'autres chantiers comparables à la / aux / à l' [Nom]. » ; produits : phrase sous « Les solutions possibles » et sous « Deux chantiers, deux méthodes » ; Fenêtres, Baies vitrées, Portes d'entrée : nom de la famille dans une phrase existante ; accueil : « menuiseries extérieures » dans 3 phrases ; L'entreprise : « Un travail de menuisier : … », phrase sous les six étapes, « Un menuisier engagé après la pose. » ; Contact : phrase sous les six étapes ; étape 1 « Un premier contact par téléphone ou en ligne… » (partout) ; Professionnels : « Professionnels, envoyez-nous vos plans… » ; pied de page : « Menuisier à Aix-en-Provence : fourniture et pose… ».
@@ -476,3 +476,8 @@ Détail et maquettes : `PROPOSITION-SEO-100.md`. Validé par le client avec troi
 - **Reste à faire** : test réel du formulaire de devis (réception de l'e-mail), déclaration du plan du site dans Google Search Console, suivi des notes AIOSEO après recalcul, choix du médiateur de la consommation, pages de démonstration de l'ancien constructeur (répondent 404, à vérifier dans Search Console).
 - **Adresse officielle avec www (07/10/2026, demande client)** : le www pointait encore vers l'ancien site du constructeur Hostinger (supprimé ensuite par le client). WordPress basculé sur `https://www.menuiseriedespennes.fr` (remplacement des adresses dans toute la base, approuvé par le client) ; `menuiseriedespennes.fr` redirige en 301 vers le www (règle ajoutée dans `inc/router.php`, car le routeur du thème répond avant la redirection native de WordPress). Vérifié : adresses canoniques, plan du site et robots.txt en www ; anciennes adresses → nouvelles pages en www.
 - **Cache CDN Hostinger (07/10/2026)** : l'accueil en www servait encore une copie de l'ancien site (Website Builder) gardée par le CDN Hostinger depuis environ 6 jours. Cache CDN vidé par le client dans hPanel ; vérifié : 45 essais sur 45 affichent le nouveau site.
+
+### 3.32 Corrections demandées le 07/10/2026 (en attente : limite WPVibe atteinte, reprise le 08/10 vers 9 h 20)
+
+- **Nom de la résidence : « Résidence Saint-Donat »** (et non « Sindona », erreur reprise de l'ancien site, corrigée dans tous les documents). À faire sur le site : textes du thème (fiche, cartes, textes alternatifs, pages Portails et Professionnels, données structurées), page WordPress 191 (titre), titre / description / expression-clé AIOSEO, adresse `/realisations/residence-saint-donat/` avec redirection 301 depuis `/realisations/residence-sindona/`, puis copie d'analyse AIOSEO et vérification.
+- **Photo de la porte en frêne** (client, `photos/porte-entree-sur-mesure-alu-bois.jpg`, confirmée : porte de la « Maison à la porte de frêne ») : remplace la photo de la section « Atelier et savoir-faire » de l'accueil ; ajoutée aussi en tête de la fiche Maison à la porte de frêne et sur la carte « Fabriquée à l'atelier » de la page Portes d'entrée. Via brouillon + lien d'aperçu avant publication.

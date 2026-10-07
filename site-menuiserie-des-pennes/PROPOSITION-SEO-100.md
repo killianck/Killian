@@ -6,7 +6,7 @@
 |---|---|---|
 | **75 %** | Critères liés à l'expression-clé : début du titre Google, introduction, **30 à 75 % des sous-titres**, **30 à 75 % des images** (texte alternatif), description, adresse de la page, densité (0,5 à 3 %), répartition, **300 mots minimum**, au moins un **lien externe** | c'est là qu'on perd les points |
 | 20 % | Lisibilité (phrases, paragraphes, voix passive…) : comptée à 100 % dès que la moyenne dépasse 60 % | déjà au maximum |
-| 5 % | Orthographe : **−1 point par phrase contenant un mot inconnu** | les noms propres (Sindona, Noralis, Generali, Futurol…) comptent comme fautes |
+| 5 % | Orthographe : **−1 point par phrase contenant un mot inconnu** | les noms propres (Saint-Donat, Noralis, Generali, Futurol…) comptent comme fautes |
 
 **100/100 exactement ne sera possible que sur les pages sans nom propre.** Ailleurs, l'objectif réaliste est **95 à 99**.
 
@@ -44,7 +44,7 @@
 - Sous-titre de la galerie de réalisations : « **Nos chantiers avec fenêtres et portes-fenêtres.** » (au lieu de « Posées par nos équipes. », formulation validée par le client), idem pour chaque famille : « Nos chantiers avec baies vitrées. », « … avec volets. », « … avec portails et garde-corps. »…
 - Baies vitrées, introduction : « …des baies **vitrées** coulissantes, des galandages… »
 - Portes d'entrée, introduction : « La porte d'entrée signe la façade. **Nos portes d'entrée,** en aluminium, bois, acier ou blindées… » ; sous-titre : « **Des portes d'entrée qui signent** votre façade. »
-- Volets : textes alternatifs « Volets battants en bois », « Volets roulants » ; Portails : « Portails et portillon, Résidence Sindona ».
+- Volets : textes alternatifs « Volets battants en bois », « Volets roulants » ; Portails : « Portails et portillon, Résidence Saint-Donat ».
 
 ### Les 10 réalisations · expression = nom de la réalisation
 Trois ajouts par page, uniquement à partir des faits déjà publiés sur la fiche :
@@ -54,7 +54,7 @@ Trois ajouts par page, uniquement à partir des faits déjà publiés sur la fic
 
 | Réalisation | Phrase d'introduction proposée |
 |---|---|
-| Résidence Sindona | **La Résidence Sindona est un programme neuf de 12 appartements à Aix-en-Provence : nous y avons fourni et posé l'ensemble des menuiseries aluminium, jusqu'au duplex du dernier étage.** |
+| Résidence Saint-Donat | **La Résidence Saint-Donat est un programme neuf de 12 appartements à Aix-en-Provence : nous y avons fourni et posé l'ensemble des menuiseries aluminium, jusqu'au duplex du dernier étage.** |
 | Villa dans la roche | **La Villa dans la roche est une villa d'architecte neuve à Marseille : nous y avons posé les baies, les fenêtres et portes-fenêtres, les garde-corps et un brise-soleil en red cedar.** |
 | Villa contemporaine | **La Villa contemporaine est une maison neuve à ossature bois à Céreste : nous y avons posé les baies coulissantes, l'angle vitré sans poteau, les fenêtres et les garde-corps.** |
 | Villa des galandages | **La Villa des galandages est une villa d'exception de 31 menuiseries aluminium : nous y avons posé deux galandages de 7,80 m et une porte d'entrée sur pivot.** |
