@@ -41,7 +41,7 @@
 - Sous-titre : « Choisissez **vos menuiseries**. » (au lieu de « Choisissez votre projet. »)
 
 ### Les 7 pages produits · expression = nom de la famille (fenêtres, baies vitrées, portes d'entrée, volets, portes de garage, portails, pergolas)
-- Sous-titre de la galerie de réalisations : « **Nos chantiers de fenêtres et portes-fenêtres.** » (au lieu de « Posées par nos équipes. »), idem pour chaque famille.
+- Sous-titre de la galerie de réalisations : « **Nos chantiers avec fenêtres et portes-fenêtres.** » (au lieu de « Posées par nos équipes. », formulation validée par le client), idem pour chaque famille : « Nos chantiers avec baies vitrées. », « … avec volets. », « … avec portails et garde-corps. »…
 - Baies vitrées, introduction : « …des baies **vitrées** coulissantes, des galandages… »
 - Portes d'entrée, introduction : « La porte d'entrée signe la façade. **Nos portes d'entrée,** en aluminium, bois, acier ou blindées… » ; sous-titre : « **Des portes d'entrée qui signent** votre façade. »
 - Volets : textes alternatifs « Volets battants en bois », « Volets roulants » ; Portails : « Portails et portillon, Résidence Sindona ».
