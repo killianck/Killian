@@ -28,10 +28,10 @@
 | `/menuiseries/portes-de-garage/` | porte de garage Aix-en-Provence | Porte de garage motorisée à Aix-en-Provence | Portes de garage enroulables, sectionnelles ou battantes, motorisées et assorties à vos menuiseries. | Portes de garage |
 | `/menuiseries/portails-garde-corps/` | portail aluminium Aix · garde-corps alu | Portails, portillons et garde-corps alu · Aix-en-Provence | Portails coulissants et battants, portillons et garde-corps aluminium ou verre, assortis à la façade. | Portails, portillons et garde-corps |
 | `/menuiseries/pergolas-stores/` | pergola bioclimatique Aix-en-Provence | Pergola bioclimatique et stores à Aix-en-Provence | Pergolas bioclimatiques, stores bannes, stores verticaux et brise-soleil pour vivre dehors en Provence. | Pergolas et stores |
-| `/realisations/` | réalisations menuiserie Aix Marseille | Nos réalisations de menuiseries · Aix, Marseille, 13 | Villas, programmes de logements, rénovations : chaque chantier avec son lieu, sa contrainte et les menuiseries posées. | Nos réalisations |
+| `/realisations/` | réalisations menuiserie Aix Marseille | Réalisations de menuiseries · Aix, Marseille, 13 *(07/10/2026)* | Villas, programmes de logements, rénovations : chaque chantier avec son lieu, sa contrainte et les menuiseries posées. | Nos réalisations |
 | `/realisations/[projet]/` | contrainte + lieu + projet (modèle du benchmark) | ex. « Résidence Sindona, Aix-en-Provence : menuiseries alu RAL 7016 » | Description factuelle : programme, produits, point fort | Titre du projet + commune |
-| `/entreprise/` | menuisier Aix-en-Provence (marque) | Menuisier à Aix-en-Provence depuis 2005 · L'entreprise | Atelier à Aix, équipe spécialisée dans la pose, un seul interlocuteur du devis à la pose. Assurance décennale Generali. | Menuisiers depuis 2005, à Aix-en-Provence |
-| `/devis/` | devis menuiserie Aix-en-Provence | Demande de devis menuiseries · réponse sous 72 h | Particulier ou professionnel : décrivez votre projet ou envoyez vos plans. Première réponse sous 72 h, visite technique. | Parlons de votre projet |
+| `/menuisier-aix-en-provence/` *(ex-`/entreprise/`, 301, 07/10/2026)* | menuisier Aix-en-Provence (marque) | Menuisier à Aix-en-Provence depuis 2005 · L'entreprise | Atelier à Aix, équipe spécialisée dans la pose, un seul interlocuteur du devis à la pose. Assurance décennale Generali. | Menuisiers depuis 2005, à Aix-en-Provence |
+| `/devis/` | devis menuiserie Aix-en-Provence | Devis menuiseries à Aix-en-Provence · réponse sous 72 h *(07/10/2026)* | Particulier ou professionnel : décrivez votre projet ou envoyez vos plans. Première réponse sous 72 h, visite technique. | Parlons de votre projet |
 | `/contact/` | Menuiserie des Pennes contact (marque) | Contact · Menuiserie des Pennes, Aix-en-Provence | 105 chemin de la Chênaie, Aix-en-Provence. 06 20 71 13 36 · mdp13@hotmail.fr. Accueil sur rendez-vous. | Nous contacter |
 
 ## 3. Redirections de l'ancien site (à activer au lancement)
@@ -46,9 +46,11 @@
 | `/portail-portillons-et-garde-corps-haut-de-gamme` | `/menuiseries/portails-garde-corps/` |
 | `/syndics-de-copropriete` | `/professionnels/` |
 | `/nos-realisations` | `/realisations/` |
-| `/entreprise-menuiserie` · `/notre-savoir-faire-menuiseries-exterieures` | `/entreprise/` |
+| `/entreprise-menuiserie` · `/notre-savoir-faire-menuiseries-exterieures` | `/menuisier-aix-en-provence/` |
 | `/contact-menuiserie-des-pennes` | `/contact/` |
-| `/mentions-legales` | `/mentions-legales/` (page à créer) |
+| `/mentions-legales` | `/mentions-legales/` (noindex) |
+| `/entreprise/` (nouveau site, avant lancement) | `/menuisier-aix-en-provence/` (301 déjà actif dans le thème) |
+| `/realisations/villa-31-menuiseries/` · `porte-atelier/` · `maison-ocre/` · `villa-puyricard/` | `villa-des-galandages/` · `maison-a-la-porte-de-frene/` · `maison-provencale/` · `villa-minimaliste-puyricard/` (301 déjà actifs) |
 | 13 pages de démonstration (casquette, sérum, chaise, pull, cours de langue…) | **410 (supprimées)** |
 
 ⚠ Constat : le plan du site actuel déclare 13 produits de démonstration du constructeur Hostinger. Décision du 01/10/2026 : pas de suppression manuelle, l'ancien site sera remplacé ; ces adresses répondront 410 au lancement. Ne supprimer l'ancien site qu'une fois le nouveau branché sur le domaine.
