@@ -434,7 +434,8 @@ Recueillir les réglages du client sur le prototype, puis textes définitifs pag
 - **Confirmé par l'extrait Kbis (à jour au 23/12/2025) et le client** : 480 377 308 R.C.S. Aix-en-Provence ; SAS à associé unique, capital 100 000 € ; immatriculation 27/01/2005, début d'activité 05/01/2005 ; président : Régis Ombrouck ; TVA intracommunautaire **FR26480377308** (client).
 - **Point à vérifier** : le Kbis écrit le nom « OMBROUK » (sans c), le site écrit « Ombrouck ». Orthographe à confirmer par le client.
 - Assurance décennale Generali : **contrat n° AL839752** (client, 06/10/2026).
-- **Encore à fournir** : médiateur de la consommation (obligatoire pour les clients particuliers).
+- SIRET (en-tête des devis) : 480 377 308 00026, ajouté aux mentions légales.
+- **Médiateur de la consommation : section retirée des mentions légales pour l'instant (client, 07/10/2026).** L'obligation d'adhérer à un médiateur (art. L.612-1 et L.616-1 du Code de la consommation) reste à régler par le client avec son comptable ; l'ajouter au site et aux devis dès qu'il est choisi. Ancienne mention : médiateur de la consommation (obligatoire pour les clients particuliers).
 - Le Kbis n'est pas conservé dans le dépôt (données personnelles du dirigeant).
 - **Confidentialité** : données des formulaires uniquement, finalités (devis, visite, suivi), accès (équipe, Hostinger, messagerie, Akismet), conservation (3 ans sans suite ; 10 ans clients), fichiers PDF supprimés du serveur après envoi, droits RGPD et CNIL.
 - **Cookies** : « aucun cookie publicitaire ni de mesure d'audience, pas de bandeau ». Vrai seulement si, avant le lancement, on **désactive Hostinger Reach** et on **héberge les polices sur le site** (aujourd'hui chargées depuis Google). Sinon, adapter le texte.
