@@ -463,3 +463,14 @@ Détail et maquettes : `PROPOSITION-SEO-100.md`. Validé par le client avec troi
 - Copie d'analyse AIOSEO : les questions des FAQ sont désormais incluses ; sur les fiches de réalisations, le pied de page et les engagements de l'appel final (identiques sur tout le site) sont remplacés par le seul lien « Nos avis Google ». Le critère « 300 mots » ne compte pas dans la note SEO d'AIOSEO (seulement dans la partie lisibilité, déjà au maximum).
 - **À surveiller (07/10/2026)** : extensions actives non prévues par le cahier des charges : MonsterInsights (non configuré, aucun suivi pour l'instant ; s'il est branché à Google Analytics, il faudra un bandeau cookies et modifier la page Confidentialité), OptinMonster, Broken Link Checker. Universally Language Translation (sélecteur de langue) désactivée le 07/10/2026 à la demande du client : le site est uniquement en français.
 - **Densité (07/10/2026, accord client)** : AIOSEO plafonne l'expression-clé à environ 3 % du texte. Corrigé sur 3 pages : Volets (phrases ajoutées en 2e passe retirées pour cette famille, « Deux grandes familles. », « ceux qui conviennent ») ; 12 logements et Appartement Joliette (titre « D'autres chantiers du même type. » conservé, le nom figurant déjà dans le titre « Le projet »).
+
+### 3.31 Mise en ligne (07/10/2026, demandée par le client)
+
+- Domaine **menuiseriedespennes.fr** branché par le client sur le WordPress Hostinger (HTTPS actif, messagerie inchangée : MX Hostinger). WPVibe reconnecté sur le vrai domaine.
+- **Sauvegarde complète faite par le client dans hPanel** avant publication.
+- Thème `menuiserie-des-pennes` publié (remplace « Hostinger AI theme », qui reste installé).
+- 24 pages du nouveau site publiées ; page d'accueil = page 179 (renommée « Accueil ») ; anciennes pages 163 à 176 (sauf 165) passées en brouillon, rien de supprimé.
+- **Redirections 301** actives (thème, `mdp_legacy_map`) : 13 anciennes adresses (`/fenetres-haut-de-gamme`, `/nos-realisations`, `/contact-menuiserie-des-pennes`…) + `/entreprise/` et les 4 anciennes adresses de réalisations.
+- **Indexation ouverte** (robots.txt sans blocage, pas de noindex) ; Mentions légales et Confidentialité en noindex ; plan du site AIOSEO = 23 pages du nouveau site.
+- Vérifié : 25 adresses en 200, page inexistante en 404, 16 redirections en 301, aucune erreur JavaScript, rendu ordinateur et mobile.
+- **Reste à faire** : test réel du formulaire de devis (réception de l'e-mail), déclaration du plan du site dans Google Search Console, suivi des notes AIOSEO après recalcul, choix du médiateur de la consommation, pages de démonstration de l'ancien constructeur (répondent 404, à vérifier dans Search Console).
