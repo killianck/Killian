@@ -89,7 +89,7 @@ Trois ajouts par page, uniquement à partir des faits déjà publiés sur la fic
   - Quels documents envoyer ? → « Des plans avec les cotes des menuiseries, ou une liste détaillée des menuiseries souhaitées, en PDF. Des cotes approximatives suffisent : nous prenons les mesures exactes lors de la visite technique. »
   - Intervenez-vous près de chez moi ? → « À Aix-en-Provence, à Marseille et dans les Bouches-du-Rhône, où se situent 80 % de nos chantiers, et dans les départements voisins. »
   - Quels sont les délais ? → « Entre 5 et 8 semaines selon les produits, jusqu'à 12 pour certaines fabrications. »
-  - **Le devis est-il gratuit ? → réponse à fournir par le client.**
+  - Le devis est-il gratuit ? → « Oui, le devis est gratuit. Il est établi après la visite technique, poste par poste. » (confirmé par le client le 07/10/2026 ; mention limitée à cette question, pas de « devis gratuit » en accroche, cf. cahier des charges)
 - **Une photo de chantier** dans la colonne de droite (ex. pose en cours, Villa des galandages) : la page n'a aucune image (2 critères).
 
 ### Contact · expression « contact »
