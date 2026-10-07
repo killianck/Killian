@@ -50,9 +50,9 @@
 - ~~Poids des images~~ : **fait le 05/10/2026** (WebP, voir §2).
 - **Scripts inutiles chargés sur toutes les pages** :
   - ~~Tailwind (CDN jsdelivr)~~ : **retiré le 07/10/2026** ;
-  - Hostinger Reach (`embed.js`), outil d'e-mailing non utilisé ;
-  - Google Fonts chargées depuis Google (question RGPD) → les héberger sur le site.
-- **Extensions inutiles** à désactiver après lancement : WPForms Lite (les formulaires sont gérés par le thème), Hostinger Reach, Hostinger AI Assistant. Garder : AIOSEO, LiteSpeed, Akismet, Site Kit (pour Search Console / Analytics).
+  - ~~Hostinger Reach~~ : **désactivé le 07/10/2026** ;
+  - ~~Google Fonts~~ : **hébergées sur le site le 07/10/2026** (90 Ko, préchargement de la police principale).
+- **Extensions inutiles** à désactiver après lancement : WPForms Lite (les formulaires sont gérés par le thème), Hostinger AI Assistant (Hostinger Reach : fait). Garder : AIOSEO, LiteSpeed, Akismet, Site Kit (pour Search Console / Analytics).
 - ~~Mentions légales~~ : **fait le 07/10/2026** (page du thème, titre et description refaits ; politique de confidentialité ajoutée).
 - ~~Page 404~~ : **fait le 07/10/2026** (français, style du site, liens utiles).
 - **Descriptions Google à mettre à jour** avec les décisions récentes :
