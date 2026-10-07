@@ -427,7 +427,7 @@ Recueillir les réglages du client sur le prototype, puis textes définitifs pag
 - Contact (06/10/2026) : **réponse sous 72 heures** affichée dans l'introduction, dans le message de remerciement et dans l'e-mail de confirmation.
 - **Devis aussi à 72 heures, partout** (06/10/2026, client) : accueil, pied de page, appels finaux de toutes les pages, page Devis (intro, encadré, remerciement), e-mail de confirmation, page Professionnels (chiffre « 72 h », étapes, encadré), étapes « Comment ça se passe », descriptions Google (179, 180, 182 et description par défaut). Les mentions « 48 h » plus haut dans ce cahier sont **remplacées par 72 h**.
 
-### 3.29 Mentions légales, confidentialité, page 404 (06/10/2026, maquettes proposées, non intégrées)
+### 3.29 Mentions légales, confidentialité, page 404 (validées et intégrées le 07/10/2026)
 
 - Même mise en page que le site : grand titre, sommaire à gauche, sections à droite. Page 404 en français : « Cette page n'existe pas », boutons Accueil / Réalisations / Devis, liens vers les 7 familles.
 - **Mentions légales** : éditeur (SAS, 100 000 €, siège, SIREN 480 377 308), directeur de la publication Régis Ombrouck, hébergeur Hostinger International Ltd (Larnaca, Chypre), assurance décennale Generali, médiation de la consommation, propriété intellectuelle, renvoi vers la confidentialité.
@@ -440,3 +440,8 @@ Recueillir les réglages du client sur le prototype, puis textes définitifs pag
 - **Confidentialité** : données des formulaires uniquement, finalités (devis, visite, suivi), accès (équipe, Hostinger, messagerie, Akismet), conservation (3 ans sans suite ; 10 ans clients), fichiers PDF supprimés du serveur après envoi, droits RGPD et CNIL.
 - **Cookies** : « aucun cookie publicitaire ni de mesure d'audience, pas de bandeau ». Vrai seulement si, avant le lancement, on **désactive Hostinger Reach** et on **héberge les polices sur le site** (aujourd'hui chargées depuis Google). Sinon, adapter le texte.
 - Intégration prévue : liens « Mentions légales · Confidentialité · Cookies » du pied de page (aujourd'hui non cliquables), puis retrait du script Tailwind.
+
+- **Intégration (07/10/2026)** : thème `inc/legal.php` ; adresses `/mentions-legales/` (page WP 165, renommée « Mentions légales ») et `/confidentialite/` (nouvelle page privée 226) ; `404.php` refait (renvoie bien le code 404). Liens du pied de page actifs (« Cookies » → section cookies de la confidentialité). Titres et descriptions Google renseignés (165, 226).
+- **Script Tailwind retiré** de toutes les pages (`functions.php`, `mdp_drop_tailwind`) ; vérifié : aucune page ne le charge, rendu identique.
+- Pied de page mobile corrigé : la colonne de droite débordait de l'écran (longue adresse e-mail) ; le bloc coordonnées passe sur toute la largeur.
+- Reste avant lancement pour que la mention « aucun cookie » soit exacte : désactiver Hostinger Reach, héberger les polices sur le site.

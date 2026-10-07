@@ -49,12 +49,12 @@
 
 - ~~Poids des images~~ : **fait le 05/10/2026** (WebP, voir §2).
 - **Scripts inutiles chargés sur toutes les pages** :
-  - Tailwind (CDN jsdelivr), ajouté par l'extension WPVibe, alors que le thème a sa propre feuille de style ;
+  - ~~Tailwind (CDN jsdelivr)~~ : **retiré le 07/10/2026** ;
   - Hostinger Reach (`embed.js`), outil d'e-mailing non utilisé ;
   - Google Fonts chargées depuis Google (question RGPD) → les héberger sur le site.
 - **Extensions inutiles** à désactiver après lancement : WPForms Lite (les formulaires sont gérés par le thème), Hostinger Reach, Hostinger AI Assistant. Garder : AIOSEO, LiteSpeed, Akismet, Site Kit (pour Search Console / Analytics).
-- **Mentions légales** : la page actuelle est celle de l'ancien site (titre « Legal », 2 H1, description de 459 caractères). → Page à créer (prévue).
-- **Page 404** : texte en anglais (« We can't find that page »). → La traduire et l'habiller au style du site.
+- ~~Mentions légales~~ : **fait le 07/10/2026** (page du thème, titre et description refaits ; politique de confidentialité ajoutée).
+- ~~Page 404~~ : **fait le 07/10/2026** (français, style du site, liens utiles).
 - **Descriptions Google à mettre à jour** avec les décisions récentes :
   - Portails : dit « aluminium ou verre » → **aluminium ou acier, garde-corps vitrés** ;
   - Portes d'entrée : dit « blindées, connectées » → à valider ;
