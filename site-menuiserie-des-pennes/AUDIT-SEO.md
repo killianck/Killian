@@ -28,7 +28,12 @@
 ### Complément du 05/10 (All in One SEO)
 
 - Titres raccourcis sous 60 caractères : Villa contemporaine, Villa dans la roche, Maison provençale. Descriptions mises à jour : Portails (alu ou acier, garde-corps vitrés), Portes de garage (aluminium), Maison provençale (plus de mention des volets), Villa dans la roche et Céreste (neuf). Portes d'entrée : « blindées » conservé, « connectées » retiré (validé client).
-- Les scores AIOSEO « TruSEO » sont à 0 sur les nouvelles pages : c'est normal, l'extension analyse le texte de l'éditeur WordPress, alors que le contenu est affiché par le thème. **Ces scores ne sont pas à suivre.**
+- ~~Scores AIOSEO « TruSEO » de 0 à 70~~ : **corrigé le 07/10/2026.** Cause : AIOSEO note le texte enregistré dans l'éditeur WordPress, qui ne contenait qu'une phrase technique (le thème affiche la page) ; et les expressions-clés (« fenêtre aluminium Aix-en-Provence »…) n'apparaissaient jamais mot pour mot sur les pages.
+  - **Outil de synchronisation** (`inc/seo-sync.php`) : recopie dans l'éditeur le texte réellement affiché de chaque page (titres, paragraphes, listes, liens, images avec texte alternatif). Sans effet pour les visiteurs. **À relancer après chaque modification de texte** : `GET /wp-json/mdp/v1/seo-sync` (administrateur, avec le lien d'aperçu tant que le thème n'est pas publié). 25 pages synchronisées.
+  - **Expressions-clés revues** pour qu'elles figurent dans le titre Google, la description, le H1 et le texte : menuiseries extérieures (accueil, Menuiseries), réalisations, lot menuiseries, menuisier, devis, contact, fenêtres et portes-fenêtres, baies vitrées, portes d'entrée, volets roulants, portes de garage, portails, pergolas bioclimatiques, nom de chaque réalisation, mentions légales, confidentialité.
+  - Titres passés au pluriel comme les pages (Baies vitrées, Portes d'entrée, Portes de garage, Pergolas bioclimatiques) ; 11 descriptions réécrites pour contenir l'expression ; description Contact sans l'ancienne adresse Hotmail.
+  - **Les notes se recalculent quand on ouvre la page dans l'éditeur WordPress** (puis « Mettre à jour ») : l'analyse TruSEO tourne dans le navigateur, elle ne peut pas être relancée à distance.
+  - Les anciennes pages de l'ancien site (IDs 163 à 176 : « Porte », « Coulissant »…) ont leurs propres notes (48 à 60) : elles disparaîtront au lancement (redirections 301).
 - Version gratuite : pas de gestionnaire de redirections ni de module SEO local (versions payantes). Les redirections 301 / 410 seront faites dans le thème ou le fichier .htaccess. L'éditeur de robots.txt d'AIOSEO servira au lancement.
 
 ## 3. Bloquant au lancement (à faire le jour J, dans cet ordre)
