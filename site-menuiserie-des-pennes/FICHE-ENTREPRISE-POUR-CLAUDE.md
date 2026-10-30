@@ -34,7 +34,7 @@
 - Fabricants cités sur le site : Noralis, Novelis, Laloi, K-Line (alu) ; Molenat, Menuiseries Combes (bois) ; Futurol, Sothoferm, David Fermeture, France Volet (volets) ; Porte Gervais, Portes-EO, Zilten, Tordjman Métal, Technicdoor (portes) ; La Toulousaine (portails).
 
 ## Réalisations publiées (noms exacts)
-Résidence **Saint-Donat** (12 logements, Aix — jamais « Sindona ») · Villa dans la roche (Marseille) · Villa contemporaine (Céreste) · Villa des galandages · 12 logements à Fos-sur-Mer (mairie de Fos, référence à confirmer par écrit) · Villa minimaliste (Puyricard) · Maison à la porte de frêne · Maison provençale · Appartement Joliette (Marseille, 6e étage). · Villa de plain-pied (Montagnac-Montpezat, 04, 2026).
+Résidence **Saint-Donat** (12 logements, Aix — jamais « Sindona ») · Villa dans la roche (Marseille) · Villa contemporaine (Céreste) · Villa des galandages · 12 logements à Fos-sur-Mer (mairie de Fos, référence à confirmer par écrit) · Villa minimaliste (Puyricard) · Maison à la porte de frêne · Maison provençale · Appartement Joliette (Marseille, 6e étage) · Villa de plain-pied (Montagnac-Montpezat, 04, 2026).
 
 ## Règles de communication
 - Ton : français, concis, haut de gamme. Écrire « cotes » (mesures) sans accent.
