@@ -34,7 +34,7 @@
 - Fabricants cités sur le site : Noralis, Novelis, Laloi, K-Line (alu) ; Molenat, Menuiseries Combes (bois) ; Futurol, Sothoferm, David Fermeture, France Volet (volets) ; Porte Gervais, Portes-EO, Zilten, Tordjman Métal, Technicdoor (portes) ; La Toulousaine (portails).
 
 ## Réalisations publiées (noms exacts)
-Résidence **Saint-Donat** (12 logements, Aix — jamais « Sindona ») · Villa dans la roche (Marseille) · Villa contemporaine (Céreste) · Villa des galandages · 12 logements à Fos-sur-Mer (mairie de Fos, référence à confirmer par écrit) · Villa minimaliste (Puyricard) · Maison à la porte de frêne · Maison provençale · Appartement Joliette (Marseille, 6e étage).
+Résidence **Saint-Donat** (12 logements, Aix — jamais « Sindona ») · Villa dans la roche (Marseille) · Villa contemporaine (Céreste) · Villa des galandages · 12 logements à Fos-sur-Mer (mairie de Fos, référence à confirmer par écrit) · Villa minimaliste (Puyricard) · Maison à la porte de frêne · Maison provençale · Appartement Joliette (Marseille, 6e étage). · Villa de plain-pied (Montagnac-Montpezat, 04, 2026).
 
 ## Règles de communication
 - Ton : français, concis, haut de gamme. Écrire « cotes » (mesures) sans accent.
@@ -47,6 +47,6 @@ Résidence **Saint-Donat** (12 logements, Aix — jamais « Sindona ») · Villa
 
 ## Site web (état au 21/10/2026)
 - Thème sur mesure WordPress, modifié via WPVibe (brouillon → aperçu → validation → publication). **Après chaque publication, vider le cache CDN dans hPanel** (Performance › CDN).
-- Pages : Accueil, Menuiseries (7 familles), Réalisations (9 fiches), Professionnels, L'entreprise (`/menuisier-aix-en-provence/`), Demande de devis (dépôt de plans PDF ou saisie des menuiseries), Contact, Mentions légales et Confidentialité (non indexées).
+- Pages : Accueil, Menuiseries (7 familles), Réalisations (10 fiches), Professionnels, L'entreprise (`/menuisier-aix-en-provence/`), Demande de devis (dépôt de plans PDF ou saisie des menuiseries), Contact, Mentions légales et Confidentialité (non indexées).
 - SEO : Lighthouse SEO 100, vitesse 97 (mobile) / 100 (ordinateur), notes AIOSEO 91 à 97. Google Search Console en place.
 - Pistes pour la suite : plus d'avis Google, fiche Google Business Profile à jour, liens depuis fabricants/annuaires du bâtiment, photos pour portes de garage et pergolas.
