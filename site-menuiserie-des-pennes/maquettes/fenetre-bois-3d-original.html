@@ -1,0 +1,595 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Coupe 3D fenêtre bois</title>
+<meta name="description" content="Maquette 3D interactive de la coupe d'une fenêtre bois haut de gamme : rotation, zoom, vue éclatée et fiche de chaque pièce.">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0}
+[hidden]{display:none!important}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout : atelier de maquette — scène 3D à gauche, fiche des pièces à droite ; empilé sur téléphone */
+:root {
+  --bg: #E7EAEC;
+  --surface: #F7F8F9;
+  --stage: #DCE1E4;
+  --ink: #16202A;
+  --muted: #56626D;
+  --line: #C9D0D5;
+  --accent: #1F4E79;
+  --accent-ink: #FFFFFF;
+  --chip: #EDF0F2;
+  --font-display: 'Archivo', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-body: 'Archivo', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-data: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11161B; --surface: #192028; --stage: #1D252D; --ink: #E6EBEF; --muted: #9AA6B1;
+    --line: #2D3740; --accent: #74A7D6; --accent-ink: #0E1620; --chip: #222B34; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11161B; --surface: #192028; --stage: #1D252D; --ink: #E6EBEF; --muted: #9AA6B1;
+  --line: #2D3740; --accent: #74A7D6; --accent-ink: #0E1620; --chip: #222B34; color-scheme: dark;
+}
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 14px; }
+.app {
+  box-sizing: border-box; height: 100%;
+  padding-block: 16px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; grid-template-columns: minmax(0, 1fr) 368px; gap: 16px;
+}
+.viewport { position: relative; min-width: 0; min-height: 0; background: var(--stage); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.viewport canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
+.viewport canvas:active { cursor: grabbing; }
+.labels { position: absolute; inset: 0; pointer-events: none; }
+.marker {
+  position: absolute; left: 0; top: 0; width: 26px; height: 26px; margin: -13px 0 0 -13px;
+  border-radius: 50%; border: 2px solid var(--surface); background: var(--accent); color: var(--accent-ink);
+  font: 700 12px/1 var(--font-body); display: flex; align-items: center; justify-content: center;
+  pointer-events: auto; cursor: pointer; padding: 0; box-shadow: 0 1px 4px rgba(0,0,0,.25);
+}
+.marker[aria-pressed="true"] { outline: 3px solid var(--ink); outline-offset: 1px; }
+.hint {
+  position: absolute; top: 12px; left: 12px; right: 12px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  font: 500 12px/1.4 var(--font-data); color: var(--muted); pointer-events: none;
+}
+.hint b { color: var(--ink); font-weight: 600; }
+.toolbar {
+  position: absolute; left: 12px; right: 12px; bottom: 12px;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.08);
+}
+.btn {
+  font: 600 13px/1 var(--font-body); color: var(--ink); background: var(--chip);
+  border: 1px solid var(--line); border-radius: 7px; padding: 0 12px; height: 36px; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+}
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.btn:focus-visible, .marker:focus-visible, .part:focus-visible, .eye:focus-visible, input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; }
+.seg .btn { border: 0; border-radius: 0; border-right: 1px solid var(--line); }
+.seg .btn:last-child { border-right: 0; }
+.slider { display: flex; align-items: center; gap: 8px; flex: 1 1 180px; min-width: 150px; }
+.slider label { font: 600 12px/1 var(--font-data); color: var(--muted); white-space: nowrap; }
+.slider input { flex: 1; min-width: 0; accent-color: var(--accent); }
+.slider output { font: 600 12px/1 var(--font-data); width: 38px; text-align: right; font-variant-numeric: tabular-nums; }
+.spacer { flex: 1 1 0; }
+
+.panel { min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; }
+.head { display: flex; flex-direction: column; gap: 6px; }
+.eyebrow { font: 600 11px/1.3 var(--font-data); letter-spacing: .12em; color: var(--muted); }
+h1 { margin: 0; font: 800 26px/1.08 var(--font-display); letter-spacing: -.015em; text-wrap: balance; }
+.lede { margin: 0; color: var(--muted); line-height: 1.5; font-size: 14px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.card-top { display: flex; align-items: center; gap: 10px; }
+.badges { display: flex; gap: 4px; }
+.badge { min-width: 24px; height: 24px; padding: 0 6px; box-sizing: border-box; border-radius: 12px; background: var(--accent); color: var(--accent-ink); font: 700 12px/24px var(--font-body); text-align: center; }
+.card h2 { margin: 0; font: 700 18px/1.2 var(--font-display); }
+.card p { margin: 0; line-height: 1.55; font-size: 14px; }
+.details { list-style: none; margin: 0; padding: 10px 0 0; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
+.details li { display: flex; gap: 8px; line-height: 1.45; font-size: 13px; }
+.details .badge { flex-shrink: 0; min-width: 22px; height: 22px; line-height: 22px; font-size: 11px; }
+.list-title { display: flex; justify-content: space-between; align-items: baseline; }
+.list-title h3 { margin: 0; font: 700 14px/1 var(--font-display); }
+.list-title span { font: 500 12px/1 var(--font-data); color: var(--muted); }
+.parts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); overflow: hidden; }
+.parts li { display: flex; align-items: stretch; border-bottom: 1px solid var(--line); }
+.parts li:last-child { border-bottom: 0; }
+.part {
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: transparent; border: 0;
+  color: var(--ink); text-align: left; font: 500 14px/1.25 var(--font-body); cursor: pointer;
+}
+.part:hover { background: var(--chip); }
+.part[aria-pressed="true"] { background: var(--chip); box-shadow: inset 3px 0 0 var(--accent); font-weight: 700; }
+.part .num { font: 600 12px/1 var(--font-data); color: var(--accent); min-width: 34px; }
+.part.off { color: var(--muted); text-decoration: line-through; }
+.eye { width: 44px; flex-shrink: 0; background: transparent; border: 0; border-left: 1px solid var(--line); color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.eye:hover { color: var(--ink); background: var(--chip); }
+.eye svg { width: 18px; height: 18px; }
+.foot { font-size: 12px; line-height: 1.5; color: var(--muted); margin: 0; }
+.error { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 24px; text-align: center; color: var(--muted); line-height: 1.5; }
+
+@media (max-width: 880px) {
+  html, body { height: auto; }
+  .app { height: auto; grid-template-columns: minmax(0, 1fr); }
+  .viewport { height: 72vh; min-height: 460px; }
+  .panel { overflow: visible; }
+}
+@media (max-width: 520px) {
+  .hint .controls-hint { display: none; }
+  .seg .btn { padding: 0 9px; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <section class="viewport" id="viewport" aria-label="Maquette 3D de la coupe de fenêtre">
+    <div class="labels" id="labels"></div>
+    <div class="hint">
+      <span><b>Traverse basse</b> · longueur représentée 300 mm</span>
+      <span class="controls-hint">Glisser : tourner · Molette ou pincer : zoomer · Clic droit : déplacer</span>
+    </div>
+    <div class="toolbar">
+      <button class="btn primary" id="explodeBtn" type="button">Éclater</button>
+      <div class="slider">
+        <label for="explode">Vue éclatée</label>
+        <input id="explode" type="range" min="0" max="100" value="0">
+        <output id="explodeOut" for="explode">0 %</output>
+      </div>
+      <div class="seg" role="group" aria-label="Points de vue">
+        <button class="btn" type="button" data-view="coupe">Coupe</button>
+        <button class="btn" type="button" data-view="trois">3/4</button>
+        <button class="btn" type="button" data-view="ext">Extérieur</button>
+        <button class="btn" type="button" data-view="int">Intérieur</button>
+      </div>
+      <button class="btn" type="button" id="labelsBtn" aria-pressed="true">Repères</button>
+      <button class="btn" type="button" id="spinBtn" aria-pressed="false">Rotation</button>
+    </div>
+  </section>
+
+  <aside class="panel">
+    <div class="head">
+      <div class="eyebrow">MAQUETTE 3D · PLANCHE 01</div>
+      <h1>Coupe de la fenêtre bois haut de gamme</h1>
+      <p class="lede">Ouvrant 62 mm à la française. Tournez la maquette, écartez les pièces avec la vue éclatée, puis touchez une pièce ou un repère pour sa fiche.</p>
+    </div>
+
+    <div class="card" id="card" aria-live="polite">
+      <div class="card-top"><div class="badges" id="cardBadges"></div><h2 id="cardTitle"></h2></div>
+      <p id="cardText"></p>
+      <ul class="details" id="cardDetails" hidden></ul>
+    </div>
+
+    <div class="list-title"><h3>Pièces</h3><span id="visibleCount">10 / 10 visibles</span></div>
+    <ul class="parts" id="parts"></ul>
+
+    <p class="foot">Schéma de principe établi d'après les fiches Natura (Menuiseries Combes) et Fenêtre bois haut de gamme (Groupe Lorillard). Proportions indicatives, non contractuel. Numéros identiques à la planche 01.</p>
+  </aside>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function () {
+  const viewportEl = document.getElementById('viewport');
+  if (!window.THREE || !THREE.OrbitControls) {
+    const d = document.createElement('div'); d.className = 'error';
+    d.textContent = "La maquette 3D n'a pas pu se charger. Rechargez la page pour réessayer.";
+    viewportEl.appendChild(d); return;
+  }
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+  /* ---------- Données ---------- */
+  const PARTS = [
+    { id: 'vitrage', nums: [1], name: 'Vitrage isolant',
+      text: "Double vitrage 4/20/4 faiblement émissif à lame d'argon, Ug 1,1 W/m²·K en standard. La feuillure accepte jusqu'à 28 mm (Natura 62) ou 37 mm (Natura 71) pour un vitrage acoustique, retardateur d'effraction ou à contrôle solaire." },
+    { id: 'intercalaire', nums: [8], name: 'Intercalaire noir anti-reflet',
+      text: "Espaceur entre les deux verres, noir pour rester discret en fond de feuillure. Version warm edge en option pour limiter le pont thermique en rive de vitrage." },
+    { id: 'silicone', nums: [6], name: 'Obturateurs silicone',
+      text: "Un cordon de chaque côté du vitrage assure l'étanchéité entre le verre et le bois. Vitrages certifiés CEKAL." },
+    { id: 'parclose', nums: [2], name: 'Parclose à doucine',
+      text: "Moulure qui maintient le vitrage côté extérieur. En variante, cadre parclose en solin mastic pour retrouver l'aspect des menuiseries anciennes." },
+    { id: 'ouvrant', nums: [9], name: 'Ouvrant 62 mm',
+      text: "Lamellé-collé 3 plis : les lignes de colle se lisent sur la tranche. Angles assemblés à double enfourchement collé, plus robuste qu'un assemblage mécanique.",
+      details: [[3, 'Finition usine 300 µm', 'peinture microporeuse en phase aqueuse, garantie 12 ans en teintes opaques.'],
+                [4, "Jet d'eau", "profil en saillie qui rejette le ruissellement loin de la jonction ouvrant/dormant (E*7B)."],
+                [7, 'Profil mouluré', 'arêtes travaillées côté intérieur.']] },
+    { id: 'ferrure', nums: [10], name: 'Ferrure à galets champignons',
+      text: "Crémone encastrée dans l'ouvrant : ses galets, réglables en 2 dimensions, se verrouillent dans des gâches de sécurité vissées sur le dormant. Oscillo-battant en option." },
+    { id: 'joints', nums: [11], name: 'Double joint sur ouvrant',
+      text: "Un joint en battue sur le dormant, un second sous le recouvrement intérieur : étanchéité à l'air classée A*4, affaiblissement jusqu'à 38 dB selon le vitrage." },
+    { id: 'dormant', nums: [12], name: 'Dormant lamellé-collé 3 plis',
+      text: "Cadre fixe en chêne, Red Grandis ou pin sylvestre issus de forêts gérées durablement (PEFC ou FSC).",
+      details: [[5, "Rejet d'eau et goutte d'eau", "pente usinée sur le dessus et larmier en sous-face : l'eau s'égoutte en débord, sans revenir vers la maçonnerie."]] },
+    { id: 'cales', nums: [], name: "Cales d'assise",
+      text: "Supports placés sous le vitrage : ils en reprennent le poids et le gardent centré dans sa feuillure." },
+    { id: 'appui', nums: [], name: 'Appui maçonné',
+      text: "Support de pose, représenté pour situer la menuiserie dans la baie." }
+  ];
+  const byId = Object.fromEntries(PARTS.map(p => [p.id, p]));
+
+  /* ---------- Scène ---------- */
+  const L = 300;
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.05;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  viewportEl.insertBefore(renderer.domElement, viewportEl.firstChild);
+  renderer.domElement.setAttribute('aria-label', 'Vue 3D interactive : glisser pour tourner, molette pour zoomer');
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(css('--stage') || '#DCE1E4');
+  const camera = new THREE.PerspectiveCamera(32, 1, 1, 5000);
+  camera.position.set(300, 170, 380);
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true; controls.dampingFactor = 0.08;
+  controls.minDistance = 90; controls.maxDistance = 1400;
+  controls.target.set(0, 0, 0);
+  controls.autoRotateSpeed = 1.2;
+
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x8a8478, 0.75));
+  const key = new THREE.DirectionalLight(0xffffff, 0.95);
+  key.position.set(260, 420, 380); key.castShadow = true;
+  key.shadow.mapSize.set(2048, 2048);
+  Object.assign(key.shadow.camera, { left: -340, right: 340, top: 340, bottom: -340, near: 50, far: 1500 });
+  key.shadow.bias = -0.0006;
+  scene.add(key);
+  const rim = new THREE.DirectionalLight(0xdfe9ff, 0.35); rim.position.set(-400, 120, -260); scene.add(rim);
+
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(4000, 4000), new THREE.ShadowMaterial({ opacity: 0.16 }));
+  ground.rotation.x = -Math.PI / 2; ground.position.y = -190; ground.receiveShadow = true; scene.add(ground);
+
+  const root = new THREE.Group(); root.position.set(-50, -100, -L / 2); scene.add(root);
+
+  /* ---------- Textures bois ---------- */
+  function capTexture(plies) {
+    const W = 512, H = 1024, s = W / 100;
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const g = c.getContext('2d');
+    g.fillStyle = '#D4A677'; g.fillRect(0, 0, W, H);
+    let seed = plies.length * 7 + 3;
+    const rnd = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+    plies.forEach(([a, b], i) => {
+      g.save(); g.beginPath(); g.rect(a * s, 0, (b - a) * s, H); g.clip();
+      const cx = ((a + b) / 2) * s + (i % 2 ? 46 : -46), cy = H + 220 + i * 60;
+      for (let r = 30; r < 1500; r += 6 + rnd() * 7) {
+        g.strokeStyle = 'rgba(146,96,52,' + (0.16 + rnd() * 0.24).toFixed(2) + ')';
+        g.lineWidth = 1 + rnd() * 1.8;
+        g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.stroke();
+      }
+      g.restore();
+    });
+    plies.slice(1).forEach(([a]) => { g.fillStyle = 'rgba(72,42,20,0.9)'; g.fillRect(a * s - 1.6, 0, 3.2, H); });
+    const t = new THREE.CanvasTexture(c);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(1 / 100, 1 / 200);
+    t.encoding = THREE.sRGBEncoding; t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    return t;
+  }
+  function sideTexture() {
+    const W = 256, H = 1024;
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const g = c.getContext('2d');
+    g.fillStyle = '#CC9D6B'; g.fillRect(0, 0, W, H);
+    let seed = 11; const rnd = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+    for (let i = 0; i < 90; i++) {
+      const x = rnd() * W, ph = rnd() * 6, f = 90 + rnd() * 120;
+      g.strokeStyle = 'rgba(128,82,42,' + (0.12 + rnd() * 0.3).toFixed(2) + ')';
+      g.lineWidth = 0.6 + rnd() * 2.2;
+      g.beginPath(); g.moveTo(x, 0);
+      for (let y = 0; y <= H; y += 12) g.lineTo(x + Math.sin(y / f + ph) * 5, y);
+      g.stroke();
+    }
+    const t = new THREE.CanvasTexture(c);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(1 / 32, 1 / 300);
+    t.encoding = THREE.sRGBEncoding; t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    return t;
+  }
+  const sideTex = sideTexture();
+  const woodMats = (plies) => [
+    new THREE.MeshStandardMaterial({ map: capTexture(plies), roughness: 0.72 }),
+    new THREE.MeshStandardMaterial({ map: sideTex, roughness: 0.6 })
+  ];
+  const mat = {
+    glass: () => new THREE.MeshStandardMaterial({ color: 0xBFE0EA, roughness: 0.05, metalness: 0, transparent: true, opacity: 0.3, depthWrite: false, side: THREE.DoubleSide }),
+    rubber: () => new THREE.MeshStandardMaterial({ color: 0x1C2228, roughness: 0.92 }),
+    spacer: () => new THREE.MeshStandardMaterial({ color: 0x23292F, roughness: 0.5, metalness: 0.3 }),
+    butyl: () => new THREE.MeshStandardMaterial({ color: 0x5B6168, roughness: 0.9 }),
+    silicone: () => new THREE.MeshStandardMaterial({ color: 0xE9EEF1, roughness: 0.4, transparent: true, opacity: 0.92 }),
+    metal: () => new THREE.MeshStandardMaterial({ color: 0xA7AFB5, roughness: 0.32, metalness: 0.55 }),
+    block: () => new THREE.MeshStandardMaterial({ color: 0x4E555B, roughness: 0.8 }),
+    stone: () => new THREE.MeshStandardMaterial({ color: 0xCBC6BC, roughness: 1 })
+  };
+  const edgeMat = new THREE.LineBasicMaterial({ color: new THREE.Color(css('--ink') || '#16202A'), transparent: true, opacity: 0.28 });
+
+  /* ---------- Géométrie (mm ; x = profondeur ext→int, y = hauteur) ---------- */
+  function shape(pts) {
+    const s = new THREE.Shape(); s.moveTo(pts[0][0], pts[0][1]);
+    for (let i = 1; i < pts.length; i++) {
+      const p = pts[i];
+      if (p.q) s.quadraticCurveTo(p.q[0], p.q[1], p.x, p.y);
+      else if (p.c) s.bezierCurveTo(p.c[0], p.c[1], p.c[2], p.c[3], p.x, p.y);
+      else s.lineTo(p[0], p[1]);
+    }
+    s.closePath(); return s;
+  }
+  const extrude = (sh, z0 = 0, len = L) => {
+    const g = new THREE.ExtrudeGeometry(sh, { depth: len, bevelEnabled: false, curveSegments: 28 });
+    g.translate(0, 0, z0); return g;
+  };
+  const rect = (x0, x1, y0, y1) => shape([[x0, y0], [x1, y0], [x1, y1], [x0, y1]]);
+  const rrect = (x0, x1, y0, y1, r) => shape([
+    [x0 + r, y0], [x1 - r, y0], { q: [x1, y0], x: x1, y: y0 + r }, [x1, y1 - r], { q: [x1, y1], x: x1 - r, y: y1 },
+    [x0 + r, y1], { q: [x0, y1], x: x0, y: y1 - r }, [x0, y0 + r], { q: [x0, y0], x: x0 + r, y: y0 }
+  ]);
+
+  const meshes = []; // { mesh, part, explode: Vector3 }
+  const partGroups = {};
+  function add(partId, geometry, material, explode, opts = {}) {
+    const m = new THREE.Mesh(geometry, material);
+    m.castShadow = opts.shadow !== false; m.receiveShadow = true;
+    m.userData.part = partId;
+    if (opts.edges !== false) {
+      const e = new THREE.LineSegments(new THREE.EdgesGeometry(geometry, 28), edgeMat);
+      e.raycast = () => {}; m.add(e);
+    }
+    root.add(m);
+    const rec = { mesh: m, part: partId, explode: new THREE.Vector3(...explode) };
+    meshes.push(rec);
+    (partGroups[partId] = partGroups[partId] || []).push(rec);
+    return rec;
+  }
+
+  // Appui maçonné
+  add('appui', extrude(rect(14, 106, -8, 0), -20, L + 40), mat.stone(), [0, -72, 0]);
+  // Dormant
+  add('dormant', extrude(shape([[0, 22], [14, 24], [30, 27], [46, 31], [46, 34], [86, 34], [86, 28], [100, 28], [100, 0], [10, 0], [10, 5], [6, 5], [6, 0], [2, 0], [0, 3]])),
+      woodMats([[0, 33.33], [33.33, 66.67], [66.67, 100]]), [0, -38, 0]);
+  // Gâches de sécurité
+  [40, 150, 260].forEach(z => add('ferrure', extrude(rect(60, 76, 34, 35.2), z - 15, 30), mat.metal(), [0, -20, 0]));
+  // Ouvrant
+  add('ouvrant', extrude(shape([[34, 104], [34, 72], [20, 56], [20, 50], [23, 50], [23, 52], [25, 52], [25, 50], [34, 50], [34, 38], [88, 38], [88, 31], [96, 31], [96, 118],
+      { q: [96, 128], x: 88, y: 128 }, [78, 128], [78, 104]])),
+      woodMats([[34, 54.67], [54.67, 75.33], [75.33, 100]]), [0, 26, 0]);
+  // Crémone + galets champignons
+  add('ferrure', extrude(rect(62, 74, 38, 42)), mat.metal(), [0, 8, 0]);
+  [40, 150, 260].forEach(z => {
+    const stem = new THREE.CylinderGeometry(1.1, 1.1, 3.2, 20); stem.translate(68, 36.6, z);
+    add('ferrure', stem, mat.metal(), [0, 8, 0], { edges: false });
+    const head = new THREE.SphereGeometry(2.1, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2);
+    head.rotateX(Math.PI); head.translate(68, 35.4, z);
+    add('ferrure', head, mat.metal(), [0, 8, 0], { edges: false });
+  });
+  // Double joint
+  add('joints', extrude(rrect(48, 54, 34, 38, 1.5)), mat.rubber(), [0, 13, 0]);
+  add('joints', extrude(rrect(90, 95, 28, 31, 1.1)), mat.rubber(), [0, 13, 0]);
+  // Parclose
+  add('parclose', extrude(shape([[34, 104], [46, 104], [46, 124], { c: [40, 124, 40, 112], x: 34, y: 112 }])),
+      woodMats([[0, 100]]), [-48, 40, 0]);
+  // Cales d'assise
+  [30, 270].forEach(z => add('cales', extrude(rect(50, 74, 104, 106), z - 25, 50), mat.block(), [0, 62, 0]));
+  // Vitrage
+  add('vitrage', extrude(rect(48, 52, 106, 196)), mat.glass(), [-16, 108, 0], { shadow: false });
+  add('vitrage', extrude(rect(72, 76, 106, 196)), mat.glass(), [16, 108, 0], { shadow: false });
+  // Intercalaire + butyl
+  add('intercalaire', extrude(rect(52, 72, 108, 118)), mat.spacer(), [0, 88, 0]);
+  add('intercalaire', extrude(rect(52, 72, 106, 108)), mat.butyl(), [0, 88, 0]);
+  // Silicones
+  add('silicone', extrude(shape([[46, 124], [48, 124], [48, 128.5]])), mat.silicone(), [-34, 74, 0]);
+  add('silicone', extrude(shape([[78, 128], [76, 128], [76, 132.5]])), mat.silicone(), [34, 80, 0]);
+
+  /* ---------- Repères ---------- */
+  const F = L + 0.6;
+  const LABELS = [
+    [1, 'vitrage', 0, [50, 160, F]], [2, 'parclose', 0, [40, 112, F]], [3, 'ouvrant', 0, [34, 84, F]],
+    [4, 'ouvrant', 0, [23, 54, F]], [5, 'dormant', 0, [7, 14, F]], [6, 'silicone', 1, [77, 129.5, F]],
+    [7, 'ouvrant', 0, [93, 124, F]], [8, 'intercalaire', 0, [62, 113, F]], [9, 'ouvrant', 0, [62, 75, F]],
+    [10, 'ferrure', 3, [68, 40, F]], [11, 'joints', 0, [51, 36, F]], [12, 'dormant', 0, [66, 14, F]]
+  ];
+  const labelsEl = document.getElementById('labels');
+  const labelEls = LABELS.map(([n, pid, idx, pos]) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'marker'; b.textContent = n;
+    b.setAttribute('aria-label', 'Repère ' + n + ' : ' + byId[pid].name);
+    b.setAttribute('aria-pressed', 'false');
+    b.addEventListener('click', () => select(pid));
+    labelsEl.appendChild(b);
+    return { el: b, pid, rec: partGroups[pid][idx], local: new THREE.Vector3(...pos) };
+  });
+  // the crémone rail is the 4th ferrure mesh (index 3) — keep label tied to it
+  labelEls.forEach(l => { if (l.pid === 'ferrure') l.rec = partGroups.ferrure.find(r => r.mesh.geometry.type === 'ExtrudeGeometry' && r.explode.y > 0) || l.rec; });
+
+  /* ---------- Panneau ---------- */
+  const partsEl = document.getElementById('parts');
+  const hidden = new Set();
+  const eyeOn = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+  const eyeOff = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4.1M6.6 6.6A17 17 0 0 0 2 12s3.6 7 10 7a9.6 9.6 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
+  const rows = {};
+  PARTS.forEach(p => {
+    const li = document.createElement('li');
+    const btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'part'; btn.setAttribute('aria-pressed', 'false');
+    const allNums = p.nums.concat((p.details || []).map(d => d[0])).sort((a, b) => a - b);
+    btn.innerHTML = '<span class="num">' + (allNums.length ? allNums.join('·') : '—') + '</span><span></span>';
+    btn.lastChild.textContent = p.name;
+    btn.addEventListener('click', () => select(p.id));
+    const eye = document.createElement('button');
+    eye.type = 'button'; eye.className = 'eye'; eye.innerHTML = eyeOn;
+    eye.setAttribute('aria-label', 'Masquer ' + p.name);
+    eye.addEventListener('click', () => toggleVisible(p.id));
+    li.append(btn, eye); partsEl.appendChild(li);
+    rows[p.id] = { btn, eye };
+  });
+  function toggleVisible(id) {
+    if (hidden.has(id)) hidden.delete(id); else hidden.add(id);
+    const off = hidden.has(id);
+    partGroups[id].forEach(r => { r.mesh.visible = !off; });
+    rows[id].btn.classList.toggle('off', off);
+    rows[id].eye.innerHTML = off ? eyeOff : eyeOn;
+    rows[id].eye.setAttribute('aria-label', (off ? 'Afficher ' : 'Masquer ') + byId[id].name);
+    document.getElementById('visibleCount').textContent = (PARTS.length - hidden.size) + ' / ' + PARTS.length + ' visibles';
+  }
+
+  let selected = null;
+  const accentColor = () => new THREE.Color(css('--accent') || '#1F4E79');
+  function setEmissive(id, on) {
+    (partGroups[id] || []).forEach(r => {
+      const ms = Array.isArray(r.mesh.material) ? r.mesh.material : [r.mesh.material];
+      ms.forEach(m => { if (m.emissive) { m.emissive.copy(on ? accentColor() : new THREE.Color(0)); m.emissiveIntensity = on ? 0.32 : 0; } });
+    });
+  }
+  function select(id) {
+    if (selected) setEmissive(selected, false);
+    selected = id; setEmissive(id, true);
+    const p = byId[id];
+    Object.entries(rows).forEach(([k, r]) => r.btn.setAttribute('aria-pressed', String(k === id)));
+    labelEls.forEach(l => l.el.setAttribute('aria-pressed', String(l.pid === id)));
+    const badges = document.getElementById('cardBadges'); badges.innerHTML = '';
+    p.nums.forEach(n => { const s = document.createElement('span'); s.className = 'badge'; s.textContent = n; badges.appendChild(s); });
+    badges.hidden = !p.nums.length;
+    document.getElementById('cardTitle').textContent = p.name;
+    document.getElementById('cardText').textContent = p.text;
+    const det = document.getElementById('cardDetails'); det.innerHTML = '';
+    (p.details || []).forEach(([n, t, d]) => {
+      const li = document.createElement('li');
+      li.innerHTML = '<span class="badge"></span><span><b></b> : <span></span></span>';
+      li.querySelector('.badge').textContent = n;
+      li.querySelector('b').textContent = t;
+      li.lastChild.lastChild.textContent = d;
+      det.appendChild(li);
+    });
+    det.hidden = !(p.details || []).length;
+  }
+
+  /* ---------- Vue éclatée ---------- */
+  let explodeT = 0, explodeTarget = 0;
+  const slider = document.getElementById('explode');
+  const out = document.getElementById('explodeOut');
+  const exBtn = document.getElementById('explodeBtn');
+  function syncExplodeUI() {
+    slider.value = Math.round(explodeTarget * 100);
+    out.textContent = Math.round(explodeTarget * 100) + ' %';
+    exBtn.textContent = explodeTarget > 0.5 ? 'Assembler' : 'Éclater';
+  }
+  slider.addEventListener('input', () => { explodeTarget = slider.value / 100; explodeT = explodeTarget; syncExplodeUI(); });
+  exBtn.addEventListener('click', () => {
+    explodeTarget = explodeTarget > 0.5 ? 0 : 1;
+    if (reduceMotion) explodeT = explodeTarget;
+    syncExplodeUI();
+  });
+
+  /* ---------- Caméra ---------- */
+  const VIEWS = {
+    trois: [300, 170, 380],
+    coupe: [0, 10, 560],
+    ext: [-470, 90, 230],
+    int: [470, 90, 230]
+  };
+  let camAnim = null;
+  function goView(name) {
+    const to = new THREE.Vector3(...VIEWS[name]);
+    if (reduceMotion) { camera.position.copy(to); controls.target.set(0, 0, 0); return; }
+    camAnim = { from: camera.position.clone(), to, fromT: controls.target.clone(), start: performance.now(), dur: 750 };
+  }
+  document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => goView(b.dataset.view)));
+
+  const labelsBtn = document.getElementById('labelsBtn');
+  let showLabels = true;
+  labelsBtn.addEventListener('click', () => {
+    showLabels = !showLabels; labelsBtn.setAttribute('aria-pressed', String(showLabels));
+    labelsEl.hidden = !showLabels;
+  });
+  const spinBtn = document.getElementById('spinBtn');
+  spinBtn.addEventListener('click', () => {
+    controls.autoRotate = !controls.autoRotate; spinBtn.setAttribute('aria-pressed', String(controls.autoRotate));
+  });
+
+  /* ---------- Sélection au clic dans la scène ---------- */
+  const ray = new THREE.Raycaster(); const ptr = new THREE.Vector2(); let down = null;
+  renderer.domElement.addEventListener('pointerdown', e => { down = [e.clientX, e.clientY]; });
+  renderer.domElement.addEventListener('pointerup', e => {
+    if (!down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 5) { down = null; return; }
+    down = null;
+    const r = renderer.domElement.getBoundingClientRect();
+    ptr.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    ray.setFromCamera(ptr, camera);
+    const hits = ray.intersectObjects(meshes.filter(m => m.mesh.visible).map(m => m.mesh), false);
+    // le verre ne masque pas ce qui est derrière lui, sauf s'il est seul touché
+    const hit = hits.find(h => h.object.userData.part !== 'vitrage') || hits[0];
+    if (hit) select(hit.object.userData.part);
+  });
+
+  /* ---------- Thème ---------- */
+  function applyTheme() {
+    scene.background.set(css('--stage') || '#DCE1E4');
+    edgeMat.color.set(css('--ink') || '#16202A');
+    if (selected) setEmissive(selected, true);
+  }
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
+  new MutationObserver(applyTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+  /* ---------- Taille ---------- */
+  function resize() {
+    const w = viewportEl.clientWidth, h = viewportEl.clientHeight;
+    if (!w || !h) return;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h; camera.updateProjectionMatrix();
+  }
+  new ResizeObserver(resize).observe(viewportEl); resize();
+
+  /* ---------- Boucle ---------- */
+  const tmp = new THREE.Vector3();
+  const ease = t => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
+  function frame(now) {
+    if (camAnim) {
+      const k = Math.min(1, (now - camAnim.start) / camAnim.dur), e = ease(k);
+      camera.position.lerpVectors(camAnim.from, camAnim.to, e);
+      controls.target.lerpVectors(camAnim.fromT, new THREE.Vector3(0, 0, 0), e);
+      if (k >= 1) camAnim = null;
+    }
+    if (Math.abs(explodeTarget - explodeT) > 0.0005) {
+      explodeT += (explodeTarget - explodeT) * 0.1;
+      if (Math.abs(explodeTarget - explodeT) < 0.002) explodeT = explodeTarget;
+      if (document.activeElement !== slider) { slider.value = Math.round(explodeT * 100); out.textContent = Math.round(explodeT * 100) + ' %'; }
+    }
+    meshes.forEach(r => r.mesh.position.copy(r.explode).multiplyScalar(explodeT));
+    controls.update();
+    renderer.render(scene, camera);
+
+    if (showLabels) {
+      const w = viewportEl.clientWidth, h = viewportEl.clientHeight;
+      labelEls.forEach(l => {
+        if (hidden.has(l.pid)) { l.el.hidden = true; return; }
+        tmp.copy(l.local).add(l.rec.mesh.position);
+        root.localToWorld(tmp);
+        tmp.project(camera);
+        const vis = tmp.z < 1 && Math.abs(tmp.x) < 1.05 && Math.abs(tmp.y) < 1.05;
+        l.el.hidden = !vis;
+        if (vis) l.el.style.transform = 'translate(' + ((tmp.x + 1) / 2 * w).toFixed(1) + 'px,' + ((1 - tmp.y) / 2 * h).toFixed(1) + 'px)';
+      });
+    }
+    requestAnimationFrame(frame);
+  }
+  select('ouvrant');
+  syncExplodeUI();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
