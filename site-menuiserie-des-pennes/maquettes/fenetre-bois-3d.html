@@ -117,7 +117,7 @@ body { background: var(--bg); color: var(--ink); font-family: var(--font-body); 
 @media (max-width: 880px) {
   html, body { height: auto; }
   .app { height: auto; grid-template-columns: minmax(0, 1fr); }
-  .viewport { height: 62vh; min-height: 420px; }
+  .viewport { height: 480px; } /* hauteur fixe : dans un cadre, « vh » suivrait la hauteur du cadre lui-même */
   .panel { overflow: visible; }
 }
 @media (max-width: 520px) {
