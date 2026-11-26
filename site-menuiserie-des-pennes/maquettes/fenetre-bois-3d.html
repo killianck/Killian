@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="robots" content="noindex">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Coupe 3D fenêtre bois</title>
-<meta name="description" content="Maquette 3D interactive de la coupe d'une fenêtre bois haut de gamme : rotation, zoom, vue éclatée et fiche de chaque pièce.">
+<title>Maquettes 3D fenêtre bois</title>
+<meta name="description" content="Maquettes 3D interactives d'une fenêtre bois haut de gamme : coupe de la traverse basse et battement à mouton et gueule de loup.">
 <style>
 *,*::before,*::after{box-sizing:border-box}
 body{margin:0}
@@ -14,7 +14,7 @@ body{margin:0}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
 <style>
-/* Layout : atelier de maquette — scène 3D à gauche, fiche des pièces à droite ; empilé sur téléphone */
+/* Atelier de maquettes : scène 3D à gauche, fiche des pièces à droite ; empilé sur téléphone. Palette et polices du site. */
 :root {
   --bg: #EDECE8;
   --surface: #FFFFFF;
@@ -50,7 +50,7 @@ body { background: var(--bg); color: var(--ink); font-family: var(--font-body); 
   font: 700 12px/1 var(--font-body); display: flex; align-items: center; justify-content: center;
   pointer-events: auto; cursor: pointer; padding: 0; box-shadow: 0 1px 4px rgba(0,0,0,.25);
 }
-.marker[aria-pressed="true"] { outline: 3px solid var(--ink); outline-offset: 1px; }
+.marker[aria-pressed="true"] { outline: 3px solid var(--sable); outline-offset: 1px; }
 .hint {
   position: absolute; top: 12px; left: 12px; right: 12px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
   font: 500 12px/1.4 var(--font-data); color: var(--muted); pointer-events: none;
@@ -70,7 +70,7 @@ body { background: var(--bg); color: var(--ink); font-family: var(--font-body); 
 .btn:hover { border-color: var(--muted); }
 .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 .btn[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
-.btn:focus-visible, .marker:focus-visible, .part:focus-visible, .eye:focus-visible, input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.btn:focus-visible, .marker:focus-visible, .part:focus-visible, .eye:focus-visible, input:focus-visible { outline: 3px solid var(--sable); outline-offset: 2px; }
 .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; }
 .seg .btn { border: 0; border-radius: 0; border-right: 1px solid var(--line); }
 .seg .btn:last-child { border-right: 0; }
@@ -78,9 +78,16 @@ body { background: var(--bg); color: var(--ink); font-family: var(--font-body); 
 .slider label { font: 600 12px/1 var(--font-data); color: var(--muted); white-space: nowrap; }
 .slider input { flex: 1; min-width: 0; accent-color: var(--accent); }
 .slider output { font: 600 12px/1 var(--font-data); width: 38px; text-align: right; font-variant-numeric: tabular-nums; }
-.spacer { flex: 1 1 0; }
 
 .panel { min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; }
+.models { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 9px; overflow: hidden; background: var(--surface); flex-shrink: 0; }
+.models button {
+  font: 600 13px/1.2 var(--font-body); color: var(--muted); background: transparent; border: 0; padding: 10px 8px; cursor: pointer; text-align: center;
+  border-right: 1px solid var(--line); min-height: 44px;
+}
+.models button:last-child { border-right: 0; }
+.models button[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
+.models button:focus-visible { outline: 3px solid var(--sable); outline-offset: -3px; }
 .head { display: flex; flex-direction: column; gap: 6px; }
 .eyebrow { font: 600 11px/1.3 var(--font-data); letter-spacing: .12em; color: var(--muted); }
 .title { margin: 0; font: 600 24px/1.1 var(--font-display); letter-spacing: -.02em; text-wrap: balance; }
@@ -129,10 +136,10 @@ body { background: var(--bg); color: var(--ink); font-family: var(--font-body); 
 <body>
 
 <div class="app">
-  <section class="viewport" id="viewport" aria-label="Maquette 3D de la coupe de fenêtre">
+  <section class="viewport" id="viewport" aria-label="Maquette 3D de fenêtre bois">
     <div class="labels" id="labels"></div>
     <div class="hint">
-      <span><b>Traverse basse</b> · longueur représentée 300 mm</span>
+      <span id="hintModel"></span>
       <span class="controls-hint">Glisser : tourner · Molette ou pincer : zoomer · Clic droit : déplacer</span>
     </div>
     <div class="toolbar">
@@ -148,16 +155,21 @@ body { background: var(--bg); color: var(--ink); font-family: var(--font-body); 
         <button class="btn" type="button" data-view="ext">Extérieur</button>
         <button class="btn" type="button" data-view="int">Intérieur</button>
       </div>
+      <button class="btn" type="button" id="finishBtn" aria-pressed="false">Peint</button>
       <button class="btn" type="button" id="labelsBtn" aria-pressed="true">Repères</button>
       <button class="btn" type="button" id="spinBtn" aria-pressed="false">Rotation</button>
     </div>
   </section>
 
   <aside class="panel">
+    <div class="models" role="group" aria-label="Choix de la maquette">
+      <button type="button" data-model="coupe" aria-pressed="false">Coupe de fenêtre</button>
+      <button type="button" data-model="battement" aria-pressed="false">Battement à mouton</button>
+    </div>
     <div class="head">
-      <div class="eyebrow">MAQUETTE 3D</div>
-      <p class="title">Coupe de la fenêtre bois haut de gamme</p>
-      <p class="lede">Ouvrant 62 mm à la française. Tournez la maquette, écartez les pièces avec la vue éclatée, puis touchez une pièce ou un repère pour sa fiche.</p>
+      <div class="eyebrow" id="eyebrow"></div>
+      <p class="title" id="title"></p>
+      <p class="lede" id="lede"></p>
     </div>
 
     <div class="card" id="card" aria-live="polite">
@@ -166,10 +178,10 @@ body { background: var(--bg); color: var(--ink); font-family: var(--font-body); 
       <ul class="details" id="cardDetails" hidden></ul>
     </div>
 
-    <div class="list-title"><h3>Pièces</h3><span id="visibleCount">10 / 10 visibles</span></div>
+    <div class="list-title"><h3>Pièces</h3><span id="visibleCount"></span></div>
     <ul class="parts" id="parts"></ul>
 
-    <p class="foot">Schéma de principe : proportions indicatives, non contractuel.</p>
+    <p class="foot" id="foot"></p>
   </aside>
 </div>
 
@@ -185,38 +197,9 @@ body { background: var(--bg); color: var(--ink); font-family: var(--font-body); 
   }
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const $ = (id) => document.getElementById(id);
 
-  /* ---------- Données ---------- */
-  const PARTS = [
-    { id: 'vitrage', nums: [1], name: 'Vitrage isolant',
-      text: "Double vitrage 4/20/4 faiblement émissif à lame d'argon, Ug 1,1 W/m²·K en standard. La feuillure accepte jusqu'à 28 mm (ouvrant 62 mm) ou 37 mm (ouvrant 71 mm) pour un vitrage acoustique, retardateur d'effraction ou à contrôle solaire." },
-    { id: 'intercalaire', nums: [8], name: 'Intercalaire noir anti-reflet',
-      text: "Espaceur entre les deux verres, noir pour rester discret en fond de feuillure. Version warm edge en option pour limiter le pont thermique en rive de vitrage." },
-    { id: 'silicone', nums: [6], name: 'Obturateurs silicone',
-      text: "Un cordon de chaque côté du vitrage assure l'étanchéité entre le verre et le bois. Vitrages certifiés CEKAL." },
-    { id: 'parclose', nums: [2], name: 'Parclose à doucine',
-      text: "Moulure qui maintient le vitrage côté extérieur. En variante, cadre parclose en solin mastic pour retrouver l'aspect des menuiseries anciennes." },
-    { id: 'ouvrant', nums: [9], name: 'Ouvrant 62 mm',
-      text: "Lamellé-collé 3 plis : les lignes de colle se lisent sur la tranche. Angles assemblés à double enfourchement collé, plus robuste qu'un assemblage mécanique.",
-      details: [[3, 'Finition usine 300 µm', 'peinture microporeuse en phase aqueuse, garantie fabricant jusqu’à 12 ans en teintes opaques.'],
-                [4, "Jet d'eau", "profil en saillie qui rejette le ruissellement loin de la jonction ouvrant/dormant (E*7B)."],
-                [7, 'Profil mouluré', 'arêtes travaillées côté intérieur.']] },
-    { id: 'ferrure', nums: [10], name: 'Ferrure à galets champignons',
-      text: "Crémone encastrée dans l'ouvrant : ses galets, réglables en 2 dimensions, se verrouillent dans des gâches de sécurité vissées sur le dormant. Oscillo-battant en option." },
-    { id: 'joints', nums: [11], name: 'Double joint sur ouvrant',
-      text: "Un joint en battue sur le dormant, un second sous le recouvrement intérieur : étanchéité à l'air classée A*4, affaiblissement jusqu'à 38 dB selon le vitrage." },
-    { id: 'dormant', nums: [12], name: 'Dormant lamellé-collé 3 plis',
-      text: "Cadre fixe en chêne, Red Grandis ou pin sylvestre issus de forêts gérées durablement (PEFC ou FSC).",
-      details: [[5, "Rejet d'eau et goutte d'eau", "pente usinée sur le dessus et larmier en sous-face : l'eau s'égoutte en débord, sans revenir vers la maçonnerie."]] },
-    { id: 'cales', nums: [], name: "Cales d'assise",
-      text: "Supports placés sous le vitrage : ils en reprennent le poids et le gardent centré dans sa feuillure." },
-    { id: 'appui', nums: [], name: 'Appui maçonné',
-      text: "Support de pose, représenté pour situer la menuiserie dans la baie." }
-  ];
-  const byId = Object.fromEntries(PARTS.map(p => [p.id, p]));
-
-  /* ---------- Scène ---------- */
-  const L = 300;
+  /* ================= Rendu ================= */
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.outputEncoding = THREE.sRGBEncoding;
@@ -229,49 +212,56 @@ body { background: var(--bg); color: var(--ink); font-family: var(--font-body); 
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(css('--stage') || '#E2E0DA');
-  const camera = new THREE.PerspectiveCamera(32, 1, 1, 5000);
+  const camera = new THREE.PerspectiveCamera(32, 1, 1, 6000);
   camera.position.set(300, 170, 380);
   const controls = new THREE.OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true; controls.dampingFactor = 0.08;
-  controls.minDistance = 90; controls.maxDistance = 1400;
-  controls.target.set(0, 0, 0);
+  controls.minDistance = 80; controls.maxDistance = 1600;
   controls.autoRotateSpeed = 1.2;
 
   scene.add(new THREE.HemisphereLight(0xffffff, 0x8a8478, 0.75));
   const key = new THREE.DirectionalLight(0xffffff, 0.95);
-  key.position.set(260, 420, 380); key.castShadow = true;
+  key.position.set(260, 460, 380); key.castShadow = true;
   key.shadow.mapSize.set(2048, 2048);
-  Object.assign(key.shadow.camera, { left: -340, right: 340, top: 340, bottom: -340, near: 50, far: 1500 });
+  Object.assign(key.shadow.camera, { left: -380, right: 380, top: 380, bottom: -380, near: 50, far: 1700 });
   key.shadow.bias = -0.0006;
   scene.add(key);
   const rim = new THREE.DirectionalLight(0xdfe9ff, 0.35); rim.position.set(-400, 120, -260); scene.add(rim);
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(5000, 5000), new THREE.ShadowMaterial({ opacity: 0.16 }));
+  ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
 
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(4000, 4000), new THREE.ShadowMaterial({ opacity: 0.16 }));
-  ground.rotation.x = -Math.PI / 2; ground.position.y = -190; ground.receiveShadow = true; scene.add(ground);
-
-  const root = new THREE.Group(); root.position.set(-50, -100, -L / 2); scene.add(root);
-
-  /* ---------- Textures bois ---------- */
-  function capTexture(plies) {
-    const W = 512, H = 1024, s = W / 100;
-    const c = document.createElement('canvas'); c.width = W; c.height = H;
+  /* ================= Matières ================= */
+  let seed = 7;
+  const rnd = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+  // Bois de bout : cernes + lignes de colle du lamellé-collé 3 plis. Zone couverte : x0..x0+w, y0..y0+h (mm, coordonnées du profil)
+  function capTexture({ x0, w, y0, h, plies, axis, tone }) {
+    const W = 512, Hc = Math.max(128, Math.round(512 * h / w)), sx = W / w, sy = Hc / h;
+    const c = document.createElement('canvas'); c.width = W; c.height = Hc;
     const g = c.getContext('2d');
-    g.fillStyle = '#D4A677'; g.fillRect(0, 0, W, H);
-    let seed = plies.length * 7 + 3;
-    const rnd = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
-    plies.forEach(([a, b], i) => {
-      g.save(); g.beginPath(); g.rect(a * s, 0, (b - a) * s, H); g.clip();
-      const cx = ((a + b) / 2) * s + (i % 2 ? 46 : -46), cy = H + 220 + i * 60;
-      for (let r = 30; r < 1500; r += 6 + rnd() * 7) {
+    g.fillStyle = tone || '#D4A677'; g.fillRect(0, 0, W, Hc);
+    const band = ([a, b]) => axis === 'x'
+      ? [(a - x0) * sx, 0, (b - a) * sx, Hc]
+      : [0, (y0 + h - b) * sy, W, (b - a) * sy];
+    plies.forEach((p, i) => {
+      const [bx, by, bw, bh] = band(p);
+      g.save(); g.beginPath(); g.rect(bx, by, bw, bh); g.clip();
+      const cx = axis === 'x' ? bx + bw / 2 + (i % 2 ? 46 : -46) : -260 - i * 90;
+      const cy = axis === 'x' ? Hc + 220 + i * 60 : by + bh / 2 + (i % 2 ? 14 : -14);
+      for (let r = 30; r < 1700; r += 6 + rnd() * 7) {
         g.strokeStyle = 'rgba(146,96,52,' + (0.16 + rnd() * 0.24).toFixed(2) + ')';
         g.lineWidth = 1 + rnd() * 1.8;
         g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.stroke();
       }
       g.restore();
     });
-    plies.slice(1).forEach(([a]) => { g.fillStyle = 'rgba(72,42,20,0.9)'; g.fillRect(a * s - 1.6, 0, 3.2, H); });
+    g.fillStyle = 'rgba(72,42,20,0.9)';
+    plies.slice(1).forEach(([a]) => {
+      if (axis === 'x') g.fillRect((a - x0) * sx - 1.6, 0, 3.2, Hc);
+      else g.fillRect(0, (y0 + h - a) * sy - 1.6, W, 3.2);
+    });
     const t = new THREE.CanvasTexture(c);
-    t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(1 / 100, 1 / 200);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(1 / w, 1 / h); t.offset.set(-x0 / w, -y0 / h);
     t.encoding = THREE.sRGBEncoding; t.anisotropy = renderer.capabilities.getMaxAnisotropy();
     return t;
   }
@@ -280,7 +270,6 @@ body { background: var(--bg); color: var(--ink); font-family: var(--font-body); 
     const c = document.createElement('canvas'); c.width = W; c.height = H;
     const g = c.getContext('2d');
     g.fillStyle = '#CC9D6B'; g.fillRect(0, 0, W, H);
-    let seed = 11; const rnd = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
     for (let i = 0; i < 90; i++) {
       const x = rnd() * W, ph = rnd() * 6, f = 90 + rnd() * 120;
       g.strokeStyle = 'rgba(128,82,42,' + (0.12 + rnd() * 0.3).toFixed(2) + ')';
@@ -295,10 +284,20 @@ body { background: var(--bg); color: var(--ink); font-family: var(--font-body); 
     return t;
   }
   const sideTex = sideTexture();
-  const woodMats = (plies) => [
-    new THREE.MeshStandardMaterial({ map: capTexture(plies), roughness: 0.72 }),
-    new THREE.MeshStandardMaterial({ map: sideTex, roughness: 0.6 })
-  ];
+  const sideMats = [];
+  const PAINT = '#D7DAD5';
+  let painted = false;
+  function woodMats(capOpts) {
+    const side = new THREE.MeshStandardMaterial({ map: sideTex, roughness: 0.6 });
+    side.userData.tint = capOpts.tint || '#ffffff';
+    sideMats.push(side); applyFinishTo(side);
+    return [new THREE.MeshStandardMaterial({ map: capTexture(capOpts), roughness: 0.72 }), side];
+  }
+  function applyFinishTo(m) {
+    if (painted) { m.map = null; m.color.set(PAINT); m.roughness = 0.5; }
+    else { m.map = sideTex; m.color.set(m.userData.tint || '#ffffff'); m.roughness = 0.6; }
+    m.needsUpdate = true;
+  }
   const mat = {
     glass: () => new THREE.MeshStandardMaterial({ color: 0xBFE0EA, roughness: 0.05, metalness: 0, transparent: true, opacity: 0.3, depthWrite: false, side: THREE.DoubleSide }),
     rubber: () => new THREE.MeshStandardMaterial({ color: 0x1C2228, roughness: 0.92 }),
@@ -306,24 +305,26 @@ body { background: var(--bg); color: var(--ink); font-family: var(--font-body); 
     butyl: () => new THREE.MeshStandardMaterial({ color: 0x5B6168, roughness: 0.9 }),
     silicone: () => new THREE.MeshStandardMaterial({ color: 0xE9EEF1, roughness: 0.4, transparent: true, opacity: 0.92 }),
     metal: () => new THREE.MeshStandardMaterial({ color: 0xA7AFB5, roughness: 0.32, metalness: 0.55 }),
+    iron: () => new THREE.MeshStandardMaterial({ color: 0x232527, roughness: 0.42, metalness: 0.55 }),
     block: () => new THREE.MeshStandardMaterial({ color: 0x4E555B, roughness: 0.8 }),
     stone: () => new THREE.MeshStandardMaterial({ color: 0xCBC6BC, roughness: 1 })
   };
-  const edgeMat = new THREE.LineBasicMaterial({ color: new THREE.Color(css('--ink') || '#16202A'), transparent: true, opacity: 0.28 });
+  const edgeMat = new THREE.LineBasicMaterial({ color: new THREE.Color(css('--ink') || '#111315'), transparent: true, opacity: 0.4 });
 
-  /* ---------- Géométrie (mm ; x = profondeur ext→int, y = hauteur) ---------- */
+  /* ================= Géométrie ================= */
   function shape(pts) {
     const s = new THREE.Shape(); s.moveTo(pts[0][0], pts[0][1]);
     for (let i = 1; i < pts.length; i++) {
       const p = pts[i];
       if (p.q) s.quadraticCurveTo(p.q[0], p.q[1], p.x, p.y);
       else if (p.c) s.bezierCurveTo(p.c[0], p.c[1], p.c[2], p.c[3], p.x, p.y);
+      else if (p.arc) s.absarc(p.arc[0], p.arc[1], p.arc[2], p.arc[3], p.arc[4], !!p.arc[5]);
       else s.lineTo(p[0], p[1]);
     }
     s.closePath(); return s;
   }
-  const extrude = (sh, z0 = 0, len = L) => {
-    const g = new THREE.ExtrudeGeometry(sh, { depth: len, bevelEnabled: false, curveSegments: 28 });
+  const extrude = (sh, z0, len) => {
+    const g = new THREE.ExtrudeGeometry(sh, { depth: len, bevelEnabled: false, curveSegments: 32 });
     g.translate(0, 0, z0); return g;
   };
   const rect = (x0, x1, y0, y1) => shape([[x0, y0], [x1, y0], [x1, y1], [x0, y1]]);
@@ -332,117 +333,234 @@ body { background: var(--bg); color: var(--ink); font-family: var(--font-body); 
     [x0 + r, y1], { q: [x0, y1], x: x0, y: y1 - r }, [x0, y0 + r], { q: [x0, y0], x: x0 + r, y: y0 }
   ]);
 
-  const meshes = []; // { mesh, part, explode: Vector3 }
-  const partGroups = {};
-  function add(partId, geometry, material, explode, opts = {}) {
-    const m = new THREE.Mesh(geometry, material);
-    m.castShadow = opts.shadow !== false; m.receiveShadow = true;
-    m.userData.part = partId;
-    if (opts.edges !== false) {
-      const e = new THREE.LineSegments(new THREE.EdgesGeometry(geometry, 28), edgeMat);
-      e.raycast = () => {}; m.add(e);
+  /* ================= Modèles ================= */
+  const FOOT = 'Schéma de principe : proportions indicatives, non contractuel.';
+  const MODELS = {
+    coupe: {
+      eyebrow: 'MAQUETTE 3D · COUPE VERTICALE',
+      title: 'Coupe de la fenêtre bois haut de gamme',
+      lede: "Ouvrant 62 mm à la française. Tournez la maquette, écartez les pièces avec la vue éclatée, puis touchez une pièce ou un repère pour sa fiche.",
+      hint: '<b>Traverse basse</b> · longueur représentée 300 mm',
+      foot: FOOT,
+      painted: false, ground: -190, offset: [-50, -100, -150], select: 'ouvrant', target: [0, 0, 0],
+      views: { trois: [300, 170, 380], coupe: [0, 10, 560], ext: [-470, 90, 230], int: [470, 90, 230] },
+      parts: [
+        { id: 'vitrage', nums: [1], name: 'Vitrage isolant',
+          text: "Double vitrage 4/20/4 faiblement émissif à lame d'argon, Ug 1,1 W/m²·K en standard. La feuillure accepte jusqu'à 28 mm (ouvrant 62 mm) ou 37 mm (ouvrant 71 mm) pour un vitrage acoustique, retardateur d'effraction ou à contrôle solaire." },
+        { id: 'intercalaire', nums: [8], name: 'Intercalaire noir anti-reflet',
+          text: "Espaceur entre les deux verres, noir pour rester discret en fond de feuillure. Version warm edge en option pour limiter le pont thermique en rive de vitrage." },
+        { id: 'silicone', nums: [6], name: 'Obturateurs silicone',
+          text: "Un cordon de chaque côté du vitrage assure l'étanchéité entre le verre et le bois. Vitrages certifiés CEKAL." },
+        { id: 'parclose', nums: [2], name: 'Parclose à doucine',
+          text: "Moulure qui maintient le vitrage côté extérieur. En variante, cadre parclose en solin mastic pour retrouver l'aspect des menuiseries anciennes." },
+        { id: 'ouvrant', nums: [9], name: 'Ouvrant 62 mm',
+          text: "Lamellé-collé 3 plis : les lignes de colle se lisent sur la tranche. Angles assemblés à double enfourchement collé, plus robuste qu'un assemblage mécanique.",
+          details: [[3, 'Finition usine 300 µm', 'peinture microporeuse en phase aqueuse, garantie fabricant jusqu’à 12 ans en teintes opaques.'],
+                    [4, "Jet d'eau", "profil en saillie qui rejette le ruissellement loin de la jonction ouvrant/dormant (E*7B)."],
+                    [7, 'Profil mouluré', 'arêtes travaillées côté intérieur.']] },
+        { id: 'ferrure', nums: [10], name: 'Ferrure à galets champignons',
+          text: "Crémone encastrée dans l'ouvrant : ses galets, réglables en 2 dimensions, se verrouillent dans des gâches de sécurité vissées sur le dormant. Oscillo-battant en option." },
+        { id: 'joints', nums: [11], name: 'Double joint sur ouvrant',
+          text: "Un joint en battue sur le dormant, un second sous le recouvrement intérieur : étanchéité à l'air classée A*4, affaiblissement jusqu'à 38 dB selon le vitrage." },
+        { id: 'dormant', nums: [12], name: 'Dormant lamellé-collé 3 plis',
+          text: "Cadre fixe en chêne, Red Grandis ou pin sylvestre issus de forêts gérées durablement (PEFC ou FSC).",
+          details: [[5, "Rejet d'eau et goutte d'eau", "pente usinée sur le dessus et larmier en sous-face : l'eau s'égoutte en débord, sans revenir vers la maçonnerie."]] },
+        { id: 'cales', nums: [], name: "Cales d'assise",
+          text: "Supports placés sous le vitrage : ils en reprennent le poids et le gardent centré dans sa feuillure." },
+        { id: 'appui', nums: [], name: 'Appui maçonné',
+          text: "Support de pose, représenté pour situer la menuiserie dans la baie." }
+      ],
+      build(add) {
+        const L = 300, ex = (sh, z0 = 0, len = L) => extrude(sh, z0, len);
+        const P = (plies) => ({ x0: 0, w: 100, y0: 0, h: 200, axis: 'x', plies });
+        add('appui', ex(rect(14, 106, -8, 0), -20, L + 40), mat.stone(), [0, -72, 0]);
+        const dormant = add('dormant', ex(shape([[0, 22], [14, 24], [30, 27], [46, 31], [46, 34], [86, 34], [86, 28], [100, 28], [100, 0], [10, 0], [10, 5], [6, 5], [6, 0], [2, 0], [0, 3]])),
+          woodMats(P([[0, 33.33], [33.33, 66.67], [66.67, 100]])), [0, -38, 0]);
+        [40, 150, 260].forEach(z => add('ferrure', ex(rect(60, 76, 34, 35.2), z - 15, 30), mat.metal(), [0, -20, 0]));
+        const ouvrant = add('ouvrant', ex(shape([[34, 104], [34, 72], [20, 56], [20, 50], [23, 50], [23, 52], [25, 52], [25, 50], [34, 50], [34, 38], [88, 38], [88, 31], [96, 31], [96, 118],
+          { q: [96, 128], x: 88, y: 128 }, [78, 128], [78, 104]])), woodMats(P([[34, 54.67], [54.67, 75.33], [75.33, 100]])), [0, 26, 0]);
+        const rail = add('ferrure', ex(rect(62, 74, 38, 42)), mat.metal(), [0, 8, 0]);
+        [40, 150, 260].forEach(z => {
+          add('ferrure', new THREE.CylinderGeometry(1.1, 1.1, 3.2, 20).translate(68, 36.6, z), mat.metal(), [0, 8, 0], { edges: false });
+          add('ferrure', new THREE.SphereGeometry(2.1, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2).rotateX(Math.PI).translate(68, 35.4, z), mat.metal(), [0, 8, 0], { edges: false });
+        });
+        const joint = add('joints', ex(rrect(48, 54, 34, 38, 1.5)), mat.rubber(), [0, 13, 0]);
+        add('joints', ex(rrect(90, 95, 28, 31, 1.1)), mat.rubber(), [0, 13, 0]);
+        const parclose = add('parclose', ex(shape([[34, 104], [46, 104], [46, 124], { c: [40, 124, 40, 112], x: 34, y: 112 }])), woodMats(P([[0, 100]])), [-48, 40, 0]);
+        [30, 270].forEach(z => add('cales', ex(rect(50, 74, 104, 106), z - 25, 50), mat.block(), [0, 62, 0]));
+        const verre = add('vitrage', ex(rect(48, 52, 106, 196)), mat.glass(), [-16, 108, 0], { shadow: false });
+        add('vitrage', ex(rect(72, 76, 106, 196)), mat.glass(), [16, 108, 0], { shadow: false });
+        const inter = add('intercalaire', ex(rect(52, 72, 108, 118)), mat.spacer(), [0, 88, 0]);
+        add('intercalaire', ex(rect(52, 72, 106, 108)), mat.butyl(), [0, 88, 0]);
+        add('silicone', ex(shape([[46, 124], [48, 124], [48, 128.5]])), mat.silicone(), [-34, 74, 0]);
+        const sil = add('silicone', ex(shape([[78, 128], [76, 128], [76, 132.5]])), mat.silicone(), [34, 80, 0]);
+        const F = L + 0.6;
+        return [
+          [1, verre, [50, 160, F]], [2, parclose, [40, 112, F]], [3, ouvrant, [34, 84, F]], [4, ouvrant, [23, 54, F]],
+          [5, dormant, [7, 14, F]], [6, sil, [77, 129.5, F]], [7, ouvrant, [93, 124, F]], [8, inter, [62, 113, F]],
+          [9, ouvrant, [62, 75, F]], [10, rail, [68, 40, F]], [11, joint, [51, 36, F]], [12, dormant, [66, 14, F]]
+        ];
+      }
+    },
+    battement: {
+      eyebrow: 'MAQUETTE 3D · COUPE HORIZONTALE',
+      title: 'Battement à mouton et gueule de loup',
+      lede: "La jonction entre les deux vantaux d'une fenêtre traditionnelle en chêne : le mouton, une tête arrondie en forme de C, vient se loger dans la gueule de loup, un creux en U qui l'enveloppe. Écartez-les avec la vue éclatée pour voir l'emboîtement.",
+      hint: '<b>Battement central</b> · hauteur représentée 420 mm',
+      foot: FOOT,
+      painted: false, ground: -222, offset: [0, -210, 40], select: 'mouton', target: [0, 160, -15],
+      views: { trois: [210, 560, -270], coupe: [0, 560, 40], ext: [-340, 300, 620], int: { p: [-150, 90, -460], t: [-12, -15, -45] } },
+      parts: [
+        { id: 'mouton', nums: [3], name: 'Montant à mouton',
+          text: "Le premier vantail se termine par une tête arrondie, le « mouton » : c'est le C du profil. À la fermeture, il vient se loger dans le creux du second vantail.",
+          details: [[8, 'Lamellé-collé 3 plis', "chêne massif lamellé-collé en 3 plis : les lignes de colle se lisent sur la coupe."]] },
+        { id: 'gueule', nums: [4], name: 'Montant à gueule de loup',
+          text: "Le second vantail est creusé en U : ses deux mâchoires enveloppent le mouton, l'une côté extérieur, l'autre côté intérieur.",
+          details: [[5, 'Mâchoires', "elles s'arrêtent juste avant le premier vantail ; le jeu est fermé par des joints, si bien que l'air et l'eau doivent contourner toute la tête du mouton."]] },
+        { id: 'joints', nums: [6], name: "Joints d'étanchéité",
+          text: "Un joint ferme le jeu au bout de chaque mâchoire, un joint central garnit le fond de la gueule. Un joint isophonique complémentaire est possible. Affaiblissement de 28 à 38 dB selon le vitrage." },
+        { id: 'cremone', nums: [7], name: 'Crémone à levier',
+          text: "Fixée sur le vantail à gueule de loup. En rabattant la poignée, les tringles s'enclenchent en haut et en bas dans le dormant. Finitions cémentée, blanche ou noire ; en rénovation, une crémone d'origine peut être restaurée et remontée." },
+        { id: 'agrafe', nums: [10], name: 'Agrafe de poignée',
+          text: "Vissée sur l'autre vantail, celui à mouton. La poignée rabattue vient s'y caler : les deux vantaux sont verrouillés ensemble, en plus de l'emboîtement du mouton dans la gueule." },
+        { id: 'vitrage', nums: [1], name: 'Vitrages isolants',
+          text: "Un double vitrage faiblement émissif par vantail, Ug 1,1 W/m²·K. Logement jusqu'à 28 mm pour un vitrage acoustique ou de sécurité." },
+        { id: 'intercalaire', nums: [9], name: 'Intercalaires noirs',
+          text: "Espaceurs noirs anti-reflet, discrets en fond de feuillure ; warm edge en option." },
+        { id: 'parclose', nums: [2], name: 'Parcloses moulurées',
+          text: "Elles maintiennent chaque vitrage : en quart de rond, à doucine, ou en solin mastic pour l'aspect ancien." }
+      ],
+      build(add) {
+        const H = 420;
+        const v = (sh) => extrude(sh, 0, H).rotateX(-Math.PI / 2);          // profil (largeur x, profondeur) → vertical
+        const box = (x0, x1, y0, y1, z0, z1) => { const g = new THREE.BoxGeometry(x1 - x0, y1 - y0, z1 - z0); g.translate((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2); return g; };
+        const plies = [[0, 19.33], [19.33, 38.67], [38.67, 58]];
+        const moutonPl = { x0: -80, w: 160, y0: 0, h: 58, axis: 'y', plies, tone: '#D9AF80', tint: '#FFF8EE' };
+        const gueulePl = { x0: -80, w: 160, y0: 0, h: 58, axis: 'y', plies, tone: '#CC9E6E', tint: '#F0DCC2' };
+        const parPl = { x0: -80, w: 160, y0: 0, h: 58, axis: 'y', plies: [[0, 58]] };
+        // C : tête arrondie du mouton (rayon 15) ; U : creux de la gueule (rayon 18), jeu de 3 mm tout autour
+        const mouton = add('mouton', v(shape([[-66, 0], [-22, 0], [-22, 14], [-8, 14], { arc: [-8, 29, 15, -Math.PI / 2, Math.PI / 2, false] },
+          [-22, 44], [-22, 58], [-50, 58], [-50, 45], [-53, 45], [-53, 24], [-66, 24]])), woodMats(moutonPl), [-46, 0, 0]);
+        const gueule = add('gueule', v(shape([[-19, 0], [66, 0], [66, 24], [53, 24], [53, 45], [50, 45], [50, 58], [-19, 58],
+          [-19, 47], [-8, 47], { arc: [-8, 29, 18, Math.PI / 2, -Math.PI / 2, true] }, [-19, 11]])), woodMats(gueulePl), [46, 0, 0]);
+        const jHaut = add('joints', v(rrect(-21.8, -19.2, 49, 55, 0.8)), mat.rubber(), [-20, 0, -40]);
+        add('joints', v(rrect(-21.8, -19.2, 3, 9, 0.8)), mat.rubber(), [-20, 0, 40]);
+        add('joints', v(rrect(7.3, 9.8, 26, 32, 0.8)), mat.rubber(), [70, 0, 0]);
+        const parG = add('parclose', v(shape([[-50, 45], [-50, 58], [-60, 58], { q: [-68, 58], x: -68, y: 50 }, [-68, 45]])), woodMats(parPl), [-70, 0, -46]);
+        add('parclose', v(shape([[50, 45], [50, 58], [60, 58], { q: [68, 58], x: 68, y: 50 }, [68, 45]])), woodMats(parPl), [70, 0, -46]);
+        const verre = add('vitrage', v(rect(-170, -55, 26, 30)), mat.glass(), [-118, 0, 16], { shadow: false });
+        add('vitrage', v(rect(-170, -55, 40, 44)), mat.glass(), [-118, 0, -16], { shadow: false });
+        add('vitrage', v(rect(55, 170, 26, 30)), mat.glass(), [118, 0, 16], { shadow: false });
+        add('vitrage', v(rect(55, 170, 40, 44)), mat.glass(), [118, 0, -16], { shadow: false });
+        const interG = add('intercalaire', v(rect(-65, -55, 30, 40)), mat.spacer(), [-100, 0, 0]);
+        add('intercalaire', v(rect(55, 65, 30, 40)), mat.spacer(), [100, 0, 0]);
+        // Crémone en applique sur la face intérieure du montant à gueule de loup (z = -58)
+        const ex = [46, 0, -84], cx = 12, zf = -58;
+        add('cremone', new THREE.CylinderGeometry(5.5, 5.5, H - 50, 32).translate(cx, H / 2, zf - 9), mat.iron(), ex, { edges: false });
+        [25, H - 25].forEach(y => add('cremone', new THREE.SphereGeometry(6.5, 24, 16).translate(cx, y, zf - 9), mat.iron(), ex, { edges: false }));
+        [80, H - 80].forEach(y => add('cremone', box(cx - 9, cx + 9, y - 6, y + 6, zf - 15, zf), mat.iron(), ex));
+        add('cremone', box(cx - 17, cx + 17, H / 2 - 52, H / 2 + 52, zf - 15, zf), mat.iron(), ex);
+        [H / 2 - 52, H / 2 + 52].forEach(y => add('cremone', new THREE.SphereGeometry(9, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2).rotateX(y > H / 2 ? 0 : Math.PI).scale(1.7, 0.9, 0.55).translate(cx, y, zf - 7.5), mat.iron(), ex, { edges: false }));
+        const yP = H / 2 - 18, zL = zf - 26;                               // axe de la poignée
+        add('cremone', new THREE.CylinderGeometry(9, 10, 12, 32).rotateX(Math.PI / 2).translate(cx, yP, zf - 21), mat.iron(), ex, { edges: false });
+        const knob = add('cremone', new THREE.CylinderGeometry(4, 5.2, 52, 24).rotateZ(Math.PI / 2).translate(cx - 26, yP, zL), mat.iron(), ex, { edges: false });
+        add('cremone', new THREE.SphereGeometry(7, 24, 16).scale(1.25, 1, 1).translate(cx - 55, yP, zL), mat.iron(), ex, { edges: false });
+        // Agrafe sur le vantail à mouton : platine + berceau en U qui reçoit le levier
+        const xa = cx - 46, exA = [-46, 0, -84];
+        const agrafe = add('agrafe', box(xa - 7, xa + 7, yP - 26, yP + 14, -61, -58), mat.iron(), exA);
+        add('agrafe', box(xa - 5, xa + 5, yP - 11, yP - 5, zL + 4, -61), mat.iron(), exA);
+        add('agrafe', box(xa - 5, xa + 5, yP - 11, yP + 3, zL - 8, zL - 5), mat.iron(), exA);
+        add('agrafe', box(xa - 5, xa + 5, yP - 11, yP - 5, zL - 8, zL + 4), mat.iron(), exA);
+        const T = H + 0.6;
+        return [
+          [1, verre, [-110, T, -28]], [2, parG, [-59, T, -51]], [3, mouton, [-4, T, -29]], [4, gueule, [22, T, -29]],
+          [5, gueule, [2, T, -5]], [6, jHaut, [-20.5, T, -52]], [7, knob, [cx - 14, H / 2 - 18 + 10, zf - 26]], [10, agrafe, [xa, H / 2 - 18 - 20, -62]],
+          [8, mouton, [-40, T, -19.33]], [9, interG, [-60, T, -35]]
+        ];
+      }
     }
-    root.add(m);
-    const rec = { mesh: m, part: partId, explode: new THREE.Vector3(...explode) };
-    meshes.push(rec);
-    (partGroups[partId] = partGroups[partId] || []).push(rec);
-    return rec;
+  };
+
+  /* ================= Construction paresseuse ================= */
+  const state = {};
+  function buildModel(id) {
+    const M = MODELS[id];
+    const root = new THREE.Group(); root.position.set(...M.offset); root.visible = false; scene.add(root);
+    const S = { root, meshes: [], groups: {}, hidden: new Set(), labels: [] };
+    const prevPainted = painted; painted = M.painted;
+    const add = (partId, geometry, material, explode, opts = {}) => {
+      const m = new THREE.Mesh(geometry, material);
+      m.castShadow = opts.shadow !== false; m.receiveShadow = true; m.userData.part = partId;
+      if (opts.edges !== false) { const e = new THREE.LineSegments(new THREE.EdgesGeometry(geometry, 28), edgeMat); e.raycast = () => {}; m.add(e); }
+      root.add(m);
+      const rec = { mesh: m, part: partId, explode: new THREE.Vector3(...explode) };
+      S.meshes.push(rec); (S.groups[partId] = S.groups[partId] || []).push(rec);
+      return rec;
+    };
+    S.labelDefs = M.build(add);
+    painted = prevPainted;
+    state[id] = S;
+    return S;
   }
 
-  // Appui maçonné
-  add('appui', extrude(rect(14, 106, -8, 0), -20, L + 40), mat.stone(), [0, -72, 0]);
-  // Dormant
-  add('dormant', extrude(shape([[0, 22], [14, 24], [30, 27], [46, 31], [46, 34], [86, 34], [86, 28], [100, 28], [100, 0], [10, 0], [10, 5], [6, 5], [6, 0], [2, 0], [0, 3]])),
-      woodMats([[0, 33.33], [33.33, 66.67], [66.67, 100]]), [0, -38, 0]);
-  // Gâches de sécurité
-  [40, 150, 260].forEach(z => add('ferrure', extrude(rect(60, 76, 34, 35.2), z - 15, 30), mat.metal(), [0, -20, 0]));
-  // Ouvrant
-  add('ouvrant', extrude(shape([[34, 104], [34, 72], [20, 56], [20, 50], [23, 50], [23, 52], [25, 52], [25, 50], [34, 50], [34, 38], [88, 38], [88, 31], [96, 31], [96, 118],
-      { q: [96, 128], x: 88, y: 128 }, [78, 128], [78, 104]])),
-      woodMats([[34, 54.67], [54.67, 75.33], [75.33, 100]]), [0, 26, 0]);
-  // Crémone + galets champignons
-  add('ferrure', extrude(rect(62, 74, 38, 42)), mat.metal(), [0, 8, 0]);
-  [40, 150, 260].forEach(z => {
-    const stem = new THREE.CylinderGeometry(1.1, 1.1, 3.2, 20); stem.translate(68, 36.6, z);
-    add('ferrure', stem, mat.metal(), [0, 8, 0], { edges: false });
-    const head = new THREE.SphereGeometry(2.1, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2);
-    head.rotateX(Math.PI); head.translate(68, 35.4, z);
-    add('ferrure', head, mat.metal(), [0, 8, 0], { edges: false });
-  });
-  // Double joint
-  add('joints', extrude(rrect(48, 54, 34, 38, 1.5)), mat.rubber(), [0, 13, 0]);
-  add('joints', extrude(rrect(90, 95, 28, 31, 1.1)), mat.rubber(), [0, 13, 0]);
-  // Parclose
-  add('parclose', extrude(shape([[34, 104], [46, 104], [46, 124], { c: [40, 124, 40, 112], x: 34, y: 112 }])),
-      woodMats([[0, 100]]), [-48, 40, 0]);
-  // Cales d'assise
-  [30, 270].forEach(z => add('cales', extrude(rect(50, 74, 104, 106), z - 25, 50), mat.block(), [0, 62, 0]));
-  // Vitrage
-  add('vitrage', extrude(rect(48, 52, 106, 196)), mat.glass(), [-16, 108, 0], { shadow: false });
-  add('vitrage', extrude(rect(72, 76, 106, 196)), mat.glass(), [16, 108, 0], { shadow: false });
-  // Intercalaire + butyl
-  add('intercalaire', extrude(rect(52, 72, 108, 118)), mat.spacer(), [0, 88, 0]);
-  add('intercalaire', extrude(rect(52, 72, 106, 108)), mat.butyl(), [0, 88, 0]);
-  // Silicones
-  add('silicone', extrude(shape([[46, 124], [48, 124], [48, 128.5]])), mat.silicone(), [-34, 74, 0]);
-  add('silicone', extrude(shape([[78, 128], [76, 128], [76, 132.5]])), mat.silicone(), [34, 80, 0]);
-
-  /* ---------- Repères ---------- */
-  const F = L + 0.6;
-  const LABELS = [
-    [1, 'vitrage', 0, [50, 160, F]], [2, 'parclose', 0, [40, 112, F]], [3, 'ouvrant', 0, [34, 84, F]],
-    [4, 'ouvrant', 0, [23, 54, F]], [5, 'dormant', 0, [7, 14, F]], [6, 'silicone', 1, [77, 129.5, F]],
-    [7, 'ouvrant', 0, [93, 124, F]], [8, 'intercalaire', 0, [62, 113, F]], [9, 'ouvrant', 0, [62, 75, F]],
-    [10, 'ferrure', 3, [68, 40, F]], [11, 'joints', 0, [51, 36, F]], [12, 'dormant', 0, [66, 14, F]]
-  ];
-  const labelsEl = document.getElementById('labels');
-  const labelEls = LABELS.map(([n, pid, idx, pos]) => {
-    const b = document.createElement('button');
-    b.type = 'button'; b.className = 'marker'; b.textContent = n;
-    b.setAttribute('aria-label', 'Repère ' + n + ' : ' + byId[pid].name);
-    b.setAttribute('aria-pressed', 'false');
-    b.addEventListener('click', () => select(pid));
-    labelsEl.appendChild(b);
-    return { el: b, pid, rec: partGroups[pid][idx], local: new THREE.Vector3(...pos) };
-  });
-  // the crémone rail is the 4th ferrure mesh (index 3) — keep label tied to it
-  labelEls.forEach(l => { if (l.pid === 'ferrure') l.rec = partGroups.ferrure.find(r => r.mesh.geometry.type === 'ExtrudeGeometry' && r.explode.y > 0) || l.rec; });
-
-  /* ---------- Panneau ---------- */
-  const partsEl = document.getElementById('parts');
-  const hidden = new Set();
+  /* ================= Panneau & repères ================= */
+  const labelsEl = $('labels'), partsEl = $('parts');
   const eyeOn = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
   const eyeOff = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4.1M6.6 6.6A17 17 0 0 0 2 12s3.6 7 10 7a9.6 9.6 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
-  const rows = {};
-  PARTS.forEach(p => {
-    const li = document.createElement('li');
-    const btn = document.createElement('button');
-    btn.type = 'button'; btn.className = 'part'; btn.setAttribute('aria-pressed', 'false');
-    const allNums = p.nums.concat((p.details || []).map(d => d[0])).sort((a, b) => a - b);
-    btn.innerHTML = '<span class="num">' + (allNums.length ? allNums.join('·') : '—') + '</span><span></span>';
-    btn.lastChild.textContent = p.name;
-    btn.addEventListener('click', () => select(p.id));
-    const eye = document.createElement('button');
-    eye.type = 'button'; eye.className = 'eye'; eye.innerHTML = eyeOn;
-    eye.setAttribute('aria-label', 'Masquer ' + p.name);
-    eye.addEventListener('click', () => toggleVisible(p.id));
-    li.append(btn, eye); partsEl.appendChild(li);
-    rows[p.id] = { btn, eye };
-  });
-  function toggleVisible(id) {
-    if (hidden.has(id)) hidden.delete(id); else hidden.add(id);
-    const off = hidden.has(id);
-    partGroups[id].forEach(r => { r.mesh.visible = !off; });
+  let current = null, S = null, selected = null, rows = {};
+  const partOf = (id) => MODELS[current].parts.find(p => p.id === id);
+
+  function renderPanel() {
+    const M = MODELS[current];
+    $('eyebrow').textContent = M.eyebrow; $('title').textContent = M.title;
+    $('lede').textContent = M.lede; $('foot').textContent = M.foot; $('hintModel').innerHTML = M.hint;
+    partsEl.innerHTML = ''; rows = {};
+    M.parts.forEach(p => {
+      const li = document.createElement('li');
+      const btn = document.createElement('button');
+      btn.type = 'button'; btn.className = 'part'; btn.setAttribute('aria-pressed', 'false');
+      const nums = p.nums.concat((p.details || []).map(d => d[0])).sort((a, b) => a - b);
+      btn.innerHTML = '<span class="num"></span><span></span>';
+      btn.firstChild.textContent = nums.length ? nums.join('·') : '—';
+      btn.lastChild.textContent = p.name;
+      btn.addEventListener('click', () => select(p.id));
+      const eye = document.createElement('button');
+      eye.type = 'button'; eye.className = 'eye';
+      eye.addEventListener('click', () => toggleVisible(p.id));
+      li.append(btn, eye); partsEl.appendChild(li);
+      rows[p.id] = { btn, eye };
+      paintRow(p.id);
+    });
+    labelsEl.innerHTML = '';
+    S.labels = S.labelDefs.map(([n, rec, pos]) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'marker'; b.textContent = n;
+      b.setAttribute('aria-label', 'Repère ' + n + ' : ' + partOf(rec.part).name);
+      b.setAttribute('aria-pressed', 'false');
+      b.addEventListener('click', () => select(rec.part));
+      labelsEl.appendChild(b);
+      return { el: b, pid: rec.part, rec, local: new THREE.Vector3(...pos) };
+    });
+    updateCount();
+  }
+  function paintRow(id) {
+    const off = S.hidden.has(id), p = partOf(id);
     rows[id].btn.classList.toggle('off', off);
     rows[id].eye.innerHTML = off ? eyeOff : eyeOn;
-    rows[id].eye.setAttribute('aria-label', (off ? 'Afficher ' : 'Masquer ') + byId[id].name);
-    document.getElementById('visibleCount').textContent = (PARTS.length - hidden.size) + ' / ' + PARTS.length + ' visibles';
+    rows[id].eye.setAttribute('aria-label', (off ? 'Afficher ' : 'Masquer ') + p.name);
   }
-
-  let selected = null;
+  function updateCount() {
+    const n = MODELS[current].parts.length;
+    $('visibleCount').textContent = (n - S.hidden.size) + ' / ' + n + ' visibles';
+  }
+  function toggleVisible(id) {
+    if (S.hidden.has(id)) S.hidden.delete(id); else S.hidden.add(id);
+    S.groups[id].forEach(r => { r.mesh.visible = !S.hidden.has(id); });
+    paintRow(id); updateCount();
+  }
   const accentColor = () => new THREE.Color(css('--sable') || '#C9AE84');
   function setEmissive(id, on) {
-    (partGroups[id] || []).forEach(r => {
+    ((S && S.groups[id]) || []).forEach(r => {
       const ms = Array.isArray(r.mesh.material) ? r.mesh.material : [r.mesh.material];
       ms.forEach(m => { if (m.emissive) { m.emissive.copy(on ? accentColor() : new THREE.Color(0)); m.emissiveIntensity = on ? 0.32 : 0; } });
     });
@@ -450,71 +568,77 @@ body { background: var(--bg); color: var(--ink); font-family: var(--font-body); 
   function select(id) {
     if (selected) setEmissive(selected, false);
     selected = id; setEmissive(id, true);
-    const p = byId[id];
+    const p = partOf(id);
     Object.entries(rows).forEach(([k, r]) => r.btn.setAttribute('aria-pressed', String(k === id)));
-    labelEls.forEach(l => l.el.setAttribute('aria-pressed', String(l.pid === id)));
-    const badges = document.getElementById('cardBadges'); badges.innerHTML = '';
+    S.labels.forEach(l => l.el.setAttribute('aria-pressed', String(l.pid === id)));
+    const badges = $('cardBadges'); badges.innerHTML = '';
     p.nums.forEach(n => { const s = document.createElement('span'); s.className = 'badge'; s.textContent = n; badges.appendChild(s); });
     badges.hidden = !p.nums.length;
-    document.getElementById('cardTitle').textContent = p.name;
-    document.getElementById('cardText').textContent = p.text;
-    const det = document.getElementById('cardDetails'); det.innerHTML = '';
+    $('cardTitle').textContent = p.name; $('cardText').textContent = p.text;
+    const det = $('cardDetails'); det.innerHTML = '';
     (p.details || []).forEach(([n, t, d]) => {
       const li = document.createElement('li');
       li.innerHTML = '<span class="badge"></span><span><b></b> : <span></span></span>';
-      li.querySelector('.badge').textContent = n;
-      li.querySelector('b').textContent = t;
-      li.lastChild.lastChild.textContent = d;
+      li.querySelector('.badge').textContent = n; li.querySelector('b').textContent = t; li.lastChild.lastChild.textContent = d;
       det.appendChild(li);
     });
     det.hidden = !(p.details || []).length;
   }
 
-  /* ---------- Vue éclatée ---------- */
+  /* ================= Finition ================= */
+  const finishBtn = $('finishBtn');
+  function setFinish(p) {
+    painted = p; sideMats.forEach(applyFinishTo);
+    finishBtn.setAttribute('aria-pressed', String(p));
+  }
+  finishBtn.addEventListener('click', () => setFinish(!painted));
+
+  /* ================= Vue éclatée ================= */
   let explodeT = 0, explodeTarget = 0;
-  const slider = document.getElementById('explode');
-  const out = document.getElementById('explodeOut');
-  const exBtn = document.getElementById('explodeBtn');
+  const slider = $('explode'), out = $('explodeOut'), exBtn = $('explodeBtn');
   function syncExplodeUI() {
     slider.value = Math.round(explodeTarget * 100);
     out.textContent = Math.round(explodeTarget * 100) + ' %';
     exBtn.textContent = explodeTarget > 0.5 ? 'Assembler' : 'Éclater';
   }
   slider.addEventListener('input', () => { explodeTarget = slider.value / 100; explodeT = explodeTarget; syncExplodeUI(); });
-  exBtn.addEventListener('click', () => {
-    explodeTarget = explodeTarget > 0.5 ? 0 : 1;
-    if (reduceMotion) explodeT = explodeTarget;
-    syncExplodeUI();
-  });
+  exBtn.addEventListener('click', () => { explodeTarget = explodeTarget > 0.5 ? 0 : 1; if (reduceMotion) explodeT = explodeTarget; syncExplodeUI(); });
 
-  /* ---------- Caméra ---------- */
-  const VIEWS = {
-    trois: [300, 170, 380],
-    coupe: [0, 10, 560],
-    ext: [-470, 90, 230],
-    int: [470, 90, 230]
-  };
+  /* ================= Caméra ================= */
   let camAnim = null;
-  function goView(name) {
-    const to = new THREE.Vector3(...VIEWS[name]);
-    if (reduceMotion) { camera.position.copy(to); controls.target.set(0, 0, 0); return; }
-    camAnim = { from: camera.position.clone(), to, fromT: controls.target.clone(), start: performance.now(), dur: 750 };
+  function goView(name, instant) {
+    const view = MODELS[current].views[name];
+    const to = new THREE.Vector3(...(view.p || view));
+    const toT = new THREE.Vector3(...(view.t || MODELS[current].target || [0, 0, 0]));
+    if (instant || reduceMotion) { camAnim = null; camera.position.copy(to); controls.target.copy(toT); return; }
+    camAnim = { from: camera.position.clone(), to, fromT: controls.target.clone(), toT, start: performance.now(), dur: 750 };
   }
   document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => goView(b.dataset.view)));
+  const labelsBtn = $('labelsBtn'); let showLabels = true;
+  labelsBtn.addEventListener('click', () => { showLabels = !showLabels; labelsBtn.setAttribute('aria-pressed', String(showLabels)); labelsEl.hidden = !showLabels; });
+  const spinBtn = $('spinBtn');
+  spinBtn.addEventListener('click', () => { controls.autoRotate = !controls.autoRotate; spinBtn.setAttribute('aria-pressed', String(controls.autoRotate)); });
 
-  const labelsBtn = document.getElementById('labelsBtn');
-  let showLabels = true;
-  labelsBtn.addEventListener('click', () => {
-    showLabels = !showLabels; labelsBtn.setAttribute('aria-pressed', String(showLabels));
-    labelsEl.hidden = !showLabels;
-  });
-  const spinBtn = document.getElementById('spinBtn');
-  spinBtn.addEventListener('click', () => {
-    controls.autoRotate = !controls.autoRotate; spinBtn.setAttribute('aria-pressed', String(controls.autoRotate));
-  });
+  /* ================= Changement de modèle ================= */
+  const modelBtns = [...document.querySelectorAll('[data-model]')];
+  function switchModel(id) {
+    if (!MODELS[id] || id === current) return;
+    if (S) { if (selected) setEmissive(selected, false); S.root.visible = false; }
+    current = id; selected = null;
+    S = state[id] || buildModel(id);
+    S.root.visible = true;
+    ground.position.y = MODELS[id].ground;
+    explodeT = explodeTarget = 0; syncExplodeUI();
+    setFinish(MODELS[id].painted);
+    renderPanel();
+    select(MODELS[id].select);
+    goView('trois', true);
+    modelBtns.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.model === id)));
+  }
+  modelBtns.forEach(b => b.addEventListener('click', () => switchModel(b.dataset.model)));
 
-  /* ---------- Sélection au clic dans la scène ---------- */
-  const ray = new THREE.Raycaster(); const ptr = new THREE.Vector2(); let down = null;
+  /* ================= Clic dans la scène ================= */
+  const ray = new THREE.Raycaster(), ptr = new THREE.Vector2(); let down = null;
   renderer.domElement.addEventListener('pointerdown', e => { down = [e.clientX, e.clientY]; });
   renderer.domElement.addEventListener('pointerup', e => {
     if (!down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 5) { down = null; return; }
@@ -522,40 +646,31 @@ body { background: var(--bg); color: var(--ink); font-family: var(--font-body); 
     const r = renderer.domElement.getBoundingClientRect();
     ptr.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
     ray.setFromCamera(ptr, camera);
-    const hits = ray.intersectObjects(meshes.filter(m => m.mesh.visible).map(m => m.mesh), false);
+    const hits = ray.intersectObjects(S.meshes.filter(m => m.mesh.visible).map(m => m.mesh), false);
     // le verre ne masque pas ce qui est derrière lui, sauf s'il est seul touché
     const hit = hits.find(h => h.object.userData.part !== 'vitrage') || hits[0];
     if (hit) select(hit.object.userData.part);
   });
 
-  /* ---------- Thème ---------- */
-  function applyTheme() {
-    scene.background.set(css('--stage') || '#E2E0DA');
-    edgeMat.color.set(css('--ink') || '#111315');
-    if (selected) setEmissive(selected, true);
-  }
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
-  new MutationObserver(applyTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-
-  /* ---------- Taille ---------- */
+  /* ================= Taille ================= */
   function resize() {
     const w = viewportEl.clientWidth, h = viewportEl.clientHeight;
     if (!w || !h) return;
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
-    camera.zoom = Math.min(1, camera.aspect / 1.15); /* écran en hauteur (téléphone) : on recule pour voir toute la coupe */
+    camera.zoom = Math.min(1, camera.aspect / 1.15); /* écran en hauteur (téléphone) : on recule pour voir toute la maquette */
     camera.updateProjectionMatrix();
   }
   new ResizeObserver(resize).observe(viewportEl); resize();
 
-  /* ---------- Boucle ---------- */
+  /* ================= Boucle ================= */
   const tmp = new THREE.Vector3();
   const ease = t => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
   function frame(now) {
     if (camAnim) {
       const k = Math.min(1, (now - camAnim.start) / camAnim.dur), e = ease(k);
       camera.position.lerpVectors(camAnim.from, camAnim.to, e);
-      controls.target.lerpVectors(camAnim.fromT, new THREE.Vector3(0, 0, 0), e);
+      controls.target.lerpVectors(camAnim.fromT, camAnim.toT, e);
       if (k >= 1) camAnim = null;
     }
     if (Math.abs(explodeTarget - explodeT) > 0.0005) {
@@ -563,17 +678,15 @@ body { background: var(--bg); color: var(--ink); font-family: var(--font-body); 
       if (Math.abs(explodeTarget - explodeT) < 0.002) explodeT = explodeTarget;
       if (document.activeElement !== slider) { slider.value = Math.round(explodeT * 100); out.textContent = Math.round(explodeT * 100) + ' %'; }
     }
-    meshes.forEach(r => r.mesh.position.copy(r.explode).multiplyScalar(explodeT));
+    S.meshes.forEach(r => r.mesh.position.copy(r.explode).multiplyScalar(explodeT));
     controls.update();
     renderer.render(scene, camera);
-
     if (showLabels) {
       const w = viewportEl.clientWidth, h = viewportEl.clientHeight;
-      labelEls.forEach(l => {
-        if (hidden.has(l.pid)) { l.el.hidden = true; return; }
+      S.labels.forEach(l => {
+        if (S.hidden.has(l.pid)) { l.el.hidden = true; return; }
         tmp.copy(l.local).add(l.rec.mesh.position);
-        root.localToWorld(tmp);
-        tmp.project(camera);
+        S.root.localToWorld(tmp); tmp.project(camera);
         const vis = tmp.z < 1 && Math.abs(tmp.x) < 1.05 && Math.abs(tmp.y) < 1.05;
         l.el.hidden = !vis;
         if (vis) l.el.style.transform = 'translate(' + ((tmp.x + 1) / 2 * w).toFixed(1) + 'px,' + ((1 - tmp.y) / 2 * h).toFixed(1) + 'px)';
@@ -581,10 +694,10 @@ body { background: var(--bg); color: var(--ink); font-family: var(--font-body); 
     }
     requestAnimationFrame(frame);
   }
+  /* hauteur transmise à la page qui affiche la maquette (téléphone : maquette et fiche empilées) */
   const sendHeight = () => { try { parent.postMessage({ mdpCoupe: Math.ceil(document.querySelector('.app').getBoundingClientRect().height) }, '*'); } catch (e) {} };
   new ResizeObserver(sendHeight).observe(document.querySelector('.app'));
-  select('ouvrant');
-  syncExplodeUI();
+  switchModel(MODELS[location.hash.slice(1)] ? location.hash.slice(1) : 'coupe');
   requestAnimationFrame(frame);
 })();
 </script>
